@@ -16,5 +16,45 @@
   "aboutTagline": "Markdown notes synced through your own GitHub repository",
   "aboutDescription": "Keeps your notes as Markdown files and syncs them with your own GitHub repository so you can continue on any PC. No server or subscription needed.",
   "homeEmptyTitle": "No notes yet",
-  "homeEmptyAction": "New note"
+  "homeEmptyAction": "New note",
+  "notesSearchHint": "Search notes",
+  "noteNew": "New note",
+  "noteUntitled": "Untitled",
+  "notesNoResults": "No matching notes",
+  "noteSelectHint": "Select a note or create a new one",
+  "noteSave": "Save",
+  "noteSaved": "Saved",
+  "noteUnsaved": "Unsaved",
+  "noteRevert": "Discard changes",
+  "noteDelete": "Delete",
+  "noteDeleteTitle": "Delete this note?",
+  "noteDeleteBody": "“{title}” will be permanently deleted.",
+  "@noteDeleteBody": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "commonCancel": "Cancel",
+  "commonCopy": "Copy",
+  "noteEditTab": "Edit",
+  "notePreviewTab": "Preview",
+  "noteBodyHint": "Write in Markdown",
+  "noteSaveFailed": "Could not save: {error}",
+  "@noteSaveFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "noteLoadFailed": "Could not load notes: {error}",
+  "@noteLoadFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  }
 }

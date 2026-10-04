@@ -64,4 +64,67 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get homeEmptyAction => '새 메모';
+
+  @override
+  String get notesSearchHint => '메모 검색';
+
+  @override
+  String get noteNew => '새 메모';
+
+  @override
+  String get noteUntitled => '제목 없음';
+
+  @override
+  String get notesNoResults => '검색 결과가 없습니다';
+
+  @override
+  String get noteSelectHint => '메모를 선택하거나 새로 만드세요';
+
+  @override
+  String get noteSave => '저장';
+
+  @override
+  String get noteSaved => '저장됨';
+
+  @override
+  String get noteUnsaved => '저장 안 됨';
+
+  @override
+  String get noteRevert => '변경 취소';
+
+  @override
+  String get noteDelete => '삭제';
+
+  @override
+  String get noteDeleteTitle => '메모를 삭제할까요?';
+
+  @override
+  String noteDeleteBody(String title) {
+    return '\'$title\' 메모가 영구히 삭제됩니다.';
+  }
+
+  @override
+  String get commonCancel => '취소';
+
+  @override
+  String get commonCopy => '복사';
+
+  @override
+  String get noteEditTab => '편집';
+
+  @override
+  String get notePreviewTab => '미리보기';
+
+  @override
+  String get noteBodyHint => '내용을 Markdown으로 입력하세요';
+
+  @override
+  String noteSaveFailed(String error) {
+    return '저장하지 못했습니다: $error';
+  }
+
+  @override
+  String noteLoadFailed(String error) {
+    return '메모를 불러오지 못했습니다: $error';
+  }
 }

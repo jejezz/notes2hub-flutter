@@ -90,7 +90,9 @@ assets/
 .notes2hub/config.json # 앱 설정(선택, 기기 간 공유 가능한 항목만)
 ```
 - 제목은 파일명이 아니라 본문 첫 줄/frontmatter로 관리 (이름 변경으로 인한 충돌 방지)
-- frontmatter: `id`, `created`, `updated`, `title`
+- frontmatter: `id`, `created`, `updated`. **제목은 저장하지 않고 본문 첫 줄에서 뽑는다** (본문과 어긋나는 것·충돌 면적 방지)
+- 저장 전 편집본(초안)은 저장소 **밖** `<앱 데이터>/drafts/<id>.md`에 1초 debounce로 기록 → 비정상 종료 후 복구. 새 메모는 첫 저장 전까지 파일이 없다.
+- 앱 데이터 폴더: macOS `~/Library/Application Support/Notes2Hub`(샌드박스에선 컨테이너), Windows `%APPDATA%\Notes2Hub`, Linux `~/.config/Notes2Hub`. 메모는 `<앱 데이터>/data/notes/`
 
 ## 5. 동작 규칙
 

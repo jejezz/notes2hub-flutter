@@ -33,5 +33,45 @@
   "aboutTagline": "내 GitHub 저장소로 동기화하는 Markdown 메모 앱",
   "aboutDescription": "메모를 Markdown 파일로 저장하고, 내 GitHub 저장소에 동기화해 여러 PC에서 이어서 씁니다. 별도 서버나 구독이 필요 없습니다.",
   "homeEmptyTitle": "아직 메모가 없습니다",
-  "homeEmptyAction": "새 메모"
+  "homeEmptyAction": "새 메모",
+  "notesSearchHint": "메모 검색",
+  "noteNew": "새 메모",
+  "noteUntitled": "제목 없음",
+  "notesNoResults": "검색 결과가 없습니다",
+  "noteSelectHint": "메모를 선택하거나 새로 만드세요",
+  "noteSave": "저장",
+  "noteSaved": "저장됨",
+  "noteUnsaved": "저장 안 됨",
+  "noteRevert": "변경 취소",
+  "noteDelete": "삭제",
+  "noteDeleteTitle": "메모를 삭제할까요?",
+  "noteDeleteBody": "'{title}' 메모가 영구히 삭제됩니다.",
+  "@noteDeleteBody": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "commonCancel": "취소",
+  "commonCopy": "복사",
+  "noteEditTab": "편집",
+  "notePreviewTab": "미리보기",
+  "noteBodyHint": "내용을 Markdown으로 입력하세요",
+  "noteSaveFailed": "저장하지 못했습니다: {error}",
+  "@noteSaveFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "noteLoadFailed": "메모를 불러오지 못했습니다: {error}",
+  "@noteLoadFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  }
 }

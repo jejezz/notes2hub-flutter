@@ -199,6 +199,120 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'새 메모'**
   String get homeEmptyAction;
+
+  /// No description provided for @notesSearchHint.
+  ///
+  /// In ko, this message translates to:
+  /// **'메모 검색'**
+  String get notesSearchHint;
+
+  /// No description provided for @noteNew.
+  ///
+  /// In ko, this message translates to:
+  /// **'새 메모'**
+  String get noteNew;
+
+  /// No description provided for @noteUntitled.
+  ///
+  /// In ko, this message translates to:
+  /// **'제목 없음'**
+  String get noteUntitled;
+
+  /// No description provided for @notesNoResults.
+  ///
+  /// In ko, this message translates to:
+  /// **'검색 결과가 없습니다'**
+  String get notesNoResults;
+
+  /// No description provided for @noteSelectHint.
+  ///
+  /// In ko, this message translates to:
+  /// **'메모를 선택하거나 새로 만드세요'**
+  String get noteSelectHint;
+
+  /// No description provided for @noteSave.
+  ///
+  /// In ko, this message translates to:
+  /// **'저장'**
+  String get noteSave;
+
+  /// No description provided for @noteSaved.
+  ///
+  /// In ko, this message translates to:
+  /// **'저장됨'**
+  String get noteSaved;
+
+  /// No description provided for @noteUnsaved.
+  ///
+  /// In ko, this message translates to:
+  /// **'저장 안 됨'**
+  String get noteUnsaved;
+
+  /// No description provided for @noteRevert.
+  ///
+  /// In ko, this message translates to:
+  /// **'변경 취소'**
+  String get noteRevert;
+
+  /// No description provided for @noteDelete.
+  ///
+  /// In ko, this message translates to:
+  /// **'삭제'**
+  String get noteDelete;
+
+  /// No description provided for @noteDeleteTitle.
+  ///
+  /// In ko, this message translates to:
+  /// **'메모를 삭제할까요?'**
+  String get noteDeleteTitle;
+
+  /// No description provided for @noteDeleteBody.
+  ///
+  /// In ko, this message translates to:
+  /// **'\'{title}\' 메모가 영구히 삭제됩니다.'**
+  String noteDeleteBody(String title);
+
+  /// No description provided for @commonCancel.
+  ///
+  /// In ko, this message translates to:
+  /// **'취소'**
+  String get commonCancel;
+
+  /// No description provided for @commonCopy.
+  ///
+  /// In ko, this message translates to:
+  /// **'복사'**
+  String get commonCopy;
+
+  /// No description provided for @noteEditTab.
+  ///
+  /// In ko, this message translates to:
+  /// **'편집'**
+  String get noteEditTab;
+
+  /// No description provided for @notePreviewTab.
+  ///
+  /// In ko, this message translates to:
+  /// **'미리보기'**
+  String get notePreviewTab;
+
+  /// No description provided for @noteBodyHint.
+  ///
+  /// In ko, this message translates to:
+  /// **'내용을 Markdown으로 입력하세요'**
+  String get noteBodyHint;
+
+  /// No description provided for @noteSaveFailed.
+  ///
+  /// In ko, this message translates to:
+  /// **'저장하지 못했습니다: {error}'**
+  String noteSaveFailed(String error);
+
+  /// No description provided for @noteLoadFailed.
+  ///
+  /// In ko, this message translates to:
+  /// **'메모를 불러오지 못했습니다: {error}'**
+  String noteLoadFailed(String error);
 }
 
 class _AppLocalizationsDelegate

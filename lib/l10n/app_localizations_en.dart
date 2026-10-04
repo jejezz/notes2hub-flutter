@@ -65,4 +65,67 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get homeEmptyAction => 'New note';
+
+  @override
+  String get notesSearchHint => 'Search notes';
+
+  @override
+  String get noteNew => 'New note';
+
+  @override
+  String get noteUntitled => 'Untitled';
+
+  @override
+  String get notesNoResults => 'No matching notes';
+
+  @override
+  String get noteSelectHint => 'Select a note or create a new one';
+
+  @override
+  String get noteSave => 'Save';
+
+  @override
+  String get noteSaved => 'Saved';
+
+  @override
+  String get noteUnsaved => 'Unsaved';
+
+  @override
+  String get noteRevert => 'Discard changes';
+
+  @override
+  String get noteDelete => 'Delete';
+
+  @override
+  String get noteDeleteTitle => 'Delete this note?';
+
+  @override
+  String noteDeleteBody(String title) {
+    return '“$title” will be permanently deleted.';
+  }
+
+  @override
+  String get commonCancel => 'Cancel';
+
+  @override
+  String get commonCopy => 'Copy';
+
+  @override
+  String get noteEditTab => 'Edit';
+
+  @override
+  String get notePreviewTab => 'Preview';
+
+  @override
+  String get noteBodyHint => 'Write in Markdown';
+
+  @override
+  String noteSaveFailed(String error) {
+    return 'Could not save: $error';
+  }
+
+  @override
+  String noteLoadFailed(String error) {
+    return 'Could not load notes: $error';
+  }
 }
