@@ -1,0 +1,20 @@
+{
+  "@@locale": "en",
+  "aboutTooltip": "About",
+  "aboutVersion": "Version {version} (build {build})",
+  "aboutOpenSourceLicenses": "Open Source Licenses",
+  "aboutRepository": "GitHub",
+  "commonClose": "Close",
+  "aboutMenuItem": "About {appName}",
+  "themeMenuTooltip": "Theme",
+  "themeSystem": "Follow System",
+  "themeLight": "Light",
+  "themeDark": "Dark",
+  "languageMenuTooltip": "Language",
+  "languageSystem": "System / 시스템 설정 따르기",
+  "languageSystemShort": "System",
+  "aboutTagline": "Markdown notes synced through your own GitHub repository",
+  "aboutDescription": "Keeps your notes as Markdown files and syncs them with your own GitHub repository so you can continue on any PC. No server or subscription needed.",
+  "homeEmptyTitle": "No notes yet",
+  "homeEmptyAction": "New note"
+}

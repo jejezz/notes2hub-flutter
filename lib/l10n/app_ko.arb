@@ -1,0 +1,37 @@
+{
+  "@@locale": "ko",
+  "aboutTooltip": "정보",
+  "aboutVersion": "버전 {version} (빌드 {build})",
+  "@aboutVersion": {
+    "placeholders": {
+      "version": {
+        "type": "String"
+      },
+      "build": {
+        "type": "String"
+      }
+    }
+  },
+  "aboutOpenSourceLicenses": "오픈소스 라이선스",
+  "aboutRepository": "GitHub",
+  "commonClose": "닫기",
+  "aboutMenuItem": "{appName} 정보",
+  "@aboutMenuItem": {
+    "placeholders": {
+      "appName": {
+        "type": "String"
+      }
+    }
+  },
+  "themeMenuTooltip": "테마",
+  "themeSystem": "시스템 설정 따르기",
+  "themeLight": "라이트",
+  "themeDark": "다크",
+  "languageMenuTooltip": "언어",
+  "languageSystem": "시스템 설정 따르기 / System",
+  "languageSystemShort": "시스템",
+  "aboutTagline": "내 GitHub 저장소로 동기화하는 Markdown 메모 앱",
+  "aboutDescription": "메모를 Markdown 파일로 저장하고, 내 GitHub 저장소에 동기화해 여러 PC에서 이어서 씁니다. 별도 서버나 구독이 필요 없습니다.",
+  "homeEmptyTitle": "아직 메모가 없습니다",
+  "homeEmptyAction": "새 메모"
+}
