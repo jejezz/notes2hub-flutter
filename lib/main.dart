@@ -8,6 +8,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:window_manager/window_manager.dart';
 
 import 'about/about_dialog.dart';
@@ -15,10 +16,14 @@ import 'about/app_menu_bar.dart';
 import 'about/extra_licenses.dart';
 import 'app_identity.dart';
 import 'l10n/app_localizations.dart';
+import 'auth/token_store.dart';
 import 'notes/app_paths.dart';
 import 'notes/note_store.dart';
 import 'notes/notes_controller.dart';
 import 'screens/notes_screen.dart';
+import 'sync/ca_bundle.dart';
+import 'sync/libgit2_engine.dart';
+import 'sync/sync_service.dart';
 import 'settings/app_settings.dart';
 import 'theme/app_theme.dart';
 
@@ -50,14 +55,22 @@ Future<void> main() async {
     notesDir: Directory('${base.path}/data/notes'),
     draftsDir: Directory('${base.path}/drafts'),
   ));
-  runApp(App(settings: settings, notes: notes));
+  final engine = LibGit2Engine(dir: Directory('${base.path}/data'), caCertPath: await ensureCaBundle(base));
+  final sync = SyncService(
+    prefs: await SharedPreferences.getInstance(),
+    tokens: SecureTokenStore(),
+    engine: engine,
+    notes: notes,
+  );
+  runApp(App(settings: settings, notes: notes, sync: sync));
 }
 
 class App extends StatefulWidget {
-  const App({super.key, required this.settings, required this.notes});
+  const App({super.key, required this.settings, required this.notes, required this.sync});
 
   final AppSettings settings;
   final NotesController notes;
+  final SyncService sync;
 
   @override
   State<App> createState() => _AppState();
@@ -78,6 +91,8 @@ class _AppState extends State<App> with WidgetsBindingObserver {
   Future<void> _loadNotes() async {
     try {
       await widget.notes.load();
+      // 메모를 읽은 뒤에 연결 상태를 복원한다 — 시작 pull이 끝나면 목록을 다시 읽는다.
+      await widget.sync.init();
     } catch (e) {
       // 목록을 못 읽어도 앱은 열린다 — 빈 상태로 시작하고 원인을 알린다.
       widget.notes.markLoaded();
@@ -91,6 +106,7 @@ class _AppState extends State<App> with WidgetsBindingObserver {
   @override
   void dispose() {
     widget.settings.removeListener(_syncWindowBrightness);
+    widget.sync.dispose();
     widget.notes.dispose();
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
@@ -135,7 +151,7 @@ class _AppState extends State<App> with WidgetsBindingObserver {
           supportedLocales: AppLocalizations.supportedLocales,
           localeResolutionCallback: AppSettings.resolveLocale,
           builder: (context, child) => AppMenuBar(onAbout: _showAbout, child: child!),
-          home: NotesScreen(controller: widget.notes, onAbout: _showAbout),
+          home: NotesScreen(controller: widget.notes, sync: widget.sync, onAbout: _showAbout),
         ),
       ),
     );

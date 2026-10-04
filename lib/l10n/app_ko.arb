@@ -73,5 +73,148 @@
         "type": "String"
       }
     }
+  },
+  "syncTooltip": "동기화",
+  "syncNotConnected": "GitHub 연결",
+  "syncRunning": "동기화 중…",
+  "syncDone": "동기화됨",
+  "syncDoneAgo": "동기화됨 · {time}",
+  "@syncDoneAgo": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "syncPending": "동기화 대기 {count}",
+  "@syncPending": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "syncOffline": "오프라인",
+  "syncError": "동기화 오류",
+  "syncReauth": "다시 로그인 필요",
+  "syncRemoteAhead": "원격에 새 변경",
+  "syncConflictCopies": "충돌한 메모 {count}개를 \"충돌\" 사본으로 보존했습니다",
+  "@syncConflictCopies": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "syncFailed": "동기화하지 못했습니다: {error}",
+  "@syncFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "timeJustNow": "방금",
+  "timeMinutesAgo": "{n}분 전",
+  "@timeMinutesAgo": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "timeHoursAgo": "{n}시간 전",
+  "@timeHoursAgo": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "settingsTitle": "설정",
+  "settingsAccount": "GitHub 계정",
+  "settingsSignedInAs": "{login} 님으로 로그인됨",
+  "@settingsSignedInAs": {
+    "placeholders": {
+      "login": {
+        "type": "String"
+      }
+    }
+  },
+  "settingsSignedOut": "로그인하지 않았습니다",
+  "settingsLoginBrowser": "GitHub로 로그인",
+  "settingsLogout": "로그아웃",
+  "settingsRepo": "메모 저장소",
+  "settingsNoRepo": "연결된 저장소가 없습니다",
+  "settingsRepoConnect": "저장소 연결",
+  "settingsRepoChange": "변경",
+  "settingsSyncMode": "동기화 방식",
+  "settingsSyncManual": "수동",
+  "settingsSyncAuto": "자동 (저장 30초 후)",
+  "settingsSyncHint": "가져오기는 시작할 때, 창으로 돌아올 때, 5분마다 자동으로 합니다. 보내기는 위 설정을 따릅니다.",
+  "loginTitle": "GitHub 로그인",
+  "loginTabBrowser": "브라우저",
+  "loginTabToken": "토큰",
+  "loginDeviceStep": "브라우저에서 아래 코드를 입력하고 승인하세요",
+  "loginOpenBrowser": "브라우저 열기",
+  "loginCopyCode": "코드 복사",
+  "loginWaiting": "승인을 기다리는 중…",
+  "loginDeviceUnavailable": "이 빌드에는 GitHub 앱 등록(Client ID)이 없어 브라우저 로그인을 쓸 수 없습니다. 토큰으로 로그인하세요.",
+  "loginStart": "로그인 시작",
+  "loginTokenLabel": "Personal access token",
+  "loginTokenHelp": "repo 권한이 있는 토큰이 필요합니다. 토큰은 OS 보안 저장소에만 저장됩니다.",
+  "loginSubmit": "로그인",
+  "loginFailed": "로그인하지 못했습니다: {error}",
+  "@loginFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "repoTitle": "메모 저장소 연결",
+  "repoCreateTitle": "새 비공개 저장소 만들기",
+  "repoNameLabel": "저장소 이름",
+  "repoCreate": "만들기",
+  "repoExisting": "기존 저장소에서 선택",
+  "repoSearch": "저장소 검색",
+  "repoPublic": "공개",
+  "repoPrivate": "비공개",
+  "repoPublicConfirmTitle": "공개 저장소입니다",
+  "repoPublicConfirmBody": "'{name}'은(는) 누구나 볼 수 있는 공개 저장소입니다. 메모가 모두에게 공개됩니다. 그래도 연결할까요?",
+  "@repoPublicConfirmBody": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "repoConnect": "연결",
+  "repoConnecting": "연결 중…",
+  "repoNoMatch": "일치하는 저장소가 없습니다",
+  "repoLoadFailed": "저장소 목록을 불러오지 못했습니다: {error}",
+  "@repoLoadFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "repoConnectFailed": "저장소를 연결하지 못했습니다: {error}",
+  "@repoConnectFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "settingsTooltip": "설정",
+  "syncUnsavedSkipped": "저장하지 않은 메모 {count}개는 동기화에 포함되지 않았습니다",
+  "@syncUnsavedSkipped": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
   }
 }

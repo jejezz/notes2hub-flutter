@@ -56,5 +56,148 @@
         "type": "String"
       }
     }
+  },
+  "syncTooltip": "Sync",
+  "syncNotConnected": "Connect GitHub",
+  "syncRunning": "Syncing…",
+  "syncDone": "Synced",
+  "syncDoneAgo": "Synced · {time}",
+  "@syncDoneAgo": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "syncPending": "{count} waiting to sync",
+  "@syncPending": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "syncOffline": "Offline",
+  "syncError": "Sync error",
+  "syncReauth": "Sign in again",
+  "syncRemoteAhead": "New changes on remote",
+  "syncConflictCopies": "Kept {count} conflicting note(s) as “conflict” copies",
+  "@syncConflictCopies": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "syncFailed": "Sync failed: {error}",
+  "@syncFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "timeJustNow": "just now",
+  "timeMinutesAgo": "{n} min ago",
+  "@timeMinutesAgo": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "timeHoursAgo": "{n} h ago",
+  "@timeHoursAgo": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "settingsTitle": "Settings",
+  "settingsAccount": "GitHub account",
+  "settingsSignedInAs": "Signed in as {login}",
+  "@settingsSignedInAs": {
+    "placeholders": {
+      "login": {
+        "type": "String"
+      }
+    }
+  },
+  "settingsSignedOut": "Not signed in",
+  "settingsLoginBrowser": "Sign in with GitHub",
+  "settingsLogout": "Sign out",
+  "settingsRepo": "Notes repository",
+  "settingsNoRepo": "No repository connected",
+  "settingsRepoConnect": "Connect repository",
+  "settingsRepoChange": "Change",
+  "settingsSyncMode": "Sync mode",
+  "settingsSyncManual": "Manual",
+  "settingsSyncAuto": "Automatic (30 s after saving)",
+  "settingsSyncHint": "Pulling happens automatically at launch, when the window regains focus, and every 5 minutes. Pushing follows the setting above.",
+  "loginTitle": "Sign in to GitHub",
+  "loginTabBrowser": "Browser",
+  "loginTabToken": "Token",
+  "loginDeviceStep": "Enter the code below in your browser and approve",
+  "loginOpenBrowser": "Open browser",
+  "loginCopyCode": "Copy code",
+  "loginWaiting": "Waiting for approval…",
+  "loginDeviceUnavailable": "This build has no GitHub app registered (Client ID), so browser sign-in is unavailable. Use a token instead.",
+  "loginStart": "Start sign-in",
+  "loginTokenLabel": "Personal access token",
+  "loginTokenHelp": "A token with the repo scope is required. It is stored only in the OS secure storage.",
+  "loginSubmit": "Sign in",
+  "loginFailed": "Could not sign in: {error}",
+  "@loginFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "repoTitle": "Connect notes repository",
+  "repoCreateTitle": "Create a new private repository",
+  "repoNameLabel": "Repository name",
+  "repoCreate": "Create",
+  "repoExisting": "Choose an existing repository",
+  "repoSearch": "Search repositories",
+  "repoPublic": "Public",
+  "repoPrivate": "Private",
+  "repoPublicConfirmTitle": "This repository is public",
+  "repoPublicConfirmBody": "“{name}” is public — anyone can read your notes. Connect anyway?",
+  "@repoPublicConfirmBody": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "repoConnect": "Connect",
+  "repoConnecting": "Connecting…",
+  "repoNoMatch": "No matching repositories",
+  "repoLoadFailed": "Could not load repositories: {error}",
+  "@repoLoadFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "repoConnectFailed": "Could not connect the repository: {error}",
+  "@repoConnectFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "settingsTooltip": "Settings",
+  "syncUnsavedSkipped": "{count} unsaved note(s) were not included in the sync",
+  "@syncUnsavedSkipped": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
   }
 }

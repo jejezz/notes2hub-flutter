@@ -12,6 +12,7 @@ import 'package:flutter/services.dart';
 
 const _entries = <(List<String> packages, String asset)>[
   (['SeoulNamsan'], 'assets/licenses/seoul-namsan.txt'),
+  (['Mozilla CA certificate bundle'], 'assets/licenses/mozilla-ca-bundle.txt'),
   // (['libserialport'], 'assets/licenses/libserialport-lgpl-3.0.txt'),
 ];
 

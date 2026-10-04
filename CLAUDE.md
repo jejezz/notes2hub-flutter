@@ -15,4 +15,4 @@ GitHub 저장소를 백엔드로 쓰는 Markdown 메모 앱. 서버/구독 없�
 - 토큰은 보안 저장소에만, 로그/파일 금지.
 
 ## 현재 단계
-Phase 0(뼈대 + macOS PoC), Phase 1(로컬 메모 CRUD·검색·Markdown 편집/미리보기·저장·초안 복구) 완료. 다음: Phase 2(GitHub 로그인, repo 생성/선택, 수동 동기화). 이후 Phase는 docs/PLAN.md §8.
+Phase 0(뼈대 + macOS PoC), Phase 1(로컬 메모 CRUD·검색·Markdown 편집/미리보기·저장·초안 복구) 완료. Phase 2(GitHub 로그인·repo 생성/선택·동기화·자동 pull) 구현·자동 검증 완료, 실제 GitHub push는 사용자 확인 대기. 다음: Phase 3(자동 동기화 다듬기·오프라인·상태 표시 보강). 이후 Phase는 docs/PLAN.md §8.

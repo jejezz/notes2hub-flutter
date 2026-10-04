@@ -128,4 +128,209 @@ class AppLocalizationsEn extends AppLocalizations {
   String noteLoadFailed(String error) {
     return 'Could not load notes: $error';
   }
+
+  @override
+  String get syncTooltip => 'Sync';
+
+  @override
+  String get syncNotConnected => 'Connect GitHub';
+
+  @override
+  String get syncRunning => 'Syncing…';
+
+  @override
+  String get syncDone => 'Synced';
+
+  @override
+  String syncDoneAgo(String time) {
+    return 'Synced · $time';
+  }
+
+  @override
+  String syncPending(int count) {
+    return '$count waiting to sync';
+  }
+
+  @override
+  String get syncOffline => 'Offline';
+
+  @override
+  String get syncError => 'Sync error';
+
+  @override
+  String get syncReauth => 'Sign in again';
+
+  @override
+  String get syncRemoteAhead => 'New changes on remote';
+
+  @override
+  String syncConflictCopies(int count) {
+    return 'Kept $count conflicting note(s) as “conflict” copies';
+  }
+
+  @override
+  String syncFailed(String error) {
+    return 'Sync failed: $error';
+  }
+
+  @override
+  String get timeJustNow => 'just now';
+
+  @override
+  String timeMinutesAgo(int n) {
+    return '$n min ago';
+  }
+
+  @override
+  String timeHoursAgo(int n) {
+    return '$n h ago';
+  }
+
+  @override
+  String get settingsTitle => 'Settings';
+
+  @override
+  String get settingsAccount => 'GitHub account';
+
+  @override
+  String settingsSignedInAs(String login) {
+    return 'Signed in as $login';
+  }
+
+  @override
+  String get settingsSignedOut => 'Not signed in';
+
+  @override
+  String get settingsLoginBrowser => 'Sign in with GitHub';
+
+  @override
+  String get settingsLogout => 'Sign out';
+
+  @override
+  String get settingsRepo => 'Notes repository';
+
+  @override
+  String get settingsNoRepo => 'No repository connected';
+
+  @override
+  String get settingsRepoConnect => 'Connect repository';
+
+  @override
+  String get settingsRepoChange => 'Change';
+
+  @override
+  String get settingsSyncMode => 'Sync mode';
+
+  @override
+  String get settingsSyncManual => 'Manual';
+
+  @override
+  String get settingsSyncAuto => 'Automatic (30 s after saving)';
+
+  @override
+  String get settingsSyncHint =>
+      'Pulling happens automatically at launch, when the window regains focus, and every 5 minutes. Pushing follows the setting above.';
+
+  @override
+  String get loginTitle => 'Sign in to GitHub';
+
+  @override
+  String get loginTabBrowser => 'Browser';
+
+  @override
+  String get loginTabToken => 'Token';
+
+  @override
+  String get loginDeviceStep =>
+      'Enter the code below in your browser and approve';
+
+  @override
+  String get loginOpenBrowser => 'Open browser';
+
+  @override
+  String get loginCopyCode => 'Copy code';
+
+  @override
+  String get loginWaiting => 'Waiting for approval…';
+
+  @override
+  String get loginDeviceUnavailable =>
+      'This build has no GitHub app registered (Client ID), so browser sign-in is unavailable. Use a token instead.';
+
+  @override
+  String get loginStart => 'Start sign-in';
+
+  @override
+  String get loginTokenLabel => 'Personal access token';
+
+  @override
+  String get loginTokenHelp =>
+      'A token with the repo scope is required. It is stored only in the OS secure storage.';
+
+  @override
+  String get loginSubmit => 'Sign in';
+
+  @override
+  String loginFailed(String error) {
+    return 'Could not sign in: $error';
+  }
+
+  @override
+  String get repoTitle => 'Connect notes repository';
+
+  @override
+  String get repoCreateTitle => 'Create a new private repository';
+
+  @override
+  String get repoNameLabel => 'Repository name';
+
+  @override
+  String get repoCreate => 'Create';
+
+  @override
+  String get repoExisting => 'Choose an existing repository';
+
+  @override
+  String get repoSearch => 'Search repositories';
+
+  @override
+  String get repoPublic => 'Public';
+
+  @override
+  String get repoPrivate => 'Private';
+
+  @override
+  String get repoPublicConfirmTitle => 'This repository is public';
+
+  @override
+  String repoPublicConfirmBody(String name) {
+    return '“$name” is public — anyone can read your notes. Connect anyway?';
+  }
+
+  @override
+  String get repoConnect => 'Connect';
+
+  @override
+  String get repoConnecting => 'Connecting…';
+
+  @override
+  String get repoNoMatch => 'No matching repositories';
+
+  @override
+  String repoLoadFailed(String error) {
+    return 'Could not load repositories: $error';
+  }
+
+  @override
+  String repoConnectFailed(String error) {
+    return 'Could not connect the repository: $error';
+  }
+
+  @override
+  String get settingsTooltip => 'Settings';
+
+  @override
+  String syncUnsavedSkipped(int count) {
+    return '$count unsaved note(s) were not included in the sync';
+  }
 }

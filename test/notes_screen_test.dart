@@ -8,7 +8,10 @@ import 'package:notes2hub/settings/app_settings.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:notes2hub/l10n/app_localizations.dart';
 import 'package:notes2hub/notes/note_store.dart';
+import 'package:notes2hub/auth/token_store.dart';
 import 'package:notes2hub/notes/notes_controller.dart';
+import 'package:notes2hub/sync/sync_service.dart';
+import 'fakes.dart';
 import 'package:notes2hub/screens/notes_screen.dart';
 
 void main() {
@@ -25,6 +28,13 @@ void main() {
     SharedPreferences.setMockInitialValues({});
     final settings = (await tester.runAsync(AppSettings.load))!;
     await tester.runAsync(c.load);
+    final sync = SyncService(
+      prefs: await tester.runAsync(SharedPreferences.getInstance).then((v) => v!),
+      tokens: MemoryTokenStore(),
+      engine: FakeEngine(),
+      notes: c,
+    );
+    addTearDown(sync.dispose);
 
     await tester.pumpWidget(AppSettingsScope(
       settings: settings,
@@ -32,7 +42,7 @@ void main() {
         locale: const Locale('en'),
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
-        home: NotesScreen(controller: c, onAbout: () {}),
+        home: NotesScreen(controller: c, sync: sync, onAbout: () {}),
       ),
     ));
     expect(find.text('No notes yet'), findsOneWidget);

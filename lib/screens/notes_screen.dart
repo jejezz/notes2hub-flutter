@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -10,20 +12,26 @@ import '../l10n/app_localizations.dart';
 import '../notes/note.dart';
 import '../notes/notes_controller.dart';
 import '../settings/settings_menus.dart';
+import '../sync/sync_service.dart';
 import '../theme/app_theme.dart';
 import '../theme/user_content.dart';
+import 'settings_dialog.dart';
+import 'sync_button.dart';
 
 bool get _isMac => defaultTargetPlatform == TargetPlatform.macOS;
 String get _mod => _isMac ? '⌘' : 'Ctrl+';
 
-SingleActivator _primary(LogicalKeyboardKey key) =>
-    SingleActivator(key, meta: _isMac, control: !_isMac);
+SingleActivator _primary(LogicalKeyboardKey key, {bool shift = false}) =>
+    SingleActivator(key, meta: _isMac, control: !_isMac, shift: shift);
+
+String get _syncShortcut => _isMac ? '⇧⌘S' : 'Ctrl+Shift+S';
 
 /// 목록 + 편집기. 저장(⌘S)은 로컬 파일 기록뿐이다 — 동기화는 Phase 2.
 class NotesScreen extends StatefulWidget {
-  const NotesScreen({super.key, required this.controller, required this.onAbout});
+  const NotesScreen({super.key, required this.controller, required this.sync, required this.onAbout});
 
   final NotesController controller;
+  final SyncService sync;
   final VoidCallback onAbout;
 
   @override
@@ -39,6 +47,8 @@ class _NotesScreenState extends State<NotesScreen> with WidgetsBindingObserver {
   String? _editorId;
 
   NotesController get c => widget.controller;
+  SyncService get sync => widget.sync;
+  StreamSubscription<SyncEvent>? _syncEvents;
 
   @override
   void initState() {
@@ -46,10 +56,12 @@ class _NotesScreenState extends State<NotesScreen> with WidgetsBindingObserver {
     WidgetsBinding.instance.addObserver(this);
     c.addListener(_syncEditor);
     _syncEditor();
+    _syncEvents = sync.events.listen(_onSyncEvent);
   }
 
   @override
   void dispose() {
+    _syncEvents?.cancel();
     c.removeListener(_syncEditor);
     WidgetsBinding.instance.removeObserver(this);
     _editor.dispose();
@@ -94,6 +106,32 @@ class _NotesScreenState extends State<NotesScreen> with WidgetsBindingObserver {
       _showError(AppLocalizations.of(context).noteSaveFailed('$e'));
     }
   }
+
+  void _onSyncEvent(SyncEvent e) {
+    if (!mounted) return;
+    final l10n = AppLocalizations.of(context);
+    if (e.failed) {
+      _showError(l10n.syncFailed(e.message ?? ''));
+    } else {
+      ScaffoldMessenger.of(context)
+        ..clearSnackBars()
+        ..showSnackBar(SnackBar(content: Text(l10n.syncConflictCopies(e.conflictCopies))));
+    }
+  }
+
+  /// 동기화는 저장된 파일만 다룬다. 저장하지 않은 편집이 빠졌다면 알린다.
+  Future<void> _syncNow() async {
+    if (!sync.connected) return _openSettings();
+    final skipped = c.unsavedCount;
+    await sync.sync();
+    if (skipped > 0 && mounted) {
+      ScaffoldMessenger.of(context)
+        ..clearSnackBars()
+        ..showSnackBar(SnackBar(content: Text(AppLocalizations.of(context).syncUnsavedSkipped(skipped))));
+    }
+  }
+
+  void _openSettings() => showSettingsDialog(context, sync);
 
   void _showError(String message) {
     final l10n = AppLocalizations.of(context);
@@ -145,6 +183,8 @@ class _NotesScreenState extends State<NotesScreen> with WidgetsBindingObserver {
       bindings: {
         _primary(LogicalKeyboardKey.keyN): _create,
         _primary(LogicalKeyboardKey.keyS): _save,
+        _primary(LogicalKeyboardKey.keyS, shift: true): _syncNow,
+        _primary(LogicalKeyboardKey.comma): _openSettings,
         _primary(LogicalKeyboardKey.keyF): () => _searchFocus.requestFocus(),
         _primary(LogicalKeyboardKey.keyE): () => setState(() => _preview = !_preview),
       },
@@ -154,10 +194,25 @@ class _NotesScreenState extends State<NotesScreen> with WidgetsBindingObserver {
           appBar: AppBar(
             title: const Text(AppIdentity.displayName),
             actions: [
+              ListenableBuilder(
+                listenable: Listenable.merge([sync, c]),
+                builder: (context, _) => SyncButton(
+                  sync: sync,
+                  notes: c,
+                  shortcut: _syncShortcut,
+                  onOpenSettings: _openSettings,
+                  onSync: _syncNow,
+                ),
+              ),
               IconButton(
                 tooltip: '${l10n.noteNew} (${_mod}N)',
                 icon: const Icon(Icons.edit_note_rounded),
                 onPressed: _create,
+              ),
+              IconButton(
+                tooltip: '${l10n.settingsTooltip} ($_mod,)',
+                icon: const Icon(Icons.settings_outlined),
+                onPressed: _openSettings,
               ),
               const ThemeMenuButton(),
               const LanguageMenuButton(),

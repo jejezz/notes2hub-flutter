@@ -127,4 +127,207 @@ class AppLocalizationsKo extends AppLocalizations {
   String noteLoadFailed(String error) {
     return '메모를 불러오지 못했습니다: $error';
   }
+
+  @override
+  String get syncTooltip => '동기화';
+
+  @override
+  String get syncNotConnected => 'GitHub 연결';
+
+  @override
+  String get syncRunning => '동기화 중…';
+
+  @override
+  String get syncDone => '동기화됨';
+
+  @override
+  String syncDoneAgo(String time) {
+    return '동기화됨 · $time';
+  }
+
+  @override
+  String syncPending(int count) {
+    return '동기화 대기 $count';
+  }
+
+  @override
+  String get syncOffline => '오프라인';
+
+  @override
+  String get syncError => '동기화 오류';
+
+  @override
+  String get syncReauth => '다시 로그인 필요';
+
+  @override
+  String get syncRemoteAhead => '원격에 새 변경';
+
+  @override
+  String syncConflictCopies(int count) {
+    return '충돌한 메모 $count개를 \"충돌\" 사본으로 보존했습니다';
+  }
+
+  @override
+  String syncFailed(String error) {
+    return '동기화하지 못했습니다: $error';
+  }
+
+  @override
+  String get timeJustNow => '방금';
+
+  @override
+  String timeMinutesAgo(int n) {
+    return '$n분 전';
+  }
+
+  @override
+  String timeHoursAgo(int n) {
+    return '$n시간 전';
+  }
+
+  @override
+  String get settingsTitle => '설정';
+
+  @override
+  String get settingsAccount => 'GitHub 계정';
+
+  @override
+  String settingsSignedInAs(String login) {
+    return '$login 님으로 로그인됨';
+  }
+
+  @override
+  String get settingsSignedOut => '로그인하지 않았습니다';
+
+  @override
+  String get settingsLoginBrowser => 'GitHub로 로그인';
+
+  @override
+  String get settingsLogout => '로그아웃';
+
+  @override
+  String get settingsRepo => '메모 저장소';
+
+  @override
+  String get settingsNoRepo => '연결된 저장소가 없습니다';
+
+  @override
+  String get settingsRepoConnect => '저장소 연결';
+
+  @override
+  String get settingsRepoChange => '변경';
+
+  @override
+  String get settingsSyncMode => '동기화 방식';
+
+  @override
+  String get settingsSyncManual => '수동';
+
+  @override
+  String get settingsSyncAuto => '자동 (저장 30초 후)';
+
+  @override
+  String get settingsSyncHint =>
+      '가져오기는 시작할 때, 창으로 돌아올 때, 5분마다 자동으로 합니다. 보내기는 위 설정을 따릅니다.';
+
+  @override
+  String get loginTitle => 'GitHub 로그인';
+
+  @override
+  String get loginTabBrowser => '브라우저';
+
+  @override
+  String get loginTabToken => '토큰';
+
+  @override
+  String get loginDeviceStep => '브라우저에서 아래 코드를 입력하고 승인하세요';
+
+  @override
+  String get loginOpenBrowser => '브라우저 열기';
+
+  @override
+  String get loginCopyCode => '코드 복사';
+
+  @override
+  String get loginWaiting => '승인을 기다리는 중…';
+
+  @override
+  String get loginDeviceUnavailable =>
+      '이 빌드에는 GitHub 앱 등록(Client ID)이 없어 브라우저 로그인을 쓸 수 없습니다. 토큰으로 로그인하세요.';
+
+  @override
+  String get loginStart => '로그인 시작';
+
+  @override
+  String get loginTokenLabel => 'Personal access token';
+
+  @override
+  String get loginTokenHelp => 'repo 권한이 있는 토큰이 필요합니다. 토큰은 OS 보안 저장소에만 저장됩니다.';
+
+  @override
+  String get loginSubmit => '로그인';
+
+  @override
+  String loginFailed(String error) {
+    return '로그인하지 못했습니다: $error';
+  }
+
+  @override
+  String get repoTitle => '메모 저장소 연결';
+
+  @override
+  String get repoCreateTitle => '새 비공개 저장소 만들기';
+
+  @override
+  String get repoNameLabel => '저장소 이름';
+
+  @override
+  String get repoCreate => '만들기';
+
+  @override
+  String get repoExisting => '기존 저장소에서 선택';
+
+  @override
+  String get repoSearch => '저장소 검색';
+
+  @override
+  String get repoPublic => '공개';
+
+  @override
+  String get repoPrivate => '비공개';
+
+  @override
+  String get repoPublicConfirmTitle => '공개 저장소입니다';
+
+  @override
+  String repoPublicConfirmBody(String name) {
+    return '\'$name\'은(는) 누구나 볼 수 있는 공개 저장소입니다. 메모가 모두에게 공개됩니다. 그래도 연결할까요?';
+  }
+
+  @override
+  String get repoConnect => '연결';
+
+  @override
+  String get repoConnecting => '연결 중…';
+
+  @override
+  String get repoNoMatch => '일치하는 저장소가 없습니다';
+
+  @override
+  String repoLoadFailed(String error) {
+    return '저장소 목록을 불러오지 못했습니다: $error';
+  }
+
+  @override
+  String repoConnectFailed(String error) {
+    return '저장소를 연결하지 못했습니다: $error';
+  }
+
+  @override
+  String get settingsTooltip => '설정';
+
+  @override
+  String syncUnsavedSkipped(int count) {
+    return '저장하지 않은 메모 $count개는 동기화에 포함되지 않았습니다';
+  }
 }

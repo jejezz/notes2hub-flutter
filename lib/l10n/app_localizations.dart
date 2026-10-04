@@ -313,6 +313,360 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'메모를 불러오지 못했습니다: {error}'**
   String noteLoadFailed(String error);
+
+  /// No description provided for @syncTooltip.
+  ///
+  /// In ko, this message translates to:
+  /// **'동기화'**
+  String get syncTooltip;
+
+  /// No description provided for @syncNotConnected.
+  ///
+  /// In ko, this message translates to:
+  /// **'GitHub 연결'**
+  String get syncNotConnected;
+
+  /// No description provided for @syncRunning.
+  ///
+  /// In ko, this message translates to:
+  /// **'동기화 중…'**
+  String get syncRunning;
+
+  /// No description provided for @syncDone.
+  ///
+  /// In ko, this message translates to:
+  /// **'동기화됨'**
+  String get syncDone;
+
+  /// No description provided for @syncDoneAgo.
+  ///
+  /// In ko, this message translates to:
+  /// **'동기화됨 · {time}'**
+  String syncDoneAgo(String time);
+
+  /// No description provided for @syncPending.
+  ///
+  /// In ko, this message translates to:
+  /// **'동기화 대기 {count}'**
+  String syncPending(int count);
+
+  /// No description provided for @syncOffline.
+  ///
+  /// In ko, this message translates to:
+  /// **'오프라인'**
+  String get syncOffline;
+
+  /// No description provided for @syncError.
+  ///
+  /// In ko, this message translates to:
+  /// **'동기화 오류'**
+  String get syncError;
+
+  /// No description provided for @syncReauth.
+  ///
+  /// In ko, this message translates to:
+  /// **'다시 로그인 필요'**
+  String get syncReauth;
+
+  /// No description provided for @syncRemoteAhead.
+  ///
+  /// In ko, this message translates to:
+  /// **'원격에 새 변경'**
+  String get syncRemoteAhead;
+
+  /// No description provided for @syncConflictCopies.
+  ///
+  /// In ko, this message translates to:
+  /// **'충돌한 메모 {count}개를 \"충돌\" 사본으로 보존했습니다'**
+  String syncConflictCopies(int count);
+
+  /// No description provided for @syncFailed.
+  ///
+  /// In ko, this message translates to:
+  /// **'동기화하지 못했습니다: {error}'**
+  String syncFailed(String error);
+
+  /// No description provided for @timeJustNow.
+  ///
+  /// In ko, this message translates to:
+  /// **'방금'**
+  String get timeJustNow;
+
+  /// No description provided for @timeMinutesAgo.
+  ///
+  /// In ko, this message translates to:
+  /// **'{n}분 전'**
+  String timeMinutesAgo(int n);
+
+  /// No description provided for @timeHoursAgo.
+  ///
+  /// In ko, this message translates to:
+  /// **'{n}시간 전'**
+  String timeHoursAgo(int n);
+
+  /// No description provided for @settingsTitle.
+  ///
+  /// In ko, this message translates to:
+  /// **'설정'**
+  String get settingsTitle;
+
+  /// No description provided for @settingsAccount.
+  ///
+  /// In ko, this message translates to:
+  /// **'GitHub 계정'**
+  String get settingsAccount;
+
+  /// No description provided for @settingsSignedInAs.
+  ///
+  /// In ko, this message translates to:
+  /// **'{login} 님으로 로그인됨'**
+  String settingsSignedInAs(String login);
+
+  /// No description provided for @settingsSignedOut.
+  ///
+  /// In ko, this message translates to:
+  /// **'로그인하지 않았습니다'**
+  String get settingsSignedOut;
+
+  /// No description provided for @settingsLoginBrowser.
+  ///
+  /// In ko, this message translates to:
+  /// **'GitHub로 로그인'**
+  String get settingsLoginBrowser;
+
+  /// No description provided for @settingsLogout.
+  ///
+  /// In ko, this message translates to:
+  /// **'로그아웃'**
+  String get settingsLogout;
+
+  /// No description provided for @settingsRepo.
+  ///
+  /// In ko, this message translates to:
+  /// **'메모 저장소'**
+  String get settingsRepo;
+
+  /// No description provided for @settingsNoRepo.
+  ///
+  /// In ko, this message translates to:
+  /// **'연결된 저장소가 없습니다'**
+  String get settingsNoRepo;
+
+  /// No description provided for @settingsRepoConnect.
+  ///
+  /// In ko, this message translates to:
+  /// **'저장소 연결'**
+  String get settingsRepoConnect;
+
+  /// No description provided for @settingsRepoChange.
+  ///
+  /// In ko, this message translates to:
+  /// **'변경'**
+  String get settingsRepoChange;
+
+  /// No description provided for @settingsSyncMode.
+  ///
+  /// In ko, this message translates to:
+  /// **'동기화 방식'**
+  String get settingsSyncMode;
+
+  /// No description provided for @settingsSyncManual.
+  ///
+  /// In ko, this message translates to:
+  /// **'수동'**
+  String get settingsSyncManual;
+
+  /// No description provided for @settingsSyncAuto.
+  ///
+  /// In ko, this message translates to:
+  /// **'자동 (저장 30초 후)'**
+  String get settingsSyncAuto;
+
+  /// No description provided for @settingsSyncHint.
+  ///
+  /// In ko, this message translates to:
+  /// **'가져오기는 시작할 때, 창으로 돌아올 때, 5분마다 자동으로 합니다. 보내기는 위 설정을 따릅니다.'**
+  String get settingsSyncHint;
+
+  /// No description provided for @loginTitle.
+  ///
+  /// In ko, this message translates to:
+  /// **'GitHub 로그인'**
+  String get loginTitle;
+
+  /// No description provided for @loginTabBrowser.
+  ///
+  /// In ko, this message translates to:
+  /// **'브라우저'**
+  String get loginTabBrowser;
+
+  /// No description provided for @loginTabToken.
+  ///
+  /// In ko, this message translates to:
+  /// **'토큰'**
+  String get loginTabToken;
+
+  /// No description provided for @loginDeviceStep.
+  ///
+  /// In ko, this message translates to:
+  /// **'브라우저에서 아래 코드를 입력하고 승인하세요'**
+  String get loginDeviceStep;
+
+  /// No description provided for @loginOpenBrowser.
+  ///
+  /// In ko, this message translates to:
+  /// **'브라우저 열기'**
+  String get loginOpenBrowser;
+
+  /// No description provided for @loginCopyCode.
+  ///
+  /// In ko, this message translates to:
+  /// **'코드 복사'**
+  String get loginCopyCode;
+
+  /// No description provided for @loginWaiting.
+  ///
+  /// In ko, this message translates to:
+  /// **'승인을 기다리는 중…'**
+  String get loginWaiting;
+
+  /// No description provided for @loginDeviceUnavailable.
+  ///
+  /// In ko, this message translates to:
+  /// **'이 빌드에는 GitHub 앱 등록(Client ID)이 없어 브라우저 로그인을 쓸 수 없습니다. 토큰으로 로그인하세요.'**
+  String get loginDeviceUnavailable;
+
+  /// No description provided for @loginStart.
+  ///
+  /// In ko, this message translates to:
+  /// **'로그인 시작'**
+  String get loginStart;
+
+  /// No description provided for @loginTokenLabel.
+  ///
+  /// In ko, this message translates to:
+  /// **'Personal access token'**
+  String get loginTokenLabel;
+
+  /// No description provided for @loginTokenHelp.
+  ///
+  /// In ko, this message translates to:
+  /// **'repo 권한이 있는 토큰이 필요합니다. 토큰은 OS 보안 저장소에만 저장됩니다.'**
+  String get loginTokenHelp;
+
+  /// No description provided for @loginSubmit.
+  ///
+  /// In ko, this message translates to:
+  /// **'로그인'**
+  String get loginSubmit;
+
+  /// No description provided for @loginFailed.
+  ///
+  /// In ko, this message translates to:
+  /// **'로그인하지 못했습니다: {error}'**
+  String loginFailed(String error);
+
+  /// No description provided for @repoTitle.
+  ///
+  /// In ko, this message translates to:
+  /// **'메모 저장소 연결'**
+  String get repoTitle;
+
+  /// No description provided for @repoCreateTitle.
+  ///
+  /// In ko, this message translates to:
+  /// **'새 비공개 저장소 만들기'**
+  String get repoCreateTitle;
+
+  /// No description provided for @repoNameLabel.
+  ///
+  /// In ko, this message translates to:
+  /// **'저장소 이름'**
+  String get repoNameLabel;
+
+  /// No description provided for @repoCreate.
+  ///
+  /// In ko, this message translates to:
+  /// **'만들기'**
+  String get repoCreate;
+
+  /// No description provided for @repoExisting.
+  ///
+  /// In ko, this message translates to:
+  /// **'기존 저장소에서 선택'**
+  String get repoExisting;
+
+  /// No description provided for @repoSearch.
+  ///
+  /// In ko, this message translates to:
+  /// **'저장소 검색'**
+  String get repoSearch;
+
+  /// No description provided for @repoPublic.
+  ///
+  /// In ko, this message translates to:
+  /// **'공개'**
+  String get repoPublic;
+
+  /// No description provided for @repoPrivate.
+  ///
+  /// In ko, this message translates to:
+  /// **'비공개'**
+  String get repoPrivate;
+
+  /// No description provided for @repoPublicConfirmTitle.
+  ///
+  /// In ko, this message translates to:
+  /// **'공개 저장소입니다'**
+  String get repoPublicConfirmTitle;
+
+  /// No description provided for @repoPublicConfirmBody.
+  ///
+  /// In ko, this message translates to:
+  /// **'\'{name}\'은(는) 누구나 볼 수 있는 공개 저장소입니다. 메모가 모두에게 공개됩니다. 그래도 연결할까요?'**
+  String repoPublicConfirmBody(String name);
+
+  /// No description provided for @repoConnect.
+  ///
+  /// In ko, this message translates to:
+  /// **'연결'**
+  String get repoConnect;
+
+  /// No description provided for @repoConnecting.
+  ///
+  /// In ko, this message translates to:
+  /// **'연결 중…'**
+  String get repoConnecting;
+
+  /// No description provided for @repoNoMatch.
+  ///
+  /// In ko, this message translates to:
+  /// **'일치하는 저장소가 없습니다'**
+  String get repoNoMatch;
+
+  /// No description provided for @repoLoadFailed.
+  ///
+  /// In ko, this message translates to:
+  /// **'저장소 목록을 불러오지 못했습니다: {error}'**
+  String repoLoadFailed(String error);
+
+  /// No description provided for @repoConnectFailed.
+  ///
+  /// In ko, this message translates to:
+  /// **'저장소를 연결하지 못했습니다: {error}'**
+  String repoConnectFailed(String error);
+
+  /// No description provided for @settingsTooltip.
+  ///
+  /// In ko, this message translates to:
+  /// **'설정'**
+  String get settingsTooltip;
+
+  /// No description provided for @syncUnsavedSkipped.
+  ///
+  /// In ko, this message translates to:
+  /// **'저장하지 않은 메모 {count}개는 동기화에 포함되지 않았습니다'**
+  String syncUnsavedSkipped(int count);
 }
 
 class _AppLocalizationsDelegate

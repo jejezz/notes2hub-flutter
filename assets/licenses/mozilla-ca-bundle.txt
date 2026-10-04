@@ -1,0 +1,12 @@
+CA certificate bundle (assets/certs/cacert.pem)
+
+Certificate data extracted from Mozilla's root certificate store
+(certdata.txt, as of Tue Nov 4 04:12:02 2025 GMT), distributed by the curl
+project at https://curl.se/docs/caextract.html and bundled with the
+git2dart_binaries package (https://pub.dev/packages/git2dart_binaries).
+
+Used by Notes2Hub only to verify the TLS certificate of github.com.
+The Mozilla certificate data is published under the Mozilla Public License 2.0:
+https://www.mozilla.org/MPL/2.0/
+
+(원문 확인 필요: 위 출처 안내 외의 라이선스 원문은 아직 넣지 않았습니다.)

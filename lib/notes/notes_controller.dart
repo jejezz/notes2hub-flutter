@@ -23,6 +23,9 @@ class NotesController extends ChangeNotifier {
   final Set<String> _draftPending = {};
   Timer? _draftTimer;
 
+  /// 디스크의 메모가 바뀌었을 때(저장·삭제) 불린다 — 동기화 대기 수를 새로 세는 용도.
+  VoidCallback? onLocalChange;
+
   String _query = '';
   String? _selectedId;
   bool _loaded = false;
@@ -40,6 +43,9 @@ class NotesController extends ChangeNotifier {
   }
 
   bool get isEmpty => _saved.isEmpty && _working.isEmpty;
+
+  /// 저장하지 않은 메모 수 (아직 아무것도 쓰지 않은 새 메모는 제외).
+  int get unsavedCount => _working.values.where((n) => n.body.trim().isNotEmpty).length;
 
   Note? get selected => _selectedId == null ? null : (_working[_selectedId] ?? _saved[_selectedId]);
 
@@ -125,6 +131,7 @@ class NotesController extends ChangeNotifier {
     _working.remove(id);
     _draftPending.remove(id);
     notifyListeners();
+    onLocalChange?.call();
   }
 
   /// 저장 전 편집을 버린다. 새 메모면 메모 자체가 사라진다.
@@ -143,6 +150,36 @@ class NotesController extends ChangeNotifier {
     _working.remove(id);
     _draftPending.remove(id);
     _afterRemoval(id);
+    notifyListeners();
+    onLocalChange?.call();
+  }
+
+  /// 동기화로 디스크의 메모가 바뀐 뒤 다시 읽는다. 편집 중이던 내용은 보존한다.
+  /// 저장 전 편집 중인 메모가 원격에서도 바뀌었다면, 편집본을 충돌 사본으로 따로 저장해
+  /// 원격 내용이 본 메모를 차지하게 한다 (docs/PLAN.md §5).
+  Future<void> reload({String label = ''}) async {
+    final before = Map<String, Note>.of(_saved);
+    final disk = await _store.loadAll();
+    _saved
+      ..clear()
+      ..addEntries(disk.map((n) => MapEntry(n.id, n)));
+    for (final id in _working.keys.toList()) {
+      final old = before[id], now = _saved[id];
+      if (old == null || now == null || old.body == now.body) continue;
+      final mine = _working.remove(id)!;
+      _draftPending.remove(id);
+      await _store.clearDraft(id);
+      final copy = conflictCopyOf(mine, newId: _uuid.v4(), label: label, now: DateTime.now());
+      await _store.save(copy);
+      _saved[copy.id] = copy;
+    }
+    if (_selectedId != null && selected == null) {
+      final rest = notes;
+      _selectedId = rest.isEmpty ? null : rest.first.id;
+    } else if (_selectedId == null) {
+      final rest = notes;
+      _selectedId = rest.isEmpty ? null : rest.first.id;
+    }
     notifyListeners();
   }
 

@@ -94,6 +94,26 @@ assets/
 - 저장 전 편집본(초안)은 저장소 **밖** `<앱 데이터>/drafts/<id>.md`에 1초 debounce로 기록 → 비정상 종료 후 복구. 새 메모는 첫 저장 전까지 파일이 없다.
 - 앱 데이터 폴더: macOS `~/Library/Application Support/Notes2Hub`(샌드박스에선 컨테이너), Windows `%APPDATA%\Notes2Hub`, Linux `~/.config/Notes2Hub`. 메모는 `<앱 데이터>/data/notes/`
 
+## 4-1. Phase 2 구현 메모 (2026-10-04)
+
+**구성**: `lib/sync/libgit2_engine.dart`(git2dart, **Isolate에서 실행** — 동기 FFI가 UI를 막지 않게) · `sync_service.dart`(로그인·연결·상태·자동 pull/동기화) · `lib/github/`(REST, Device Flow) · `lib/auth/token_store.dart`(OS 보안 저장소) · `lib/screens/`(설정·로그인·저장소 대화상자, 동기화 버튼).
+
+**동작 규칙(구현됨)**
+- 동기화 = `notes/*.md`를 스테이징(새 파일 추가·사라진 파일 제거) → 변경이 있으면 커밋(`sync: N notes @ <기기>`) → fetch → fast-forward 또는 병합 → push. push가 거절되면(다른 PC가 먼저 올림) 최대 3번 다시 가져와 합친 뒤 재시도.
+- 충돌: 같은 메모를 양쪽에서 고치면 **원격이 본 파일**, 로컬 내용은 `<제목> (충돌 <기기> <날짜>)` 새 메모로 보존. 한쪽이 삭제하고 다른 쪽이 고친 경우는 고친 쪽을 살린다.
+- 자동 pull(시작·창 복귀·5분)은 **저장된 변경이 없을 때만** fast-forward한다. 있으면 작업 폴더를 건드리지 않고 "원격에 새 변경"만 표시한다.
+- 편집 중(저장 전)인 메모가 원격에서도 바뀌면, 편집본을 충돌 사본으로 따로 저장하고 원격 내용이 본 메모를 차지한다.
+- 오프라인이면 로컬 커밋만 남고(다음 동기화 때 push), 상태에 "오프라인" 표시.
+- 동기화는 저장된 파일만 다룬다. 저장하지 않은 메모가 있으면 알림만 띄운다.
+- 처음 연결할 때 로컬에 있던 메모는 보존된다: 작업 폴더에 `git init` + fetch + 원격 브랜치 checkout(safe)이라 추적되지 않는 로컬 메모가 그대로 남고, 다음 동기화에서 커밋된다.
+
+**로그인**: 브라우저 로그인(GitHub Device Flow)은 OAuth App의 Client ID가 필요하다. GitHub → Settings → Developer settings → OAuth Apps → New OAuth App에서 만들고 **Enable Device Flow**를 켠 뒤, 빌드할 때 `--dart-define=NOTES2HUB_GITHUB_CLIENT_ID=<Client ID>`로 넣는다(`lib/github/github_config.dart`). Client ID가 없으면 로그인 대화상자는 **토큰 입력**(repo 권한 PAT)만 보여준다. 토큰은 항상 보안 저장소에만 저장한다(macOS는 키체인 — 데이터 보호 키체인을 쓰지 않아 별도 프로비저닝 불필요).
+
+**CA 번들**: `assets/certs/cacert.pem`(Mozilla, git2dart_binaries 동봉본)을 시작 시 앱 데이터 폴더로 풀어 `Libgit2.setSSLCertLocations`에 지정한다. 라이선스 안내는 `assets/licenses/mozilla-ca-bundle.txt`(원문 확인 필요).
+
+**자동 검증**: `flutter test`(엔진 9개 시나리오 — 로컬 bare origin으로 충돌·삭제·병합·오프라인 포함 / 서비스 / GitHub API / Device Flow) + `flutter test integration_test/app_test.dart -d macos`(샌드박스 앱에서 키체인·데이터 폴더·CA 번들 + HTTPS clone).
+**미검증**: 실제 GitHub private repo에 토큰으로 push, 실제 Device Flow 로그인(Client ID 필요).
+
 ## 5. 동작 규칙
 
 ### 저장 (로컬)

@@ -83,3 +83,19 @@ class Note {
     return Note(id: fallbackId, created: fallbackTime, updated: fallbackTime, body: text);
   }
 }
+
+/// 충돌로 밀려난 쪽의 사본. 첫 줄(제목)에 "(충돌 <label>)"을 붙여 목록에서 바로 구별되게 한다.
+/// docs/PLAN.md §5 — 원격이 본 파일을 차지하고, 로컬 내용은 이 사본으로 보존된다.
+Note conflictCopyOf(Note ours, {required String newId, required String label, required DateTime now}) {
+  final lines = ours.body.split('\n');
+  final i = lines.indexWhere((l) => l.trim().isNotEmpty);
+  final suffix = '(충돌 $label)';
+  if (i == -1) {
+    lines
+      ..clear()
+      ..add(suffix);
+  } else {
+    lines[i] = '${lines[i].trimRight()} $suffix';
+  }
+  return Note(id: newId, created: ours.created, updated: now, body: lines.join('\n'));
+}
