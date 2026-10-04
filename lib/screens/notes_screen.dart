@@ -145,14 +145,7 @@ class _NotesScreenState extends State<NotesScreen> with WidgetsBindingObserver {
   void _previewNote(String id) {
     final note = c.noteById(id);
     if (note == null) return;
-    final l10n = AppLocalizations.of(context);
-    showNotePreview(
-      context,
-      title: note.title.isEmpty ? l10n.noteUntitled : note.title,
-      body: note.body,
-      assets: widget.assets,
-      onEdit: () => _open(id),
-    );
+    showNotePreview(context, body: note.body, assets: widget.assets, onEdit: () => _open(id));
   }
 
   /// 편집 화면에서 보드로. 저장하지 않은 편집은 초안으로 남고 카드에 "저장 안 됨"으로 보인다.

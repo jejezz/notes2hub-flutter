@@ -47,11 +47,10 @@ class NoteImage extends StatelessWidget {
 }
 
 /// 보드에서 카드를 눌렀을 때 아래에서 올라오는 미리보기 시트: Markdown을 렌더링해서 보여주고, 길면 본문이
-/// 스크롤된다 (제목과 [닫기] [편집] 버튼은 고정). 시트의 틀은 branch-dock-flutter의 시트와 같다
+/// 스크롤된다 ([닫기] [편집] 버튼은 고정). 제목 줄은 따로 두지 않는다 — 본문 첫 줄이 곧 제목이라 중복으로 보인다. 시트의 틀은 branch-dock-flutter의 시트와 같다
 /// (드래그 핸들, 위쪽 모서리 AppRadius.sheet, 화면 높이의 85% 이내).
 Future<void> showNotePreview(
   BuildContext context, {
-  required String title,
   required String body,
   required AssetStore assets,
   required VoidCallback onEdit,
@@ -65,7 +64,6 @@ Future<void> showNotePreview(
     constraints: BoxConstraints(maxWidth: 720, maxHeight: height * 0.85),
     shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.sheet))),
     builder: (sheetContext) => NotePreviewSheet(
-      title: title,
       body: body,
       assets: assets,
       onEdit: () {
@@ -77,15 +75,8 @@ Future<void> showNotePreview(
 }
 
 class NotePreviewSheet extends StatelessWidget {
-  const NotePreviewSheet({
-    super.key,
-    required this.title,
-    required this.body,
-    required this.assets,
-    required this.onEdit,
-  });
+  const NotePreviewSheet({super.key, required this.body, required this.assets, required this.onEdit});
 
-  final String title;
   final String body;
   final AssetStore assets;
   final VoidCallback onEdit;
@@ -104,13 +95,6 @@ class NotePreviewSheet extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text(
-              title.isEmpty ? l10n.noteUntitled : title,
-              style: userContentStyle(theme.textTheme.titleLarge),
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-            ),
-            const SizedBox(height: AppSpacing.md),
             // 본문만 스크롤된다.
             Flexible(
               child: Scrollbar(
