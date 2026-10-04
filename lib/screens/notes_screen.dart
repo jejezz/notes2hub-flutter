@@ -21,6 +21,7 @@ import '../theme/app_theme.dart';
 import '../theme/user_content.dart';
 import '../window/window_layout.dart';
 import 'board_view.dart';
+import 'note_preview.dart';
 import 'settings_dialog.dart';
 import 'sync_button.dart';
 
@@ -136,8 +137,16 @@ class _NotesScreenState extends State<NotesScreen> with WidgetsBindingObserver {
   }
 
   void _open(String id) {
+    ScaffoldMessenger.of(context).hideCurrentSnackBar(); // 미리보기 스낵바가 편집 화면 위에 남지 않게
     c.select(id);
     setState(() => _preview = false);
+  }
+
+  /// 카드를 누르면 편집 화면 대신 스낵바로 내용을 미리 보여준다 (Markdown 렌더링, 길면 스크롤).
+  void _previewNote(String id) {
+    final note = c.noteById(id);
+    if (note == null) return;
+    showNotePreview(context, body: note.body, assets: widget.assets, onEdit: () => _open(id));
   }
 
   /// 편집 화면에서 보드로. 저장하지 않은 편집은 초안으로 남고 카드에 "저장 안 됨"으로 보인다.
@@ -320,7 +329,13 @@ class _NotesScreenState extends State<NotesScreen> with WidgetsBindingObserver {
   }
 
   Future<void> _delete() async {
-    final note = c.selected;
+    final id = c.selectedId;
+    if (id != null) await _deleteNote(id);
+  }
+
+  /// 확인 대화상자를 거쳐 메모를 지운다 (편집 화면과 보드 카드가 함께 쓴다).
+  Future<void> _deleteNote(String id) async {
+    final note = c.noteById(id);
     if (note == null) return;
     final l10n = AppLocalizations.of(context);
     final title = note.title.isEmpty ? l10n.noteUntitled : note.title;
@@ -342,7 +357,7 @@ class _NotesScreenState extends State<NotesScreen> with WidgetsBindingObserver {
     );
     if (ok != true) return;
     try {
-      await c.delete(note.id);
+      await c.delete(id);
     } catch (e) {
       if (mounted) _showError(l10n.noteSaveFailed('$e'));
     }
@@ -510,7 +525,9 @@ class _NotesScreenState extends State<NotesScreen> with WidgetsBindingObserver {
                                 search: _search,
                                 searchFocus: _searchFocus,
                                 onCapture: _quickCapture,
-                                onOpen: _open,
+                                onPreview: _previewNote,
+                                onEdit: _open,
+                                onDelete: _deleteNote,
                                 onCreate: _create,
                               ),
                       );
@@ -700,7 +717,7 @@ class _EditorPane extends StatelessWidget {
                         p: userContentStyle(theme.textTheme.bodyLarge),
                         listBullet: userContentStyle(theme.textTheme.bodyLarge),
                       ),
-                      imageBuilder: (uri, title, alt) => _NoteImage(uri: uri, alt: alt, assets: assets),
+                      imageBuilder: (uri, title, alt) => NoteImage(uri: uri, alt: alt, assets: assets),
                       onTapLink: (text, href, title) {
                         final uri = href == null ? null : Uri.tryParse(href);
                         if (uri != null) launchUrl(uri);
@@ -749,44 +766,5 @@ class _PasteImageAction extends Action<PasteTextIntent> {
       if (!await tryImages()) callingAction?.invoke(intent);
     }());
     return null;
-  }
-}
-
-/// 미리보기의 이미지: `../assets/<이름>`은 첨부 폴더에서, http(s)는 네트워크에서.
-class _NoteImage extends StatelessWidget {
-  const _NoteImage({required this.uri, required this.alt, required this.assets});
-
-  final Uri uri;
-  final String? alt;
-  final AssetStore assets;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    final theme = Theme.of(context);
-    Widget broken(Object _, StackTrace? _) => Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        const Icon(Icons.broken_image_outlined, size: 16),
-        const SizedBox(width: AppSpacing.xs),
-        Text(alt == null || alt!.isEmpty ? l10n.imageBroken : alt!, style: theme.textTheme.bodySmall),
-      ],
-    );
-    final Widget image;
-    if (uri.scheme == 'http' || uri.scheme == 'https') {
-      image = Image.network(uri.toString(), fit: BoxFit.contain, errorBuilder: (c, e, s) => broken(e, s));
-    } else if (uri.pathSegments.isNotEmpty) {
-      image = Image.file(
-        assets.file(uri.pathSegments.last),
-        fit: BoxFit.contain,
-        errorBuilder: (c, e, s) => broken(e, s),
-      );
-    } else {
-      image = broken('', null);
-    }
-    return Align(
-      alignment: Alignment.centerLeft,
-      child: ConstrainedBox(constraints: const BoxConstraints(maxWidth: 720, maxHeight: 480), child: image),
-    );
   }
 }

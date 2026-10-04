@@ -23,7 +23,9 @@ class NotesBoard extends StatelessWidget {
     required this.search,
     required this.searchFocus,
     required this.onCapture,
-    required this.onOpen,
+    required this.onPreview,
+    required this.onEdit,
+    required this.onDelete,
     required this.onCreate,
   });
 
@@ -35,7 +37,13 @@ class NotesBoard extends StatelessWidget {
   final TextEditingController search;
   final FocusNode searchFocus;
   final ValueChanged<String> onCapture;
-  final ValueChanged<String> onOpen;
+
+  /// 카드를 눌렀을 때: 스낵바로 내용 미리보기.
+  final ValueChanged<String> onPreview;
+
+  /// 편집 화면을 연다 (카드의 편집 버튼, 더블클릭).
+  final ValueChanged<String> onEdit;
+  final ValueChanged<String> onDelete;
   final VoidCallback onCreate;
 
   /// 보드의 날짜 묶음 이름. [now]를 받는 것은 테스트를 위해서다.
@@ -161,14 +169,27 @@ class NotesBoard extends StatelessWidget {
                 // 카드 높이는 내용에 맞춘다 (표지 이미지가 있으면 더 크게) — 쌓아 올리는 보드 배치.
                 SliverPadding(
                   padding: EdgeInsets.symmetric(horizontal: pad),
-                  sliver: SliverMasonryGrid.extent(
-                    maxCrossAxisExtent: 280,
+                  // 가장 좁은 창에서는 카드를 한 줄에 하나씩, 넓으면 280 안팎 폭의 여러 열로.
+                  sliver: SliverMasonryGrid.count(
+                    // 카드 폭이 260 밑으로 내려가지 않게 열 수를 내림으로 구한다 (아래 칩·버튼이 들어갈 자리).
+                    crossAxisCount: narrow
+                        ? 1
+                        : ((MediaQuery.sizeOf(context).width - 2 * pad + AppSpacing.md) / (260 + AppSpacing.md))
+                              .floor()
+                              .clamp(1, 8),
                     crossAxisSpacing: AppSpacing.md,
                     mainAxisSpacing: AppSpacing.md,
                     childCount: entry.value.length,
                     itemBuilder: (context, i) {
                       final n = entry.value[i];
-                      return NoteCard(note: n, assets: assets, state: _stateOf(n.id), onTap: () => onOpen(n.id));
+                      return NoteCard(
+                        note: n,
+                        assets: assets,
+                        state: _stateOf(n.id),
+                        onTap: () => onPreview(n.id),
+                        onEdit: () => onEdit(n.id),
+                        onDelete: () => onDelete(n.id),
+                      );
                     },
                   ),
                 ),
@@ -190,12 +211,22 @@ class NotesBoard extends StatelessWidget {
 enum CardSync { none, unsaved, pending, synced }
 
 class NoteCard extends StatelessWidget {
-  const NoteCard({super.key, required this.note, required this.assets, required this.state, required this.onTap});
+  const NoteCard({
+    super.key,
+    required this.note,
+    required this.assets,
+    required this.state,
+    required this.onTap,
+    required this.onEdit,
+    required this.onDelete,
+  });
 
   final Note note;
   final AssetStore assets;
   final CardSync state;
   final VoidCallback onTap;
+  final VoidCallback onEdit;
+  final VoidCallback onDelete;
 
   @override
   Widget build(BuildContext context) {
@@ -226,7 +257,7 @@ class NoteCard extends StatelessWidget {
       ),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
-        onTap: onTap,
+        onTap: onTap, // 더블클릭 처리를 두면 한 번 클릭이 300ms 늦게 반응한다 — 편집은 버튼으로
         splashFactory: NoSplash.splashFactory,
         hoverColor: scheme.primary.withValues(alpha: 0.05),
         child: Column(
@@ -276,13 +307,24 @@ class NoteCard extends StatelessWidget {
                   const SizedBox(height: AppSpacing.md),
                   Row(
                     children: [
+                      // 칩이 길어 자리가 모자라면 줄을 바꿔서 넘치지 않게 한다.
                       Expanded(
-                        child: Text(
-                          DateFormat.MMMd(locale).add_Hm().format(note.updated.toLocal()),
-                          style: theme.textTheme.labelSmall?.copyWith(color: scheme.onSurfaceVariant),
+                        child: Wrap(
+                          spacing: AppSpacing.sm,
+                          runSpacing: AppSpacing.xs,
+                          crossAxisAlignment: WrapCrossAlignment.center,
+                          children: [
+                            Text(
+                              DateFormat.MMMd(locale).add_Hm().format(note.updated.toLocal()),
+                              style: theme.textTheme.labelSmall?.copyWith(color: scheme.onSurfaceVariant),
+                            ),
+                            if (chip != null) _Chip(text: chip.$1, color: chip.$2),
+                          ],
                         ),
                       ),
-                      if (chip != null) _Chip(text: chip.$1, color: chip.$2),
+                      const SizedBox(width: AppSpacing.xs),
+                      _CardButton(icon: Icons.edit_outlined, tooltip: l10n.noteEditTab, onPressed: onEdit),
+                      _CardButton(icon: Icons.delete_outline_rounded, tooltip: l10n.noteDelete, onPressed: onDelete),
                     ],
                   ),
                 ],
@@ -312,5 +354,25 @@ class _Chip extends StatelessWidget {
       text,
       style: Theme.of(context).textTheme.labelSmall?.copyWith(color: color, fontWeight: FontWeight.w700),
     ),
+  );
+}
+
+/// 카드 아래의 작은 아이콘 버튼 (편집, 삭제).
+class _CardButton extends StatelessWidget {
+  const _CardButton({required this.icon, required this.tooltip, required this.onPressed});
+
+  final IconData icon;
+  final String tooltip;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) => IconButton(
+    tooltip: tooltip,
+    onPressed: onPressed,
+    icon: Icon(icon, size: 18),
+    visualDensity: VisualDensity.compact,
+    padding: EdgeInsets.zero,
+    constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+    color: Theme.of(context).colorScheme.onSurfaceVariant,
   );
 }

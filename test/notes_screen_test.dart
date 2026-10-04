@@ -12,17 +12,18 @@ import 'package:notes2hub/notes/note_store.dart';
 import 'package:notes2hub/auth/token_store.dart';
 import 'package:notes2hub/notes/notes_controller.dart';
 import 'package:notes2hub/sync/sync_service.dart';
+
 import 'fakes.dart';
+
 import 'package:notes2hub/screens/notes_screen.dart';
 
 void main() {
   testWidgets('create, type, save with Ctrl+S (macOS: Cmd+S), preview', (tester) async {
     final tmp = Directory.systemTemp.createTempSync('notes2hub-ui');
     addTearDown(() => tmp.deleteSync(recursive: true));
-    final c = NotesController(NoteStore(
-      notesDir: Directory('${tmp.path}/notes'),
-      draftsDir: Directory('${tmp.path}/drafts'),
-    ));
+    final c = NotesController(
+      NoteStore(notesDir: Directory('${tmp.path}/notes'), draftsDir: Directory('${tmp.path}/drafts')),
+    );
     tester.view.physicalSize = const Size(1200, 720);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
@@ -37,15 +38,22 @@ void main() {
     );
     addTearDown(sync.dispose);
 
-    await tester.pumpWidget(AppSettingsScope(
-      settings: settings,
-      child: MaterialApp(
-        locale: const Locale('en'),
-        localizationsDelegates: AppLocalizations.localizationsDelegates,
-        supportedLocales: AppLocalizations.supportedLocales,
-        home: NotesScreen(controller: c, sync: sync, assets: AssetStore(Directory('${tmp.path}/assets')), onAbout: () {}),
+    await tester.pumpWidget(
+      AppSettingsScope(
+        settings: settings,
+        child: MaterialApp(
+          locale: const Locale('en'),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: NotesScreen(
+            controller: c,
+            sync: sync,
+            assets: AssetStore(Directory('${tmp.path}/assets')),
+            onAbout: () {},
+          ),
+        ),
       ),
-    ));
+    );
     expect(find.text('No notes yet'), findsOneWidget);
 
     await tester.tap(find.text('New note'));
@@ -67,7 +75,7 @@ void main() {
     await tester.tap(find.byIcon(Icons.arrow_back_rounded));
     await tester.pumpAndSettle();
     expect(find.text('Shopping'), findsOneWidget);
-    await tester.tap(find.text('Shopping'));
+    await tester.tap(find.byIcon(Icons.edit_outlined)); // the card's edit button opens the editor
     await tester.pumpAndSettle();
 
     await tester.tap(find.text('Preview'));

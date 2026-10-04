@@ -7,6 +7,7 @@ import 'package:notes2hub/images/asset_store.dart';
 import 'package:notes2hub/l10n/app_localizations.dart';
 import 'package:notes2hub/notes/note_store.dart';
 import 'package:notes2hub/notes/notes_controller.dart';
+import 'package:notes2hub/screens/board_view.dart';
 import 'package:notes2hub/screens/notes_screen.dart';
 import 'package:notes2hub/settings/app_settings.dart';
 import 'package:notes2hub/sync/sync_service.dart';
@@ -85,6 +86,9 @@ void main() {
     ),
   );
 
+  Finder cardOf(String text) => find.ancestor(of: find.text(text), matching: find.byType(NoteCard));
+  Finder editButtonOf(String text) => find.descendant(of: cardOf(text), matching: find.byIcon(Icons.edit_outlined));
+
   for (final width in [320.0, 360.0, 420.0, 599.0]) {
     testWidgets('board, editor and menus fit without overflow at ${width.toInt()}px wide', (tester) async {
       tester.view.physicalSize = Size(width, 800);
@@ -112,8 +116,14 @@ void main() {
       await tester.pumpAndSettle();
       expect(s.layout.dock, DockSide.right);
 
-      // editor: compact toolbar
-      await tester.tap(find.text('Second note'));
+      // narrowest layouts show one card per row, each as wide as the window allows
+      for (final card in tester.widgetList(find.byType(NoteCard)).toList().asMap().keys) {
+        final w = tester.getSize(find.byType(NoteCard).at(card)).width;
+        expect(w, greaterThan(width - 2 * 24 - 1), reason: 'card $card is ${w}px wide in a ${width}px window');
+      }
+
+      // editor: compact toolbar (opened with the card's edit button)
+      await tester.tap(editButtonOf('Second note'));
       await tester.pumpAndSettle();
       expect(find.byIcon(Icons.arrow_back_rounded), findsOneWidget);
       expect(find.byIcon(Icons.save_rounded), findsOneWidget);
@@ -140,7 +150,7 @@ void main() {
       await tester.pumpAndSettle();
 
       // not docked: editing leaves the window alone
-      await tester.tap(find.text('Second note'));
+      await tester.tap(editButtonOf('Second note'));
       await tester.pumpAndSettle();
       expect(s.port.applied, isEmpty);
       await tester.tap(find.byIcon(Icons.arrow_back_rounded));
@@ -149,7 +159,7 @@ void main() {
       await tester.runAsync(() => s.layout.dockTo(DockSide.left));
       expect(s.port.current, dockBounds(screen, DockSide.left, 420));
 
-      await tester.tap(find.text('Second note'));
+      await tester.tap(editButtonOf('Second note'));
       await tester.runAsync(() => Future<void>.delayed(const Duration(milliseconds: 20)));
       await tester.pumpAndSettle();
       expect(s.layout.expanded, isTrue);
@@ -160,6 +170,7 @@ void main() {
       await tester.pumpAndSettle();
       expect(s.layout.expanded, isFalse);
       expect(s.port.current, dockBounds(screen, DockSide.left, 420));
+      await tester.pump(const Duration(seconds: 2)); // 남은 타이머를 비운다
     },
   );
 }

@@ -38,8 +38,7 @@ class NotesController extends ChangeNotifier {
   /// 최근 수정순. 편집 중인 메모는 편집본을 보여준다.
   List<Note> get notes {
     final byId = {..._saved, ..._working};
-    final list = byId.values.where((n) => n.matches(_query)).toList()
-      ..sort((a, b) => b.updated.compareTo(a.updated));
+    final list = byId.values.where((n) => n.matches(_query)).toList()..sort((a, b) => b.updated.compareTo(a.updated));
     return list;
   }
 
@@ -55,8 +54,11 @@ class NotesController extends ChangeNotifier {
 
   /// 어떤 메모(저장본·편집본)라도 참조하는 첨부 파일 이름 — 고아 정리의 기준.
   Set<String> get referencedAssets => {
-        for (final n in {..._saved, ..._working}.values) ...AssetStore.referencedIn(n.body),
-      };
+    for (final n in {..._saved, ..._working}.values) ...AssetStore.referencedIn(n.body),
+  };
+
+  /// 편집 중인 내용을 포함한 메모 (없으면 null).
+  Note? noteById(String id) => _working[id] ?? _saved[id];
 
   bool isDirty(String id) => _working.containsKey(id);
   bool isNew(String id) => !_saved.containsKey(id);
