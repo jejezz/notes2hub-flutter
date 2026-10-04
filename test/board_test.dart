@@ -13,6 +13,7 @@ import 'package:notes2hub/screens/note_preview.dart';
 import 'package:notes2hub/screens/notes_screen.dart';
 import 'package:notes2hub/settings/app_settings.dart';
 import 'package:notes2hub/sync/sync_service.dart';
+import 'package:notes2hub/theme/app_theme.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'fakes.dart';
@@ -240,4 +241,58 @@ void cardButtonsTest() {
       await tester.pump(const Duration(seconds: 1)); // 동기화 상태 갱신 타이머(300ms)를 비운다
     },
   );
+
+  testWidgets('capture and search fields share one typed-text font/size and one hint font/size', (tester) async {
+    tester.view.physicalSize = const Size(1000, 800);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    final tmp = Directory.systemTemp.createTempSync('notes2hub-fonts');
+    addTearDown(() => tmp.deleteSync(recursive: true));
+    final c = NotesController(
+      NoteStore(notesDir: Directory('${tmp.path}/notes'), draftsDir: Directory('${tmp.path}/drafts')),
+    );
+    SharedPreferences.setMockInitialValues({});
+    final sync = (await tester.runAsync(
+      () async => SyncService(
+        prefs: await SharedPreferences.getInstance(),
+        tokens: MemoryTokenStore(),
+        engine: FakeEngine(),
+        notes: c,
+        pullInterval: const Duration(hours: 1),
+      ),
+    ))!;
+    final settings = (await tester.runAsync(AppSettings.load))!;
+    addTearDown(() {
+      sync.dispose();
+      c.dispose();
+    });
+    await tester.runAsync(c.load);
+    await tester.pumpWidget(
+      AppSettingsScope(
+        settings: settings,
+        child: MaterialApp(
+          theme: AppTheme.light(),
+          locale: const Locale('en'),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: NotesScreen(
+            controller: c,
+            sync: sync,
+            assets: AssetStore(Directory('${tmp.path}/assets')),
+            onAbout: () {},
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final capture = tester.widget<TextField>(find.byType(TextField).at(0));
+    final search = tester.widget<TextField>(find.byType(TextField).at(1));
+    expect(capture.decoration!.hintText, 'Write something and press Enter');
+    expect(search.decoration!.hintText, 'Search notes');
+    expect(search.style, capture.style, reason: 'typed text: same font and size');
+    expect(search.decoration!.hintStyle, capture.decoration!.hintStyle, reason: 'hint text: same font and size');
+    expect(search.decoration!.hintStyle?.fontFamily, 'SeoulNamsan', reason: 'hints are UI text');
+    expect(capture.style?.fontFamily, isNot('SeoulNamsan'), reason: 'typed text is user content');
+  });
 }

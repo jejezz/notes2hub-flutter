@@ -73,12 +73,20 @@ class NotesBoard extends StatelessWidget {
     // 창을 화면 가장자리에 세로로 붙이면(좁은 창) 입력창과 검색창을 위아래로 쌓고 여백을 줄인다.
     final narrow = MediaQuery.sizeOf(context).width < 600;
     final pad = narrow ? AppSpacing.md : AppSpacing.xl;
+    // 두 입력창의 글꼴·크기를 맞춘다: 입력한 글은 사용자 글이라 시스템 글꼴, 안내문(hint)은 앱 글꼴(서울남산체).
+    // hint를 따로 정하지 않으면 입력창의 style을 물려받아 한쪽만 시스템 글꼴로 보인다.
+    final fieldStyle = userContentStyle(theme.textTheme.bodyLarge);
+    final hintStyle = theme.textTheme.bodyLarge?.copyWith(color: theme.hintColor);
     final captureField = TextField(
       controller: capture,
       focusNode: captureFocus,
       textInputAction: TextInputAction.done,
-      style: userContentStyle(theme.textTheme.bodyLarge),
-      decoration: InputDecoration(hintText: l10n.boardCaptureHint, prefixIcon: const Icon(Icons.add_rounded, size: 20)),
+      style: fieldStyle,
+      decoration: InputDecoration(
+        hintText: l10n.boardCaptureHint,
+        hintStyle: hintStyle,
+        prefixIcon: const Icon(Icons.add_rounded, size: 18),
+      ),
       onSubmitted: (v) {
         if (v.trim().isEmpty) return;
         onCapture(v);
@@ -90,8 +98,10 @@ class NotesBoard extends StatelessWidget {
       controller: search,
       focusNode: searchFocus,
       onChanged: controller.setQuery,
+      style: fieldStyle,
       decoration: InputDecoration(
         hintText: l10n.notesSearchHint,
+        hintStyle: hintStyle,
         prefixIcon: const Icon(Icons.search_rounded, size: 18),
         suffixIcon: controller.query.isEmpty
             ? null
