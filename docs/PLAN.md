@@ -45,6 +45,28 @@ GitHub private repo를 저장소로 쓰는 Markdown 메모 앱. 별도 서버·�
 - [ ] 빌드 크기·빌드 시간 영향 확인
 - 판정 기준: 데스크톱 통과 → 진행. 모바일 실패 → 대안 B로 모바일 별도 트랙 (또는 Desktop 전용으로 출시).
 
+### PoC 결과 (2026-10-04, macOS arm64 / macOS 26, git2dart 0.5.6 + git2dart_binaries 1.14.0 = libgit2 1.9.7)
+코드: `tool/poc/git2dart_poc.dart` (`flutter test tool/poc/git2dart_poc_test.dart`), `tool/poc/https_clone_test.dart` (`NOTES2HUB_POC_NET=1`).
+
+| 항목 | 결과 |
+|---|---|
+| git 바이너리 없이 init / commit / push / clone / fetch (로컬 bare origin) | ✅ |
+| fast-forward pull, 갈라진 히스토리 merge(다른 파일) | ✅ |
+| 같은 파일 수정 → 충돌 감지(`index.conflicts`) → "원격 우선 + 로컬은 충돌 사본" 해소 → push → 상대 PC pull | ✅ |
+| 앱 번들(`Notes2Hub.app/Contents/Frameworks/libgit2.dylib`)에 라이브러리 포함, 빌드 성공 | ✅ |
+| macOS 런타임에 OpenSSL 불필요 (dylib는 시스템 라이브러리만 링크) | ✅ |
+| HTTPS clone (GitHub 공개 repo) | ✅ **단, CA 번들을 지정해야 함** |
+| HTTPS + 토큰 push (GitHub private) | ⏳ 미검증 — 실제 토큰 필요, Phase 2에서 확인 |
+| Windows / Linux | ⏳ 미검증 (Windows는 DLL 동봉, **Linux는 시스템 libssl 필요**) |
+| iOS / Android | ⏳ 미검증 (패키지에 xcframework / android 바이너리는 있음, 에뮬레이터 확인 필요) |
+
+**구현 시 반드시 반영할 발견**
+1. **CA 번들**: 기본 상태에서는 `GIT_ERROR_SSL: the SSL certificate is invalid`. `git2dart_binaries`의 `assets/certs/cacert.pem`을 앱 에셋으로 넣고 시작 시 디스크에 풀어 `Libgit2.setSSLCertLocations(file: …)`을 호출해야 한다. (인증서 검증을 끄는 callback은 쓰지 않는다.)
+2. **충돌 해소 후 스테이징은 경로를 명시**: `index.addAll(repo.status.keys)`는 충돌 사본(새 파일)을 빠뜨렸다. 해소한 파일은 `index.add(path)`로 직접 추가한다.
+3. **fast-forward**는 `Merge.analysis`가 `fastForward`를 줄 때 `Reference.setTarget` + `Checkout.head(force)`로 처리한다 (merge 커밋 불필요).
+4. **⚠ macOS 제약**: 동봉된 `libgit2.dylib`가 **arm64 전용, 최소 macOS 26.0**이다. → 이 엔진으로는 Apple Silicon + macOS 26 이상에서만 동작(Intel Mac, 구버전 macOS 불가). 릴리스 템플릿의 `macos-universal.dmg` 가정과도 어긋난다. 대응안: (a) macOS 26+/arm64 전용으로 선언, (b) libgit2를 직접 universal·낮은 deployment target으로 빌드, (c) 구형 macOS는 `GitCliEngine`(시스템 git) 사용. 결정 필요.
+5. **Linux**는 배포 시 `libssl` 의존을 README에 명시.
+
 ## 4. 아키텍처
 
 ```
