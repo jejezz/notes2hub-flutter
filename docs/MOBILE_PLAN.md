@@ -19,7 +19,7 @@
 - 백그라운드 자동 동기화(앱이 꺼져 있을 때) — §6 참고
 - 다른 앱에서 "공유" 받기(share sheet 수신), 홈 화면 위젯 — v1.1 후보
 
-**대상 OS**: Android 8.0+(API 26) · iOS 15+ — git2dart 최소 요건(Android API 21+)과 Flutter 3.47 기본값을 만족하는 선에서 최종 확정(§3 PoC 결과로 조정).
+**대상 OS**: Android 7.0+(API 24, Flutter 3.47 기본 minSdk) · iOS 15+. 64비트 전용(arm64-v8a·x86_64) — 32비트 ARM은 설치되지 않게 막았다.
 
 ## 2. 현재 코드에서 모바일로 옮길 때 걸리는 곳
 
@@ -125,7 +125,7 @@ PLAN.md §3의 대안 B. GitHub Git Data API(blob → tree → commit → ref)�
 공통 식별자 후보(§9 결정): macOS의 `art.zoomon.notes2hub`와 **같은 ID**를 Android `applicationId`·iOS bundle ID에 쓴다(스토어에서 앱 하나로 묶고 싶을 때 유리). 표시 이름은 `Notes2Hub`(번역 안 함).
 
 **Android**
-- `minSdk` 26(예정), arm64-v8a 중심(git2dart는 arm64-v8a·x86_64 제공 → 32비트 ARM 미지원이므로 **구형 32비트 기기는 설치 불가**임을 README에 명시).
+- `minSdk` 24(Flutter 기본), arm64-v8a·x86_64만 포함. `git2dart_binaries`는 32비트 libgit2도 넣지만 libflutter·libapp이 64비트만 있어서 `packaging.jniLibs.excludes`로 빼 **32비트 기기에는 설치 자체가 되지 않게** 했다(README에 명시).
 - 권한: **`INTERNET`만**. 저장소는 앱 전용 폴더라 저장소 권한 불필요. 카메라는 `image_picker`가 시스템 앱을 호출해 별도 권한 불필요.
 - `flutter_secure_storage`: `android:allowBackup="false"` 또는 키 항목 백업 제외(토큰이 다른 기기로 복원돼 못 쓰게 되는 문제 방지).
 - 서명: 릴리스 keystore를 만들고 GitHub Secrets로 CI에 주입(분실 시 업데이트 불가 → **백업 필수**).
@@ -168,9 +168,11 @@ PLAN.md §3의 대안 B. GitHub Git Data API(blob → tree → commit → ref)�
 | M2 (Android ✅ / iOS 대기) | 동기화: 로그인(Device Flow, 앱 전환 대응), 저장소 연결, 수동/자동 동기화, 충돌 사본, stale lock 정리 | 실기기 2대(폰+PC)로 왕복 동기화 확인 |
 | M3 | 모바일 UI 다듬기: FAB, 길게 누르기 메뉴, 당겨서 새로고침, 서식 도구줄, 키보드·안전 영역·가로 모드 | 주요 화면 폰/태블릿 스크린샷 |
 | M4 | 이미지: 카메라/보관함 → 1MiB 변환 → `assets/` 동기화, 미리보기 | 실기기에서 사진 첨부 → PC에서 보임 |
-| M5 | 릴리스: 아이콘, 서명, CI 모바일 잡, README(설치 방법·32비트 미지원 등), 스토어/설치 배포(§9) | `v0.2.0-rc.1` 모바일 산출물 포함 프리릴리스 |
+| M5 (코드·CI·문서 완료, 시크릿·스토어 등록 대기) | 릴리스: 아이콘, 서명, CI 모바일 잡, README(설치 방법·32비트 미지원 등), 스토어/설치 배포(§9) | `v0.2.0-rc.1` 모바일 산출물 포함 프리릴리스 |
 
 M0이 가장 중요하고 가장 먼저 한다. 나머지는 PoC 결과에 따라 순서·범위가 바뀔 수 있다.
+
+> 릴리스 절차·시크릿·스토어 체크리스트는 [MOBILE_RELEASE.md](MOBILE_RELEASE.md).
 
 ## 9. 결정이 필요한 것 (제안 포함)
 
@@ -179,7 +181,7 @@ M0이 가장 중요하고 가장 먼저 한다. 나머지는 PoC 결과에 따�
 | 1 | **iOS 배포 방식** | ✅ **결정(2026-10-05)**: Apple Developer Program 연계 완료 → TestFlight/App Store로 배포 | 서명·프로비저닝·App Store Connect 설정은 M5에서 |
 | 2 | **Android 배포 방식** | ✅ **결정(2026-10-05)**: GitHub Release APK + **Google Play 추가 예정** | Play는 AAB·앱 서명 키(Play App Signing)·콘텐츠 등급/데이터 안전 양식 필요 → M5 |
 | 3 | 식별자 | macOS와 같은 `art.zoomon.notes2hub` | 한 앱으로 일관 |
-| 4 | 최소 OS | Android 8.0(API 26) · iOS 15 | PoC 후 조정 |
+| 4 | 최소 OS | ✅ Android 7.0(API 24) · iOS 15 | Flutter 3.47 기본값, 실측으로 확인 |
 | 5 | 폰에서 직접 편집을 허용할지 vs 읽기 전용 뷰어로 시작할지 | **편집 포함**(빠른 메모가 모바일의 핵심 가치) | 읽기 전용이면 훨씬 가볍지만 쓸모가 줄어듦 |
 | 6 | 태블릿 | 폰 레이아웃을 키워서 쓰고, 가로 2~3열 보드까지만(분할 보기 없음) | 데스크톱과 같은 "보드 → 전체 편집" 구조 유지 |
 | 7 | 릴리스 버전 | 데스크톱 `v0.1.0` 정식 이후 **`v0.2.0`**부터 모바일 포함 | 같은 태그에 모든 플랫폼 산출물 |

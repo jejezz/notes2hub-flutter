@@ -15,7 +15,7 @@
 <p align="center">
   <a href="https://github.com/jejezz/notes2hub-flutter/releases/latest"><img src="https://img.shields.io/github/v/release/jejezz/notes2hub-flutter?style=flat-square&color=4c9dff" alt="최신 릴리스"></a>
   <a href="https://github.com/jejezz/notes2hub-flutter/releases"><img src="https://img.shields.io/github/downloads/jejezz/notes2hub-flutter/total?style=flat-square&color=7c5cff" alt="다운로드"></a>
-  <img src="https://img.shields.io/badge/platform-macOS%20%C2%B7%20Windows%20%C2%B7%20Linux-34d399?style=flat-square" alt="macOS · Windows · Linux">
+  <img src="https://img.shields.io/badge/platform-macOS%20%C2%B7%20Windows%20%C2%B7%20Linux%20%C2%B7%20Android-34d399?style=flat-square" alt="macOS · Windows · Linux · Android">
   <img src="https://img.shields.io/badge/built%20with-Flutter-02569b?style=flat-square" alt="Flutter">
   <a href="LICENSE"><img src="https://img.shields.io/github/license/jejezz/notes2hub-flutter?style=flat-square" alt="MIT 라이선스"></a>
 </p>
@@ -52,8 +52,11 @@
 | macOS 26.0 이상 (Apple Silicon) | `Notes2Hub-<버전>-macos-arm64.dmg` — 열어서 앱을 Applications 폴더로 끌어다 놓으세요 |
 | Windows 10/11 (x64) | `Notes2Hub-<버전>-windows-x64-setup.exe` |
 | Linux (x64) | `Notes2Hub-<버전>-linux-x64.tar.gz` — 압축을 풀고 `./install.sh` 실행 (`--remove`로 제거) |
+| Android 7.0 이상 (64비트) | `Notes2Hub-<버전>-android-arm64.apk` — 폰에서 열어 설치 ("이 출처의 앱 설치" 허용 필요) |
 
 **Windows:** 설치 프로그램에 아직 코드 서명이 없어서 SmartScreen이 "Windows의 PC 보호" 창을 띄웁니다. **추가 정보 → 실행**을 누르세요.
+
+**폰:** Android 앱은 일반 APK입니다(32비트 폰은 지원하지 않습니다). Google Play와 iOS(TestFlight / App Store)는 준비 중입니다 — [docs/MOBILE_RELEASE.md](docs/MOBILE_RELEASE.md). 로그인은 같은 방식입니다: 폰 브라우저에서 승인하고 앱으로 돌아오세요.
 
 ## 동작 방식
 
