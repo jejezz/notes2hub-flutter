@@ -152,10 +152,13 @@
   "settingsSyncManual": "수동",
   "settingsSyncAuto": "자동 (저장 30초 후)",
   "settingsSyncHint": "가져오기는 시작할 때, 창으로 돌아올 때, 5분마다 자동으로 합니다. 보내기는 위 설정을 따릅니다.",
+  "settingsSyncHintMobile": "가져오기는 시작할 때, 앱으로 돌아올 때, 앱을 열어 둔 동안 5분마다 자동으로 합니다. 보내기는 위 설정을 따릅니다.",
   "loginTitle": "GitHub 로그인",
   "loginTabBrowser": "브라우저",
   "loginTabToken": "토큰",
   "loginDeviceStep": "브라우저에서 아래 코드를 입력하고 승인하세요",
+  "loginDeviceStepMobile": "코드를 복사했어요. 브라우저 열기를 누르고 입력칸을 길게 눌러 붙여넣은 뒤 승인하세요. 끝나면 이 앱으로 돌아오세요.",
+  "loginCodeCopied": "코드 복사됨",
   "loginOpenBrowser": "브라우저 열기",
   "loginCopyCode": "코드 복사",
   "loginWaiting": "승인을 기다리는 중…",
@@ -190,6 +193,14 @@
     }
   },
   "repoConnect": "연결",
+  "repoAutoConnected": "{name}에 연결했어요",
+  "@repoAutoConnected": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "repoConnecting": "연결 중…",
   "repoNoMatch": "일치하는 저장소가 없습니다",
   "repoLoadFailed": "저장소 목록을 불러오지 못했습니다: {error}",

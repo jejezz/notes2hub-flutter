@@ -7,6 +7,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:pasteboard/pasteboard.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -15,6 +16,7 @@ import '../images/asset_store.dart';
 import '../images/image_processor.dart';
 import '../l10n/app_localizations.dart';
 import '../notes/notes_controller.dart';
+import '../platform_kind.dart';
 import '../settings/settings_menus.dart';
 import '../sync/sync_service.dart';
 import '../theme/app_theme.dart';
@@ -215,6 +217,12 @@ class _NotesScreenState extends State<NotesScreen> with WidgetsBindingObserver {
   bool _isImageName(String name) => _imageExts.contains(name.split('.').last.toLowerCase());
 
   Future<void> _pickImages() async {
+    if (isMobilePlatform) {
+      // 사진 보관함(iOS의 HEIC는 시스템이 JPEG로 바꿔 준다). 카메라는 M3에서 별도 버튼으로.
+      final picked = await ImagePicker().pickMultiImage();
+      await _addImages([for (final f in picked) (name: f.name, read: f.readAsBytes)]);
+      return;
+    }
     final files = await openFiles(
       acceptedTypeGroups: [XTypeGroup(label: 'images', extensions: _imageExts)],
     );

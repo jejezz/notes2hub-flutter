@@ -231,6 +231,10 @@ class AppLocalizationsKo extends AppLocalizations {
       '가져오기는 시작할 때, 창으로 돌아올 때, 5분마다 자동으로 합니다. 보내기는 위 설정을 따릅니다.';
 
   @override
+  String get settingsSyncHintMobile =>
+      '가져오기는 시작할 때, 앱으로 돌아올 때, 앱을 열어 둔 동안 5분마다 자동으로 합니다. 보내기는 위 설정을 따릅니다.';
+
+  @override
   String get loginTitle => 'GitHub 로그인';
 
   @override
@@ -241,6 +245,13 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get loginDeviceStep => '브라우저에서 아래 코드를 입력하고 승인하세요';
+
+  @override
+  String get loginDeviceStepMobile =>
+      '코드를 복사했어요. 브라우저 열기를 누르고 입력칸을 길게 눌러 붙여넣은 뒤 승인하세요. 끝나면 이 앱으로 돌아오세요.';
+
+  @override
+  String get loginCodeCopied => '코드 복사됨';
 
   @override
   String get loginOpenBrowser => '브라우저 열기';
@@ -306,6 +317,11 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get repoConnect => '연결';
+
+  @override
+  String repoAutoConnected(String name) {
+    return '$name에 연결했어요';
+  }
 
   @override
   String get repoConnecting => '연결 중…';

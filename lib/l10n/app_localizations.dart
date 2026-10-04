@@ -488,6 +488,12 @@ abstract class AppLocalizations {
   /// **'가져오기는 시작할 때, 창으로 돌아올 때, 5분마다 자동으로 합니다. 보내기는 위 설정을 따릅니다.'**
   String get settingsSyncHint;
 
+  /// No description provided for @settingsSyncHintMobile.
+  ///
+  /// In ko, this message translates to:
+  /// **'가져오기는 시작할 때, 앱으로 돌아올 때, 앱을 열어 둔 동안 5분마다 자동으로 합니다. 보내기는 위 설정을 따릅니다.'**
+  String get settingsSyncHintMobile;
+
   /// No description provided for @loginTitle.
   ///
   /// In ko, this message translates to:
@@ -511,6 +517,18 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'브라우저에서 아래 코드를 입력하고 승인하세요'**
   String get loginDeviceStep;
+
+  /// No description provided for @loginDeviceStepMobile.
+  ///
+  /// In ko, this message translates to:
+  /// **'코드를 복사했어요. 브라우저 열기를 누르고 입력칸을 길게 눌러 붙여넣은 뒤 승인하세요. 끝나면 이 앱으로 돌아오세요.'**
+  String get loginDeviceStepMobile;
+
+  /// No description provided for @loginCodeCopied.
+  ///
+  /// In ko, this message translates to:
+  /// **'코드 복사됨'**
+  String get loginCodeCopied;
 
   /// No description provided for @loginOpenBrowser.
   ///
@@ -631,6 +649,12 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'연결'**
   String get repoConnect;
+
+  /// No description provided for @repoAutoConnected.
+  ///
+  /// In ko, this message translates to:
+  /// **'{name}에 연결했어요'**
+  String repoAutoConnected(String name);
 
   /// No description provided for @repoConnecting.
   ///

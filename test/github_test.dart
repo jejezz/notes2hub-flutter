@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
@@ -186,6 +187,32 @@ void main() {
         client: MockClient((_) async => _json({'error': 'authorization_pending'})),
       );
       expect(await pending.awaitToken(code, cancelled: () => true), isNull);
+    });
+
+    test('a transient network error while waiting does not fail the login', () async {
+      var calls = 0;
+      final flow = DeviceFlow(
+        'c',
+        sleep: (_) async {},
+        client: MockClient((_) async {
+          if (++calls == 1) throw http.ClientException('Failed host lookup');
+          return _json({'access_token': 'gho_ok'});
+        }),
+      );
+      const code = DeviceCode(deviceCode: 'd', userCode: 'u', verificationUri: 'v', interval: 1, expiresIn: 60);
+      expect(await flow.awaitToken(code), 'gho_ok');
+      expect(calls, 2);
+    });
+
+    test('wake skips the wait so a returning app checks right away', () async {
+      final wake = Completer<void>()..complete();
+      final flow = DeviceFlow(
+        'c',
+        sleep: (_) => Completer<void>().future, // 끝나지 않는 대기
+        client: MockClient((_) async => _json({'access_token': 'gho_now'})),
+      );
+      const code = DeviceCode(deviceCode: 'd', userCode: 'u', verificationUri: 'v', interval: 5, expiresIn: 60);
+      expect(await flow.awaitToken(code, wake: () => wake.future), 'gho_now');
     });
   });
 }

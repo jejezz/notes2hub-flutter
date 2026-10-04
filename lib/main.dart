@@ -9,6 +9,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:git2dart/git2dart.dart' show PlatformSpecific;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:window_manager/window_manager.dart';
 
@@ -24,6 +25,7 @@ import 'notes/note_store.dart';
 import 'notes/notes_controller.dart';
 import 'screens/notes_screen.dart';
 import 'sync/ca_bundle.dart';
+import 'sync/device_label.dart';
 import 'sync/libgit2_engine.dart';
 import 'sync/sync_service.dart';
 import 'window/window_layout.dart';
@@ -35,6 +37,8 @@ final bool _isDesktop = Platform.isMacOS || Platform.isWindows || Platform.isLin
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   registerExtraLicenses();
+  // 모바일은 libgit2 로딩·Android CA 설정이 먼저 필요하다 (데스크톱에서는 아무 일도 하지 않는다).
+  await PlatformSpecific.initialize();
 
   final prefs = await SharedPreferences.getInstance();
   WindowLayout? windowLayout;
@@ -67,6 +71,7 @@ Future<void> main() async {
     tokens: SecureTokenStore(),
     engine: engine,
     notes: notes,
+    deviceLabel: await readDeviceLabel(),
   );
   runApp(App(settings: settings, notes: notes, sync: sync, assets: assets, windowLayout: windowLayout));
 }

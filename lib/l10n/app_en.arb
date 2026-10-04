@@ -135,10 +135,13 @@
   "settingsSyncManual": "Manual",
   "settingsSyncAuto": "Automatic (30 s after saving)",
   "settingsSyncHint": "Pulling happens automatically at launch, when the window regains focus, and every 5 minutes. Pushing follows the setting above.",
+  "settingsSyncHintMobile": "Pulling happens automatically at launch, when you return to the app, and every 5 minutes while it is open. Pushing follows the setting above.",
   "loginTitle": "Sign in to GitHub",
   "loginTabBrowser": "Browser",
   "loginTabToken": "Token",
   "loginDeviceStep": "Enter the code below in your browser and approve",
+  "loginDeviceStepMobile": "The code is copied. Tap Open browser, paste it there (long-press the field) and approve. Then come back to this app.",
+  "loginCodeCopied": "Code copied",
   "loginOpenBrowser": "Open browser",
   "loginCopyCode": "Copy code",
   "loginWaiting": "Waiting for approval…",
@@ -174,6 +177,14 @@
   },
   "repoConnect": "Connect",
   "repoConnecting": "Connecting…",
+  "repoAutoConnected": "Connected to {name}",
+  "@repoAutoConnected": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "repoNoMatch": "No matching repositories",
   "repoLoadFailed": "Could not load repositories: {error}",
   "@repoLoadFailed": {

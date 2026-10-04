@@ -232,6 +232,10 @@ class AppLocalizationsEn extends AppLocalizations {
       'Pulling happens automatically at launch, when the window regains focus, and every 5 minutes. Pushing follows the setting above.';
 
   @override
+  String get settingsSyncHintMobile =>
+      'Pulling happens automatically at launch, when you return to the app, and every 5 minutes while it is open. Pushing follows the setting above.';
+
+  @override
   String get loginTitle => 'Sign in to GitHub';
 
   @override
@@ -243,6 +247,13 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get loginDeviceStep =>
       'Enter the code below in your browser and approve';
+
+  @override
+  String get loginDeviceStepMobile =>
+      'The code is copied. Tap Open browser, paste it there (long-press the field) and approve. Then come back to this app.';
+
+  @override
+  String get loginCodeCopied => 'Code copied';
 
   @override
   String get loginOpenBrowser => 'Open browser';
@@ -309,6 +320,11 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get repoConnect => 'Connect';
+
+  @override
+  String repoAutoConnected(String name) {
+    return 'Connected to $name';
+  }
 
   @override
   String get repoConnecting => 'Connecting…';

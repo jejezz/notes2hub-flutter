@@ -215,6 +215,21 @@ class SyncService extends ChangeNotifier with WidgetsBindingObserver {
   /// 새 PC에서 로그인했을 때 바로 제안할 저장소들 — Notes2Hub 표식이 붙은 것.
   Future<List<GitHubRepo>> listNotesRepos() async => [for (final r in await listRepos()) if (r.isNotesRepo) r];
 
+  /// 로그인 직후 고를 필요가 없는 경우의 자동 연결: Notes2Hub 표식이 붙은 **비공개** 저장소가
+  /// 정확히 하나면 그것을 연결하고 돌려준다. 후보가 없거나 여럿이거나 공개 저장소면 null —
+  /// 사용자가 직접 고른다. 목록을 못 받아도 null (직접 고르는 화면에서 오류가 드러난다).
+  Future<GitHubRepo?> connectSuggestedRepo() async {
+    final List<GitHubRepo> found;
+    try {
+      found = await listNotesRepos();
+    } catch (_) {
+      return null;
+    }
+    if (found.length != 1 || !found.single.isPrivate) return null;
+    await connectRepo(found.single);
+    return found.single;
+  }
+
   /// 저장소를 연결하고 첫 동기화까지 한다. 실패하면 [SyncException].
   Future<void> connectRepo(GitHubRepo repo) async {
     final r = await _engine.connect(remoteUrl: repo.cloneUrl, token: _token!);

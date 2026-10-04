@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -5,6 +7,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../github/device_flow.dart';
 import '../github/github_config.dart';
 import '../l10n/app_localizations.dart';
+import '../platform_kind.dart';
 import '../sync/sync_service.dart';
 import '../theme/app_theme.dart';
 
@@ -24,7 +27,7 @@ class _LoginDialog extends StatefulWidget {
   State<_LoginDialog> createState() => _LoginDialogState();
 }
 
-class _LoginDialogState extends State<_LoginDialog> {
+class _LoginDialogState extends State<_LoginDialog> with WidgetsBindingObserver {
   // Client ID가 없는 빌드는 브라우저 로그인을 쓸 수 없으니 처음부터 토큰 입력을 보여준다.
   late bool _showToken = kGitHubClientId.isEmpty;
   final _token = TextEditingController();
@@ -32,15 +35,31 @@ class _LoginDialogState extends State<_LoginDialog> {
   bool _busy = false;
   bool _closed = false;
   String? _error;
+  Completer<void> _wake = Completer<void>();
+
+  // 브라우저에서 승인하고 돌아오면 바로 확인한다 (iOS는 앱이 뒤에 있는 동안 대기가 멈춘다).
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed && !_wake.isCompleted) {
+      _wake.complete();
+      _wake = Completer<void>();
+    }
+  }
+
+  Future<void> _openBrowser(DeviceCode code) =>
+      // 폰에서는 앱 안의 브라우저 창(Custom Tab) 대신 기본 브라우저 앱으로 연다 — 앱으로 돌아와 코드를 다시 볼 수 있다.
+      launchUrl(Uri.parse(code.verificationUri), mode: LaunchMode.externalApplication);
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     if (kGitHubClientId.isNotEmpty) _startDevice();
   }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _closed = true; // 진행 중인 승인 대기를 멈춘다.
     _token.dispose();
     super.dispose();
@@ -58,8 +77,13 @@ class _LoginDialogState extends State<_LoginDialog> {
       final code = await flow.start();
       if (_closed) return;
       setState(() => _code = code);
-      await launchUrl(Uri.parse(code.verificationUri));
-      final token = await flow.awaitToken(code, cancelled: () => _closed);
+      if (isMobilePlatform) {
+        // 코드를 외울 틈 없이 브라우저가 덮이지 않도록: 복사만 하고 브라우저는 사용자가 연다.
+        await Clipboard.setData(ClipboardData(text: code.userCode));
+      } else {
+        await launchUrl(Uri.parse(code.verificationUri));
+      }
+      final token = await flow.awaitToken(code, cancelled: () => _closed, wake: () => _wake.future);
       if (token == null || _closed) return;
       await widget.sync.loginWithToken(token);
       if (mounted) Navigator.pop(context, true);
@@ -113,7 +137,7 @@ class _LoginDialogState extends State<_LoginDialog> {
               Text(l10n.loginBrowserFirst, style: theme.textTheme.bodyMedium),
               const SizedBox(height: AppSpacing.lg),
               if (_code != null) ...[
-                Text(l10n.loginDeviceStep, style: theme.textTheme.bodySmall),
+                Text(isMobilePlatform ? l10n.loginDeviceStepMobile : l10n.loginDeviceStep, style: theme.textTheme.bodySmall),
                 const SizedBox(height: AppSpacing.md),
                 Center(child: SelectableText(_code!.userCode, style: theme.textTheme.headlineMedium)),
                 const SizedBox(height: AppSpacing.md),
@@ -121,12 +145,17 @@ class _LoginDialogState extends State<_LoginDialog> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     OutlinedButton(
-                      onPressed: () => launchUrl(Uri.parse(_code!.verificationUri)),
+                      onPressed: () => _openBrowser(_code!),
                       child: Text(l10n.loginOpenBrowser),
                     ),
                     const SizedBox(width: AppSpacing.sm),
                     OutlinedButton(
-                      onPressed: () => Clipboard.setData(ClipboardData(text: _code!.userCode)),
+                      onPressed: () async {
+                        await Clipboard.setData(ClipboardData(text: _code!.userCode));
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.loginCodeCopied)));
+                        }
+                      },
                       child: Text(l10n.loginCopyCode),
                     ),
                   ],

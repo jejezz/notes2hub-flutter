@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
@@ -65,17 +66,28 @@ class DeviceFlow {
   }
 
   /// 사용자가 브라우저에서 승인할 때까지 기다린다. [cancelled]가 true가 되면 멈춘다(null 반환).
-  Future<String?> awaitToken(DeviceCode code, {bool Function()? cancelled}) async {
+  ///
+  /// [wake]가 주는 Future가 끝나면 대기 시간을 건너뛰고 바로 확인한다 — 앱이 다시 앞으로 올 때처럼
+  /// 사용자가 방금 승인했을 가능성이 높은 때 쓴다.
+  Future<String?> awaitToken(DeviceCode code, {bool Function()? cancelled, Future<void> Function()? wake}) async {
     var interval = code.interval;
     final deadline = DateTime.now().add(Duration(seconds: code.expiresIn));
     while (DateTime.now().isBefore(deadline)) {
-      await sleep(Duration(seconds: interval));
+      final wait = sleep(Duration(seconds: interval));
+      await (wake == null ? wait : Future.any([wait, wake()]));
       if (cancelled?.call() ?? false) return null;
-      final j = await _post('/login/oauth/access_token', {
-        'client_id': clientId,
-        'device_code': code.deviceCode,
-        'grant_type': 'urn:ietf:params:oauth:grant-type:device_code',
-      });
+      final Map<String, dynamic> j;
+      try {
+        j = await _post('/login/oauth/access_token', {
+          'client_id': clientId,
+          'device_code': code.deviceCode,
+          'grant_type': 'urn:ietf:params:oauth:grant-type:device_code',
+        });
+      } on http.ClientException {
+        continue; // 폰에서 브라우저를 오가는 사이 네트워크가 잠깐 끊긴다 — 다음 확인에서 다시 시도
+      } on TimeoutException {
+        continue;
+      }
       final token = j['access_token'];
       if (token is String && token.isNotEmpty) return token;
       switch (j['error']) {
