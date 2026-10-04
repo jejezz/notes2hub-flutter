@@ -2,7 +2,6 @@
 //   flutter test integration_test/app_test.dart -d macos
 // 네트워크 항목은 GitHub 공개 저장소를 익명으로 clone한다.
 import 'dart:io';
-import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
