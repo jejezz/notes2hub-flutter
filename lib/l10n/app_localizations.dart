@@ -704,6 +704,24 @@ abstract class AppLocalizations {
   /// **'이미지 추가'**
   String get imageAdd;
 
+  /// No description provided for @imageProcessing.
+  ///
+  /// In ko, this message translates to:
+  /// **'이미지를 넣는 중…'**
+  String get imageProcessing;
+
+  /// No description provided for @imageProcessingCount.
+  ///
+  /// In ko, this message translates to:
+  /// **'이미지를 넣는 중… {done} / {total}'**
+  String imageProcessingCount(int done, int total);
+
+  /// No description provided for @imageProcessingHint.
+  ///
+  /// In ko, this message translates to:
+  /// **'큰 사진은 1MB 미만으로 줄이느라 시간이 조금 걸립니다.'**
+  String get imageProcessingHint;
+
   /// No description provided for @imageDropHere.
   ///
   /// In ko, this message translates to:

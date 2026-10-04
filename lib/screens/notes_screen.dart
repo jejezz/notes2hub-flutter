@@ -71,6 +71,9 @@ class _NotesScreenState extends State<NotesScreen> with WidgetsBindingObserver {
   String? _editorId;
   bool _dragging = false;
 
+  /// 이미지를 줄여 넣는 중이면 (끝낸 장 수, 전체 장 수). 큰 사진은 몇 초 걸려서, 표시가 없으면 먹통처럼 보인다.
+  ({int done, int total})? _adding;
+
   NotesController get c => widget.controller;
   SyncService get sync => widget.sync;
   StreamSubscription<SyncEvent>? _syncEvents;
@@ -288,8 +291,31 @@ class _NotesScreenState extends State<NotesScreen> with WidgetsBindingObserver {
     if (items.isEmpty || !mounted) return;
     final l10n = AppLocalizations.of(context);
     final id = c.selectedId ?? c.create();
-    setState(() => _preview = false);
+    setState(() {
+      _preview = false;
+      _adding = (done: 0, total: items.length);
+    });
     final notices = <String>[];
+    try {
+      await _processImages(id, items, l10n, notices);
+    } finally {
+      if (mounted) setState(() => _adding = null);
+    }
+    if (notices.isNotEmpty && mounted) {
+      ScaffoldMessenger.of(context)
+        ..clearSnackBars()
+        ..showSnackBar(SnackBar(content: Text(notices.join('\n')), duration: const Duration(seconds: 8)));
+    }
+    WidgetsBinding.instance.addPostFrameCallback((_) => _editorFocus.requestFocus());
+  }
+
+  Future<void> _processImages(
+    String id,
+    List<({String name, Future<Uint8List> Function() read})> items,
+    AppLocalizations l10n,
+    List<String> notices,
+  ) async {
+    var done = 0;
     for (final item in items) {
       final base = item.name.contains('.') ? item.name.substring(0, item.name.lastIndexOf('.')) : item.name;
       try {
@@ -312,13 +338,9 @@ class _NotesScreenState extends State<NotesScreen> with WidgetsBindingObserver {
       } catch (e) {
         notices.add(l10n.imageFailed(item.name, '$e'));
       }
+      done++;
+      if (mounted) setState(() => _adding = (done: done, total: items.length));
     }
-    if (notices.isNotEmpty && mounted) {
-      ScaffoldMessenger.of(context)
-        ..clearSnackBars()
-        ..showSnackBar(SnackBar(content: Text(notices.join('\n')), duration: const Duration(seconds: 8)));
-    }
-    WidgetsBinding.instance.addPostFrameCallback((_) => _editorFocus.requestFocus());
   }
 
   /// 편집기에 보이는 메모면 커서 자리에, 아니면 본문 끝에 한 줄로 넣는다.
@@ -591,10 +613,73 @@ class _NotesScreenState extends State<NotesScreen> with WidgetsBindingObserver {
                   ),
                 ),
                 if (_dragging) Positioned.fill(child: _DropOverlay(text: l10n.imageDropHere)),
+                if (_adding != null)
+                  Positioned.fill(
+                    child: ImageBusyOverlay(
+                      text: _adding!.total > 1
+                          ? l10n.imageProcessingCount(_adding!.done, _adding!.total)
+                          : l10n.imageProcessing,
+                      hint: l10n.imageProcessingHint,
+                      progress: _adding!.total > 1 ? _adding!.done / _adding!.total : null,
+                    ),
+                  ),
               ],
             ),
           ),
         ),
+        ),
+      ),
+    );
+  }
+}
+
+/// 이미지를 줄여 넣는 동안 화면을 덮는 진행 표시. 큰 사진은 JPEG로 줄이는 데 몇 초 걸리므로, 먹통이 아니라
+/// 처리 중임을 알리고(스피너 + 안내) 그동안의 조작을 막는다. [progress]가 null이면 끝을 모르는 진행 표시.
+class ImageBusyOverlay extends StatelessWidget {
+  const ImageBusyOverlay({super.key, required this.text, required this.hint, this.progress});
+
+  final String text;
+  final String hint;
+  final double? progress;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return AbsorbPointer(
+      child: ColoredBox(
+        color: Colors.black.withValues(alpha: 0.32),
+        child: Center(
+          child: Semantics(
+            liveRegion: true,
+            label: text,
+            child: Card(
+              margin: const EdgeInsets.all(AppSpacing.xl),
+              child: Padding(
+                padding: const EdgeInsets.all(AppSpacing.xl),
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 280),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const SizedBox(width: 36, height: 36, child: CircularProgressIndicator(strokeWidth: 3)),
+                      const SizedBox(height: AppSpacing.lg),
+                      Text(text, style: theme.textTheme.titleSmall, textAlign: TextAlign.center),
+                      if (progress != null) ...[
+                        const SizedBox(height: AppSpacing.md),
+                        LinearProgressIndicator(value: progress),
+                      ],
+                      const SizedBox(height: AppSpacing.sm),
+                      Text(
+                        hint,
+                        style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
         ),
       ),
     );

@@ -354,6 +354,17 @@ class AppLocalizationsKo extends AppLocalizations {
   String get imageAdd => '이미지 추가';
 
   @override
+  String get imageProcessing => '이미지를 넣는 중…';
+
+  @override
+  String imageProcessingCount(int done, int total) {
+    return '이미지를 넣는 중… $done / $total';
+  }
+
+  @override
+  String get imageProcessingHint => '큰 사진은 1MB 미만으로 줄이느라 시간이 조금 걸립니다.';
+
+  @override
   String get imageDropHere => '이미지를 놓아서 추가';
 
   @override

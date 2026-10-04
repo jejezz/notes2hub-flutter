@@ -357,6 +357,18 @@ class AppLocalizationsEn extends AppLocalizations {
   String get imageAdd => 'Add image';
 
   @override
+  String get imageProcessing => 'Adding image…';
+
+  @override
+  String imageProcessingCount(int done, int total) {
+    return 'Adding images… $done / $total';
+  }
+
+  @override
+  String get imageProcessingHint =>
+      'Large photos are reduced to under 1 MB — this can take a moment.';
+
+  @override
   String get imageDropHere => 'Drop to add images';
 
   @override

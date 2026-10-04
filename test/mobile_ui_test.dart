@@ -1,7 +1,10 @@
 import 'dart:io';
+import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:image/image.dart' as img;
 import 'package:notes2hub/auth/token_store.dart';
 import 'package:notes2hub/images/asset_store.dart';
 import 'package:notes2hub/l10n/app_localizations.dart';
@@ -172,6 +175,51 @@ void main() {
       expect(c.selectedId, isNull);
       expect(find.byType(FloatingActionButton), findsOneWidget);
       await tester.pump(const Duration(seconds: 2));
+    });
+
+    testWidgets('adding a large photo shows a progress indicator while it is being reduced, then inserts it', (
+      tester,
+    ) async {
+      await pump(tester);
+      // 1MiB를 넘는 (무작위 잡음이라 PNG로 잘 안 줄어드는) 이미지를 클립보드에 있는 것처럼 꾸민다.
+      final rnd = Random(1);
+      final big = img.Image(width: 1300, height: 1300);
+      for (final p in big) {
+        p.setRgb(rnd.nextInt(256), rnd.nextInt(256), rnd.nextInt(256));
+      }
+      final png = Uint8List.fromList(img.encodePng(big, level: 1));
+      expect(png.length, greaterThan(1024 * 1024));
+      tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(const MethodChannel('pasteboard'), (call) async {
+        return switch (call.method) {
+          'files' => <String>[],
+          'image' => png,
+          _ => null,
+        };
+      });
+      addTearDown(() => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(const MethodChannel('pasteboard'), null));
+
+      await tester.tap(find.byType(FloatingActionButton));
+      await tester.pumpAndSettle();
+      expect(find.byType(ImageBusyOverlay), findsNothing);
+      Actions.invoke(tester.element(find.byType(TextField).first), const PasteTextIntent(SelectionChangedCause.keyboard));
+      await tester.runAsync(() => Future<void>.delayed(const Duration(milliseconds: 100)));
+      await tester.pump();
+
+      // 줄이는 동안: 진행 표시와 안내가 보이고, 그 아래 조작은 막힌다
+      expect(find.byType(ImageBusyOverlay), findsOneWidget);
+      expect(find.text('Adding image…'), findsOneWidget);
+      expect(find.text('Large photos are reduced to under 1 MB — this can take a moment.'), findsOneWidget);
+      expect(find.byType(CircularProgressIndicator), findsWidgets);
+      expect(c.selected!.body, isEmpty); // 아직 삽입 전
+
+      // 끝나면 표시가 사라지고 이미지 참조가 본문에 들어간다
+      for (var i = 0; i < 100 && find.byType(ImageBusyOverlay).evaluate().isNotEmpty; i++) {
+        await tester.runAsync(() => Future<void>.delayed(const Duration(milliseconds: 100)));
+        await tester.pump();
+      }
+      expect(find.byType(ImageBusyOverlay), findsNothing);
+      expect(c.selected!.body, contains('](../assets/'));
+      await tester.pump(const Duration(seconds: 10)); // 안내 스낵바·초안 타이머를 비운다
     });
   });
 }
