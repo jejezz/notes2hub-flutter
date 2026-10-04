@@ -174,7 +174,7 @@ jobs:
 
       - run: flutter pub get
 
-      - run: flutter build macos --release --dart-define=NOTES2HUB_GITHUB_CLIENT_ID=${{ vars.NOTES2HUB_GITHUB_CLIENT_ID }}
+      - run: flutter build macos --release --dart-define=NOTES2HUB_GITHUB_CLIENT_ID=${{ vars.NOTES2HUB_GITHUB_CLIENT_ID || secrets.NOTES2HUB_GITHUB_CLIENT_ID }}
 
       # Requires the MACOS_CERTIFICATE_* / MACOS_KEYCHAIN_PASSWORD secrets
       # (see README). Without a Developer ID certificate yet, delete this
@@ -277,7 +277,7 @@ jobs:
 
       - run: flutter pub get
 
-      - run: flutter build windows --release --dart-define=NOTES2HUB_GITHUB_CLIENT_ID=${{ vars.NOTES2HUB_GITHUB_CLIENT_ID }}
+      - run: flutter build windows --release --dart-define=NOTES2HUB_GITHUB_CLIENT_ID=${{ vars.NOTES2HUB_GITHUB_CLIENT_ID || secrets.NOTES2HUB_GITHUB_CLIENT_ID }}
 
       - name: Install Inno Setup
         run: choco install innosetup --no-progress -y
@@ -337,7 +337,7 @@ jobs:
 
       - run: flutter pub get
 
-      - run: flutter build linux --release --dart-define=NOTES2HUB_GITHUB_CLIENT_ID=${{ vars.NOTES2HUB_GITHUB_CLIENT_ID }}
+      - run: flutter build linux --release --dart-define=NOTES2HUB_GITHUB_CLIENT_ID=${{ vars.NOTES2HUB_GITHUB_CLIENT_ID || secrets.NOTES2HUB_GITHUB_CLIENT_ID }}
 
       # conventions/packaging.md §4: the bundle plus an icon, a .desktop
       # entry and linux/install.sh, which puts the app under ~/.local so it
