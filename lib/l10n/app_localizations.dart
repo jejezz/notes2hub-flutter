@@ -752,6 +752,24 @@ abstract class AppLocalizations {
   /// **'이전'**
   String get boardEarlier;
 
+  /// No description provided for @boardBookmarks.
+  ///
+  /// In ko, this message translates to:
+  /// **'북마크'**
+  String get boardBookmarks;
+
+  /// No description provided for @noteBookmarkAdd.
+  ///
+  /// In ko, this message translates to:
+  /// **'북마크'**
+  String get noteBookmarkAdd;
+
+  /// No description provided for @noteBookmarkRemove.
+  ///
+  /// In ko, this message translates to:
+  /// **'북마크 해제'**
+  String get noteBookmarkRemove;
+
   /// No description provided for @chipSynced.
   ///
   /// In ko, this message translates to:

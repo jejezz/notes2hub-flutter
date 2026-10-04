@@ -384,6 +384,15 @@ class AppLocalizationsKo extends AppLocalizations {
   String get boardEarlier => '이전';
 
   @override
+  String get boardBookmarks => '북마크';
+
+  @override
+  String get noteBookmarkAdd => '북마크';
+
+  @override
+  String get noteBookmarkRemove => '북마크 해제';
+
+  @override
   String get chipSynced => '동기화됨';
 
   @override

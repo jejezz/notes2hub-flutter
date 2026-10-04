@@ -25,6 +25,7 @@ class NotesBoard extends StatelessWidget {
     required this.onPreview,
     required this.onEdit,
     required this.onDelete,
+    required this.onBookmark,
     required this.onCreate,
   });
 
@@ -43,6 +44,9 @@ class NotesBoard extends StatelessWidget {
   /// 편집 화면을 연다 (카드의 편집 버튼, 더블클릭).
   final ValueChanged<String> onEdit;
   final ValueChanged<String> onDelete;
+
+  /// 카드의 북마크 버튼.
+  final ValueChanged<String> onBookmark;
   final VoidCallback onCreate;
 
   /// 보드의 날짜 묶음 이름. [now]를 받는 것은 테스트를 위해서다.
@@ -63,9 +67,13 @@ class NotesBoard extends StatelessWidget {
     final notes = controller.notes;
     final now = DateTime.now();
 
-    // 날짜 묶음 (이미 최근 수정순이라 순서대로 모으면 된다).
+    // 북마크한 메모가 맨 위 묶음, 나머지는 날짜 묶음 (이미 최근 수정순이라 순서대로 모으면 된다).
+    // 북마크를 풀면 updated 그대로 원래 날짜 묶음으로 돌아간다.
     final groups = <String, List<Note>>{};
+    final marked = [for (final n in notes) if (n.bookmarked) n];
+    if (marked.isNotEmpty) groups[l10n.boardBookmarks] = marked;
     for (final n in notes) {
+      if (n.bookmarked) continue;
       groups.putIfAbsent(groupOf(l10n, n.updated.toLocal(), now), () => []).add(n);
     }
 
@@ -199,6 +207,7 @@ class NotesBoard extends StatelessWidget {
                         onTap: () => onPreview(n.id),
                         onEdit: () => onEdit(n.id),
                         onDelete: () => onDelete(n.id),
+                        onBookmark: () => onBookmark(n.id),
                       );
                     },
                   ),
@@ -229,6 +238,7 @@ class NoteCard extends StatelessWidget {
     required this.onTap,
     required this.onEdit,
     required this.onDelete,
+    required this.onBookmark,
   });
 
   final Note note;
@@ -237,6 +247,7 @@ class NoteCard extends StatelessWidget {
   final VoidCallback onTap;
   final VoidCallback onEdit;
   final VoidCallback onDelete;
+  final VoidCallback onBookmark;
 
   @override
   Widget build(BuildContext context) {
@@ -331,6 +342,12 @@ class NoteCard extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(width: AppSpacing.xs),
+                      _CardButton(
+                        icon: note.bookmarked ? Icons.bookmark_rounded : Icons.bookmark_border_rounded,
+                        tooltip: note.bookmarked ? l10n.noteBookmarkRemove : l10n.noteBookmarkAdd,
+                        onPressed: onBookmark,
+                        color: note.bookmarked ? scheme.primary : null,
+                      ),
                       _CardButton(icon: Icons.edit_outlined, tooltip: l10n.noteEditTab, onPressed: onEdit),
                       _CardButton(icon: Icons.delete_outline_rounded, tooltip: l10n.noteDelete, onPressed: onDelete),
                     ],
@@ -367,8 +384,9 @@ class _Chip extends StatelessWidget {
 
 /// 카드 아래의 작은 아이콘 버튼 (편집, 삭제).
 class _CardButton extends StatelessWidget {
-  const _CardButton({required this.icon, required this.tooltip, required this.onPressed});
+  const _CardButton({required this.icon, required this.tooltip, required this.onPressed, this.color});
 
+  final Color? color;
   final IconData icon;
   final String tooltip;
   final VoidCallback onPressed;
@@ -381,6 +399,6 @@ class _CardButton extends StatelessWidget {
     visualDensity: VisualDensity.compact,
     padding: EdgeInsets.zero,
     constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
-    color: Theme.of(context).colorScheme.onSurfaceVariant,
+    color: color ?? Theme.of(context).colorScheme.onSurfaceVariant,
   );
 }

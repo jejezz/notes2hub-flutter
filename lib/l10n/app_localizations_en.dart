@@ -387,6 +387,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get boardEarlier => 'Earlier';
 
   @override
+  String get boardBookmarks => 'Bookmarks';
+
+  @override
+  String get noteBookmarkAdd => 'Bookmark';
+
+  @override
+  String get noteBookmarkRemove => 'Remove bookmark';
+
+  @override
   String get chipSynced => 'Synced';
 
   @override

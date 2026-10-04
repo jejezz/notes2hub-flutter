@@ -150,6 +150,28 @@ class NotesController extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// 북마크를 켜고 끈다. 본문은 건드리지 않고(`updated`도 그대로) 즉시 디스크에 적는다.
+  /// 편집 중인 변경이 있으면 그것은 저장하지 않은 채로 남긴다.
+  Future<void> toggleBookmark(String id) async {
+    final current = noteById(id);
+    if (current == null) return;
+    final value = !current.bookmarked;
+    final saved = _saved[id];
+    final working = _working[id];
+    if (saved != null) {
+      final note = saved.copyWith(bookmarked: value);
+      await _store.save(note); // 초안 파일도 지워지므로 아래에서 편집본이 있으면 다시 쓴다.
+      _saved[id] = note;
+    }
+    if (working != null) {
+      final w = working.copyWith(bookmarked: value);
+      _working[id] = w;
+      if (saved != null) await _store.writeDraft(w);
+    }
+    notifyListeners();
+    if (saved != null) onLocalChange?.call();
+  }
+
   /// 로컬 파일에 저장. 실패하면 예외를 던지고 편집본은 그대로 남는다.
   Future<void> save(String id) async {
     final w = _working[id];
