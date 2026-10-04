@@ -161,4 +161,32 @@ void main() {
     c.deselect();
     expect(c.notes.any((n) => n.id == blank), isFalse);
   });
+
+  test('bookmark toggles on disk without touching updated or unsaved edits', () async {
+    var c = make();
+    await c.load();
+    final id = await c.capture('# Title\nbody');
+    final updated = c.noteById(id)!.updated;
+    expect(File('${tmp.path}/notes/$id.md').readAsStringSync(), isNot(contains('bookmarked')));
+
+    c.select(id);
+    c.edit(id, '# Title\nedited');
+    await c.toggleBookmark(id);
+    expect(c.noteById(id)!.bookmarked, isTrue);
+    expect(c.isDirty(id), isTrue, reason: 'edits stay unsaved');
+    expect(c.noteById(id)!.updated, updated);
+    final file = File('${tmp.path}/notes/$id.md').readAsStringSync();
+    expect(file, contains('bookmarked: true'));
+    expect(file, contains('body'), reason: 'disk body is still the saved one');
+
+    c = make();
+    await c.load();
+    c.select(id);
+    expect(c.selected!.bookmarked, isTrue);
+    expect(c.selected!.body, contains('edited'), reason: 'draft survived the toggle');
+
+    await c.toggleBookmark(id);
+    expect(c.noteById(id)!.bookmarked, isFalse);
+    expect(File('${tmp.path}/notes/$id.md').readAsStringSync(), isNot(contains('bookmarked')));
+  });
 }

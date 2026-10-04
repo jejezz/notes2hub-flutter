@@ -528,6 +528,7 @@ class _NotesScreenState extends State<NotesScreen> with WidgetsBindingObserver {
                                 onPreview: _previewNote,
                                 onEdit: _open,
                                 onDelete: _deleteNote,
+                                onBookmark: c.toggleBookmark,
                                 onCreate: _create,
                               ),
                       );

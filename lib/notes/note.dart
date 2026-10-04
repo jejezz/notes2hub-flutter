@@ -9,12 +9,17 @@ class Note {
     required this.created,
     required this.updated,
     required this.body,
+    this.bookmarked = false,
   });
 
   final String id;
   final DateTime created;
   final DateTime updated;
   final String body;
+
+  /// 북마크한 메모 — 보드 맨 위에 모아 보인다. frontmatter `bookmarked: true`로 저장해
+  /// 동기화로 다른 PC에도 따라간다. 북마크를 바꿔도 `updated`는 그대로다.
+  final bool bookmarked;
 
   static final _imageLine = RegExp(r'^\s*!\[[^\]]*\]\([^)]*\)\s*$');
   static final _imageRef = RegExp(r'!\[[^\]]*\]\(\.\./assets/([^)\s]+)\)');
@@ -83,11 +88,12 @@ class Note {
     return m == null ? null : Uri.decodeComponent(m.group(1)!);
   }
 
-  Note copyWith({String? body, DateTime? updated}) => Note(
+  Note copyWith({String? body, DateTime? updated, bool? bookmarked}) => Note(
         id: id,
         created: created,
         updated: updated ?? this.updated,
         body: body ?? this.body,
+        bookmarked: bookmarked ?? this.bookmarked,
       );
 
   bool matches(String query) {
@@ -99,6 +105,7 @@ class Note {
       'id: $id\n'
       'created: ${created.toUtc().toIso8601String()}\n'
       'updated: ${updated.toUtc().toIso8601String()}\n'
+      '${bookmarked ? 'bookmarked: true\n' : ''}'
       '---\n'
       '$body';
 
@@ -120,6 +127,7 @@ class Note {
           created: created,
           updated: DateTime.tryParse(meta['updated'] ?? '') ?? created,
           body: text.substring(end + 5),
+          bookmarked: meta['bookmarked'] == 'true',
         );
       }
     }
