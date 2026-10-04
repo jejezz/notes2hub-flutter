@@ -242,7 +242,7 @@ void cardButtonsTest() {
     },
   );
 
-  testWidgets('capture and search fields share one typed-text font/size and one hint font/size', (tester) async {
+  testWidgets('the board uses SeoulNamsan everywhere (fields, hints, card text)', (tester) async {
     tester.view.physicalSize = const Size(1000, 800);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
@@ -292,7 +292,16 @@ void cardButtonsTest() {
     expect(search.decoration!.hintText, 'Search notes');
     expect(search.style, capture.style, reason: 'typed text: same font and size');
     expect(search.decoration!.hintStyle, capture.decoration!.hintStyle, reason: 'hint text: same font and size');
-    expect(search.decoration!.hintStyle?.fontFamily, 'SeoulNamsan', reason: 'hints are UI text');
-    expect(capture.style?.fontFamily, isNot('SeoulNamsan'), reason: 'typed text is user content');
+    expect(search.decoration!.hintStyle?.fontFamily, 'SeoulNamsan');
+    expect(capture.style?.fontFamily, 'SeoulNamsan', reason: 'the board uses the app font everywhere');
+    expect(search.style?.fontFamily, 'SeoulNamsan');
+
+    // card titles and excerpts too (the editor and the preview sheet keep the system font)
+    await tester.runAsync(() => c.capture('Card title\nCard excerpt text'));
+    await tester.pumpAndSettle();
+    for (final label in ['Card title', 'Card excerpt text']) {
+      final text = tester.widget<Text>(find.text(label));
+      expect(text.style?.fontFamily, 'SeoulNamsan', reason: label);
+    }
   });
 }

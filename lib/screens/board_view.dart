@@ -8,7 +8,6 @@ import '../notes/note.dart';
 import '../notes/notes_controller.dart';
 import '../sync/sync_service.dart';
 import '../theme/app_theme.dart';
-import '../theme/user_content.dart';
 
 /// 메모 보드: 맨 위에 빠른 메모 입력창과 검색, 아래에 날짜별로 묶인 카드. 카드를 누르면 편집 화면이 열린다.
 /// 카드는 첨부 이미지를 표지로 쓰고, 동기화 상태를 칩으로 보여준다.
@@ -73,9 +72,10 @@ class NotesBoard extends StatelessWidget {
     // 창을 화면 가장자리에 세로로 붙이면(좁은 창) 입력창과 검색창을 위아래로 쌓고 여백을 줄인다.
     final narrow = MediaQuery.sizeOf(context).width < 600;
     final pad = narrow ? AppSpacing.md : AppSpacing.xl;
-    // 두 입력창의 글꼴·크기를 맞춘다: 입력한 글은 사용자 글이라 시스템 글꼴, 안내문(hint)은 앱 글꼴(서울남산체).
-    // hint를 따로 정하지 않으면 입력창의 style을 물려받아 한쪽만 시스템 글꼴로 보인다.
-    final fieldStyle = userContentStyle(theme.textTheme.bodyLarge);
+    // 첫 화면(보드)은 입력창·안내문·카드 모두 앱 글꼴(서울남산체)로 통일한다 (사용자 요청).
+    // 편집기와 미리보기 시트는 사용자 글이라 시스템 글꼴을 그대로 쓴다 (fonts.md §3).
+    // hint를 따로 정하지 않으면 입력창의 style을 물려받으므로 두 입력창에 같은 스타일을 명시한다.
+    final fieldStyle = theme.textTheme.bodyLarge;
     final hintStyle = theme.textTheme.bodyLarge?.copyWith(color: theme.hintColor);
     final captureField = TextField(
       controller: capture,
@@ -298,11 +298,9 @@ class NoteCard extends StatelessWidget {
                     title,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
-                    style: userContentStyle(
-                      theme.textTheme.titleSmall?.copyWith(
-                        fontWeight: FontWeight.w800,
-                        color: note.title.isEmpty ? scheme.onSurfaceVariant : null,
-                      ),
+                    style: theme.textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w800,
+                      color: note.title.isEmpty ? scheme.onSurfaceVariant : null,
                     ),
                   ),
                   if (excerpt.isNotEmpty) ...[
@@ -311,7 +309,7 @@ class NoteCard extends StatelessWidget {
                       excerpt,
                       maxLines: cover == null ? 6 : 3,
                       overflow: TextOverflow.ellipsis,
-                      style: userContentStyle(theme.textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant)),
+                      style: theme.textTheme.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
                     ),
                   ],
                   const SizedBox(height: AppSpacing.md),
