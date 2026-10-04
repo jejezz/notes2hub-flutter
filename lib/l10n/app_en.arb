@@ -267,6 +267,16 @@
       }
     }
   },
+  "boardCaptureSend": "Save quick note",
+  "formatBold": "Bold",
+  "formatItalic": "Italic",
+  "formatHeading": "Heading",
+  "formatList": "List",
+  "formatChecklist": "Checklist",
+  "formatQuote": "Quote",
+  "formatLink": "Link",
+  "imageTakePhoto": "Take photo",
+  "imageFromGallery": "Photo library",
   "boardCaptureHint": "Write something and press Enter",
   "boardToday": "Today",
   "boardYesterday": "Yesterday",

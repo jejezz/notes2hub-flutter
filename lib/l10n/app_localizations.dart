@@ -746,6 +746,66 @@ abstract class AppLocalizations {
   /// **'{name}: 이미지를 추가하지 못했습니다: {error}'**
   String imageFailed(String name, String error);
 
+  /// No description provided for @boardCaptureSend.
+  ///
+  /// In ko, this message translates to:
+  /// **'빠른 메모 저장'**
+  String get boardCaptureSend;
+
+  /// No description provided for @formatBold.
+  ///
+  /// In ko, this message translates to:
+  /// **'굵게'**
+  String get formatBold;
+
+  /// No description provided for @formatItalic.
+  ///
+  /// In ko, this message translates to:
+  /// **'기울임'**
+  String get formatItalic;
+
+  /// No description provided for @formatHeading.
+  ///
+  /// In ko, this message translates to:
+  /// **'제목'**
+  String get formatHeading;
+
+  /// No description provided for @formatList.
+  ///
+  /// In ko, this message translates to:
+  /// **'목록'**
+  String get formatList;
+
+  /// No description provided for @formatChecklist.
+  ///
+  /// In ko, this message translates to:
+  /// **'체크리스트'**
+  String get formatChecklist;
+
+  /// No description provided for @formatQuote.
+  ///
+  /// In ko, this message translates to:
+  /// **'인용'**
+  String get formatQuote;
+
+  /// No description provided for @formatLink.
+  ///
+  /// In ko, this message translates to:
+  /// **'링크'**
+  String get formatLink;
+
+  /// No description provided for @imageTakePhoto.
+  ///
+  /// In ko, this message translates to:
+  /// **'사진 찍기'**
+  String get imageTakePhoto;
+
+  /// No description provided for @imageFromGallery.
+  ///
+  /// In ko, this message translates to:
+  /// **'사진 보관함'**
+  String get imageFromGallery;
+
   /// No description provided for @boardCaptureHint.
   ///
   /// In ko, this message translates to:

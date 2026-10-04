@@ -6,6 +6,8 @@
 	<true/>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
+	<key>NSCameraUsageDescription</key>
+	<string>Take photos to attach to your notes.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Attach photos to your notes.</string>
 	<key>CFBundleDisplayName</key>

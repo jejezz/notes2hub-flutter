@@ -385,6 +385,36 @@ class AppLocalizationsKo extends AppLocalizations {
   }
 
   @override
+  String get boardCaptureSend => '빠른 메모 저장';
+
+  @override
+  String get formatBold => '굵게';
+
+  @override
+  String get formatItalic => '기울임';
+
+  @override
+  String get formatHeading => '제목';
+
+  @override
+  String get formatList => '목록';
+
+  @override
+  String get formatChecklist => '체크리스트';
+
+  @override
+  String get formatQuote => '인용';
+
+  @override
+  String get formatLink => '링크';
+
+  @override
+  String get imageTakePhoto => '사진 찍기';
+
+  @override
+  String get imageFromGallery => '사진 보관함';
+
+  @override
   String get boardCaptureHint => '생각나는 대로 쓰고 Enter를 누르세요';
 
   @override

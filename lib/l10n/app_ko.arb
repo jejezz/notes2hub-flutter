@@ -284,6 +284,16 @@
       }
     }
   },
+  "boardCaptureSend": "빠른 메모 저장",
+  "formatBold": "굵게",
+  "formatItalic": "기울임",
+  "formatHeading": "제목",
+  "formatList": "목록",
+  "formatChecklist": "체크리스트",
+  "formatQuote": "인용",
+  "formatLink": "링크",
+  "imageTakePhoto": "사진 찍기",
+  "imageFromGallery": "사진 보관함",
   "boardCaptureHint": "생각나는 대로 쓰고 Enter를 누르세요",
   "boardToday": "오늘",
   "boardYesterday": "어제",

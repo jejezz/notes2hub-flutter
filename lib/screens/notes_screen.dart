@@ -20,6 +20,7 @@ import '../platform_kind.dart';
 import '../settings/settings_menus.dart';
 import '../sync/sync_service.dart';
 import '../theme/app_theme.dart';
+import 'md_toolbar.dart';
 import '../theme/user_content.dart';
 import '../window/window_layout.dart';
 import 'board_view.dart';
@@ -229,6 +230,27 @@ class _NotesScreenState extends State<NotesScreen> with WidgetsBindingObserver {
     await _addImages([for (final f in files) (name: f.name, read: f.readAsBytes)]);
   }
 
+  /// 폰 카메라로 찍어 바로 첨부한다.
+  Future<void> _takePhoto() async {
+    try {
+      final shot = await ImagePicker().pickImage(source: ImageSource.camera);
+      if (shot == null) return;
+      await _addImages([(name: shot.name, read: shot.readAsBytes)]);
+    } catch (e) {
+      if (mounted) _showError(AppLocalizations.of(context).imageFailed('camera', '$e'));
+    }
+  }
+
+  /// 서식 도구줄: 편집기 값을 바꾸고 본문에 반영한다. 입력 중이던 한글 조합은 확정하고 시작한다.
+  void _format(TextEditingValue Function(TextEditingValue) apply) {
+    final id = c.selectedId;
+    if (id == null) return;
+    final next = apply(_editor.value.copyWith(composing: TextRange.empty));
+    _editor.value = next;
+    c.edit(id, next.text);
+    _editorFocus.requestFocus();
+  }
+
   Future<void> _dropImages(List<XFile> files) async {
     await _addImages([
       for (final f in files)
@@ -424,7 +446,7 @@ class _NotesScreenState extends State<NotesScreen> with WidgetsBindingObserver {
         title: const Text(AppIdentity.displayName, maxLines: 1, overflow: TextOverflow.ellipsis),
         actions: [
           tight(syncButton),
-          tight(newNote),
+          if (!isMobilePlatform) tight(newNote), // 폰에서는 보드의 + 버튼을 쓴다
           tight(const ThemeMenuButton()),
           tight(const LanguageMenuButton()),
           tight(
@@ -487,10 +509,32 @@ class _NotesScreenState extends State<NotesScreen> with WidgetsBindingObserver {
             layout?.undock(),
         _primary(LogicalKeyboardKey.keyE): () => setState(() => _preview = !_preview),
       },
-      child: Focus(
+      // Android 뒤로가기/제스처: 편집 화면이면 앱을 닫지 않고 보드로 돌아간다 (편집 화면은 라우트가 아니라 상태).
+      child: ListenableBuilder(
+        listenable: c,
+        builder: (context, child) => PopScope(
+          canPop: c.selectedId == null,
+          onPopInvokedWithResult: (didPop, _) {
+            if (!didPop) _back();
+          },
+          child: child!,
+        ),
+        child: Focus(
         autofocus: true,
         child: Scaffold(
           appBar: _buildAppBar(context, l10n),
+          floatingActionButton: isMobilePlatform
+              ? ListenableBuilder(
+                  listenable: c,
+                  builder: (context, _) => c.loaded && c.selected == null
+                      ? FloatingActionButton(
+                          tooltip: l10n.noteNew,
+                          onPressed: _create,
+                          child: const Icon(Icons.edit_outlined),
+                        )
+                      : const SizedBox.shrink(),
+                )
+              : null,
           body: DropTarget(
             onDragEntered: (_) => setState(() => _dragging = true),
             onDragExited: (_) => setState(() => _dragging = false),
@@ -521,6 +565,8 @@ class _NotesScreenState extends State<NotesScreen> with WidgetsBindingObserver {
                                 onBack: _back,
                                 assets: widget.assets,
                                 onAddImage: _pickImages,
+                                onTakePhoto: _takePhoto,
+                                onFormat: _format,
                                 onPasteImages: _pasteImages,
                               )
                             : NotesBoard(
@@ -538,6 +584,7 @@ class _NotesScreenState extends State<NotesScreen> with WidgetsBindingObserver {
                                 onDelete: _deleteNote,
                                 onBookmark: c.toggleBookmark,
                                 onCreate: _create,
+                                onRefresh: _syncNow,
                               ),
                       );
                     },
@@ -547,6 +594,7 @@ class _NotesScreenState extends State<NotesScreen> with WidgetsBindingObserver {
               ],
             ),
           ),
+        ),
         ),
       ),
     );
@@ -590,6 +638,8 @@ class _EditorPane extends StatelessWidget {
     required this.onBack,
     required this.assets,
     required this.onAddImage,
+    required this.onTakePhoto,
+    required this.onFormat,
     required this.onPasteImages,
   });
 
@@ -603,6 +653,8 @@ class _EditorPane extends StatelessWidget {
   final VoidCallback onBack;
   final AssetStore assets;
   final VoidCallback onAddImage;
+  final VoidCallback onTakePhoto;
+  final void Function(TextEditingValue Function(TextEditingValue)) onFormat;
 
   /// 이미지를 붙여넣었으면 true (그러면 글자 붙여넣기는 하지 않는다).
   final Future<bool> Function() onPasteImages;
@@ -679,6 +731,7 @@ class _EditorPane extends StatelessWidget {
                         onPressed: () => controller.revert(note.id),
                       )
                     : TextButton(onPressed: () => controller.revert(note.id), child: Text(l10n.noteRevert)),
+              if (!isMobilePlatform) // 폰에서는 키보드 위 도구줄에 있다
               IconButton(
                 tooltip: '${l10n.imageAdd} ($_mod⇧I)',
                 visualDensity: compact ? dense : null,
@@ -762,6 +815,8 @@ class _EditorPane extends StatelessWidget {
             ),
           ),
         ),
+        if (isMobilePlatform && !preview)
+          MarkdownToolbar(onFormat: onFormat, onGallery: onAddImage, onCamera: onTakePhoto),
       ],
     );
   }

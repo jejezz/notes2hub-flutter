@@ -388,6 +388,36 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get boardCaptureSend => 'Save quick note';
+
+  @override
+  String get formatBold => 'Bold';
+
+  @override
+  String get formatItalic => 'Italic';
+
+  @override
+  String get formatHeading => 'Heading';
+
+  @override
+  String get formatList => 'List';
+
+  @override
+  String get formatChecklist => 'Checklist';
+
+  @override
+  String get formatQuote => 'Quote';
+
+  @override
+  String get formatLink => 'Link';
+
+  @override
+  String get imageTakePhoto => 'Take photo';
+
+  @override
+  String get imageFromGallery => 'Photo library';
+
+  @override
   String get boardCaptureHint => 'Write something and press Enter';
 
   @override
