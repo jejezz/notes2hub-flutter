@@ -6,8 +6,10 @@ import '../theme/app_theme.dart';
 import 'login_dialog.dart';
 import 'repo_dialog.dart';
 
-Future<void> showSettingsDialog(BuildContext context, SyncService sync) =>
-    showDialog<void>(context: context, builder: (_) => _SettingsDialog(sync: sync));
+Future<void> showSettingsDialog(BuildContext context, SyncService sync) => showDialog<void>(
+  context: context,
+  builder: (_) => _SettingsDialog(sync: sync),
+);
 
 class _SettingsDialog extends StatelessWidget {
   const _SettingsDialog({required this.sync});
@@ -30,29 +32,40 @@ class _SettingsDialog extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 _Section(l10n.settingsAccount),
-                Row(children: [
-                  Expanded(
-                    child: Text(
-                      sync.loggedIn ? l10n.settingsSignedInAs(sync.login!) : l10n.settingsSignedOut,
-                      style: theme.textTheme.bodyMedium,
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        sync.loggedIn ? l10n.settingsSignedInAs(sync.login!) : l10n.settingsSignedOut,
+                        style: theme.textTheme.bodyMedium,
+                      ),
                     ),
-                  ),
-                  if (sync.loggedIn)
-                    OutlinedButton(onPressed: sync.logout, child: Text(l10n.settingsLogout))
-                  else
-                    FilledButton(onPressed: () => showLoginDialog(context, sync), child: Text(l10n.settingsLoginBrowser)),
-                ]),
+                    if (sync.loggedIn)
+                      OutlinedButton(onPressed: sync.logout, child: Text(l10n.settingsLogout))
+                    else
+                      FilledButton(
+                        onPressed: () async {
+                          final ok = await showLoginDialog(context, sync);
+                          // 새 PC에서 로그인한 직후라면 저장소 연결로 바로 이어간다 (Notes2Hub 저장소를 맨 위에 제안).
+                          if (ok == true && sync.repoUrl == null && context.mounted) {
+                            await showRepoDialog(context, sync);
+                          }
+                        },
+                        child: Text(l10n.settingsLoginBrowser),
+                      ),
+                  ],
+                ),
                 const SizedBox(height: AppSpacing.xl),
                 _Section(l10n.settingsRepo),
-                Row(children: [
-                  Expanded(
-                    child: Text(sync.repoFullName ?? l10n.settingsNoRepo, style: theme.textTheme.bodyMedium),
-                  ),
-                  OutlinedButton(
-                    onPressed: sync.loggedIn ? () => showRepoDialog(context, sync) : null,
-                    child: Text(sync.repoFullName == null ? l10n.settingsRepoConnect : l10n.settingsRepoChange),
-                  ),
-                ]),
+                Row(
+                  children: [
+                    Expanded(child: Text(sync.repoFullName ?? l10n.settingsNoRepo, style: theme.textTheme.bodyMedium)),
+                    OutlinedButton(
+                      onPressed: sync.loggedIn ? () => showRepoDialog(context, sync) : null,
+                      child: Text(sync.repoFullName == null ? l10n.settingsRepoConnect : l10n.settingsRepoChange),
+                    ),
+                  ],
+                ),
                 const SizedBox(height: AppSpacing.xl),
                 _Section(l10n.settingsSyncMode),
                 SegmentedButton<bool>(
@@ -83,7 +96,7 @@ class _Section extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Padding(
-        padding: const EdgeInsets.only(bottom: AppSpacing.sm),
-        child: Text(text, style: Theme.of(context).textTheme.titleSmall),
-      );
+    padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+    child: Text(text, style: Theme.of(context).textTheme.titleSmall),
+  );
 }

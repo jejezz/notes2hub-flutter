@@ -21,11 +21,27 @@ void main() {
   late MemoryTokenStore tokens;
   late SyncService svc;
 
-  GitHubApi fakeApi(String token) => GitHubApi(token, client: MockClient((req) async {
-        if (req.headers['Authorization'] != 'Bearer good') return http.Response('{"message":"Bad credentials"}', 401);
-        if (req.url.path == '/user') return http.Response('{"login":"octo","id":7,"name":"Octo"}', 200);
-        return http.Response('[]', 200);
-      }));
+  final topicCalls = <String>[];
+
+  GitHubApi fakeApi(String token) => GitHubApi(
+    token,
+    client: MockClient((req) async {
+      if (req.headers['Authorization'] != 'Bearer good') return http.Response('{"message":"Bad credentials"}', 401);
+      if (req.url.path == '/user') return http.Response('{"login":"octo","id":7,"name":"Octo"}', 200);
+      if (req.url.path.endsWith('/topics')) {
+        topicCalls.add('${req.method} ${req.url.path}');
+        return http.Response('{"names":[]}', 200);
+      }
+      if (req.url.path == '/user/repos') {
+        return http.Response(
+          '[{"full_name":"octo/notes","clone_url":"https://github.com/octo/notes.git","private":true,"topics":["notes2hub"]},'
+          '{"full_name":"octo/other","clone_url":"https://github.com/octo/other.git","private":true,"topics":[]}]',
+          200,
+        );
+      }
+      return http.Response('[]', 200);
+    }),
+  );
 
   Future<SyncService> make({Duration autoDelay = const Duration(milliseconds: 40)}) async {
     SharedPreferences.setMockInitialValues({});
@@ -46,6 +62,7 @@ void main() {
   const repo = GitHubRepo(fullName: 'octo/notes', cloneUrl: 'https://github.com/octo/notes.git', isPrivate: true);
 
   setUp(() async {
+    topicCalls.clear();
     tmp = Directory.systemTemp.createTempSync('notes2hub-svc');
     notes = NotesController(
       NoteStore(notesDir: Directory('${tmp.path}/notes'), draftsDir: Directory('${tmp.path}/drafts')),
@@ -102,7 +119,9 @@ void main() {
     // a note appears on disk as if pulled from the remote
     File('${tmp.path}/notes/remote1.md')
       ..parent.createSync(recursive: true)
-      ..writeAsStringSync('---\nid: remote1\ncreated: 2026-01-01T00:00:00Z\nupdated: 2026-01-01T00:00:00Z\n---\n# From remote');
+      ..writeAsStringSync(
+        '---\nid: remote1\ncreated: 2026-01-01T00:00:00Z\nupdated: 2026-01-01T00:00:00Z\n---\n# From remote',
+      );
     engine.syncResult = const SyncResult(pushed: true, integrated: true, conflictCopies: 2);
     final events = <SyncEvent>[];
     svc.events.listen(events.add);
@@ -288,5 +307,40 @@ void main() {
     await running;
     await Future<void>.delayed(const Duration(milliseconds: 400));
     expect(engine.calls.where((c) => c == 'sync').length, greaterThanOrEqualTo(2));
+  });
+
+  test('connecting a repo marks it with the notes2hub topic; listNotesRepos suggests only marked repos', () async {
+    await svc.loginWithToken('good');
+    await svc.connectRepo(repo);
+    await Future<void>.delayed(const Duration(milliseconds: 50));
+    expect(topicCalls, contains('GET /repos/octo/notes/topics'));
+    expect(topicCalls, contains('PUT /repos/octo/notes/topics'));
+
+    final suggested = await svc.listNotesRepos();
+    expect(suggested.map((r) => r.fullName), ['octo/notes']);
+  });
+
+  test('a failing topic call never breaks the connection', () async {
+    SharedPreferences.setMockInitialValues({});
+    final s = SyncService(
+      prefs: await SharedPreferences.getInstance(),
+      tokens: tokens,
+      engine: engine,
+      notes: notes,
+      apiFactory: (t) => GitHubApi(
+        t,
+        client: MockClient((req) async {
+          if (req.url.path == '/user') return http.Response('{"login":"octo","id":7}', 200);
+          return http.Response('{"message":"Must have admin rights"}', 403);
+        }),
+      ),
+      pullInterval: const Duration(hours: 1),
+    );
+    await s.init();
+    await s.loginWithToken('good');
+    await s.connectRepo(repo);
+    await Future<void>.delayed(const Duration(milliseconds: 50));
+    expect(s.connected, isTrue);
+    s.dispose();
   });
 }

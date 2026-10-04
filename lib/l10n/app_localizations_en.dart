@@ -400,4 +400,24 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get boardEmptyHint => 'Type in the box above, or create a new note.';
+
+  @override
+  String get loginAdvancedToken => 'Sign in with a token (advanced)';
+
+  @override
+  String get loginBrowserFirst =>
+      'Approve with your GitHub account in the browser — no token to create or keep.';
+
+  @override
+  String get loginRetry => 'Try again';
+
+  @override
+  String get repoSuggested => 'Notes2Hub repositories';
+
+  @override
+  String get repoSuggestedHint =>
+      'Repositories Notes2Hub has used on this account. Connect one to continue with your notes from another PC.';
+
+  @override
+  String get repoUseThis => 'Connect this repository';
 }

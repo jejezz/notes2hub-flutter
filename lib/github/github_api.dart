@@ -28,13 +28,26 @@ class GitHubUser {
   String get noreplyEmail => '$id+$login@users.noreply.github.com';
 }
 
+/// 앱이 쓰는 저장소에 붙이는 GitHub 토픽. 새 PC에서 로그인하면 이 표식으로 저장소를 바로 제안한다.
+const kNotesTopic = 'notes2hub';
+
 class GitHubRepo {
-  const GitHubRepo({required this.fullName, required this.cloneUrl, required this.isPrivate, this.description});
+  const GitHubRepo({
+    required this.fullName,
+    required this.cloneUrl,
+    required this.isPrivate,
+    this.description,
+    this.topics = const [],
+  });
 
   final String fullName;
   final String cloneUrl;
   final bool isPrivate;
   final String? description;
+  final List<String> topics;
+
+  /// Notes2Hub가 쓰던 저장소인가 (토픽 표식).
+  bool get isNotesRepo => topics.contains(kNotesTopic);
 
   String get name => fullName.split('/').last;
 }
@@ -77,6 +90,7 @@ class GitHubApi {
         cloneUrl: j['clone_url'] as String,
         isPrivate: j['private'] as bool? ?? true,
         description: j['description'] as String?,
+        topics: [for (final t in (j['topics'] as List? ?? const [])) t as String],
       );
 
   Future<GitHubUser> user() async {
@@ -108,5 +122,18 @@ class GitHubApi {
           body: jsonEncode({'name': name, 'private': isPrivate, 'description': ?description, 'auto_init': false}),
         )) as Map<String, dynamic>;
     return _repo(j);
+  }
+
+  /// 저장소에 [kNotesTopic] 표식을 붙인다 (이미 있으면 아무것도 하지 않는다). 토픽 설정은 전체를 교체하므로
+  /// 기존 토픽을 읽어 합친다. 권한이 없으면 실패할 수 있다 — 표식은 편의 기능이라 호출하는 쪽이 무시한다.
+  Future<void> ensureNotesTopic(String fullName) async {
+    final j = await _send(() => _client.get(Uri.parse('$baseUrl/repos/$fullName/topics'), headers: _headers)) as Map<String, dynamic>;
+    final names = [for (final t in (j['names'] as List? ?? const [])) t as String];
+    if (names.contains(kNotesTopic)) return;
+    await _send(() => _client.put(
+          Uri.parse('$baseUrl/repos/$fullName/topics'),
+          headers: {..._headers, 'Content-Type': 'application/json'},
+          body: jsonEncode({'names': [...names, kNotesTopic]}),
+        ));
   }
 }

@@ -265,5 +265,11 @@
   "chipPending": "Waiting to sync",
   "chipConflict": "Conflict copy",
   "editorBack": "Back to board",
-  "boardEmptyHint": "Type in the box above, or create a new note."
+  "boardEmptyHint": "Type in the box above, or create a new note.",
+  "loginAdvancedToken": "Sign in with a token (advanced)",
+  "loginBrowserFirst": "Approve with your GitHub account in the browser — no token to create or keep.",
+  "loginRetry": "Try again",
+  "repoSuggested": "Notes2Hub repositories",
+  "repoSuggestedHint": "Repositories Notes2Hub has used on this account. Connect one to continue with your notes from another PC.",
+  "repoUseThis": "Connect this repository"
 }

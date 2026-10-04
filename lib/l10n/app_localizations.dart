@@ -781,6 +781,42 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'위 입력창에 바로 쓰거나 새 메모를 만드세요.'**
   String get boardEmptyHint;
+
+  /// No description provided for @loginAdvancedToken.
+  ///
+  /// In ko, this message translates to:
+  /// **'토큰으로 로그인 (고급)'**
+  String get loginAdvancedToken;
+
+  /// No description provided for @loginBrowserFirst.
+  ///
+  /// In ko, this message translates to:
+  /// **'브라우저에서 GitHub 계정으로 승인하면 끝납니다. 토큰을 만들거나 보관할 필요가 없습니다.'**
+  String get loginBrowserFirst;
+
+  /// No description provided for @loginRetry.
+  ///
+  /// In ko, this message translates to:
+  /// **'다시 시도'**
+  String get loginRetry;
+
+  /// No description provided for @repoSuggested.
+  ///
+  /// In ko, this message translates to:
+  /// **'Notes2Hub 저장소'**
+  String get repoSuggested;
+
+  /// No description provided for @repoSuggestedHint.
+  ///
+  /// In ko, this message translates to:
+  /// **'이 계정에서 Notes2Hub가 쓰던 저장소입니다. 다른 PC에서 쓰던 메모를 이어서 쓰려면 연결하세요.'**
+  String get repoSuggestedHint;
+
+  /// No description provided for @repoUseThis.
+  ///
+  /// In ko, this message translates to:
+  /// **'이 저장소로 연결'**
+  String get repoUseThis;
 }
 
 class _AppLocalizationsDelegate

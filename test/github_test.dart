@@ -13,10 +13,13 @@ void main() {
   group('GitHubApi', () {
     test('user() sends the token and builds a noreply commit email', () async {
       late http.Request seen;
-      final api = GitHubApi('tok', client: MockClient((req) async {
-        seen = req;
-        return _json({'login': 'octo', 'id': 42, 'name': 'Octo Cat'});
-      }));
+      final api = GitHubApi(
+        'tok',
+        client: MockClient((req) async {
+          seen = req;
+          return _json({'login': 'octo', 'id': 42, 'name': 'Octo Cat'});
+        }),
+      );
       final u = await api.user();
       expect(seen.headers['Authorization'], 'Bearer tok');
       expect(u.displayName, 'Octo Cat');
@@ -28,21 +31,33 @@ void main() {
       final api = GitHubApi('bad', client: MockClient((_) async => _json({'message': 'Bad credentials'}, 401)));
       await expectLater(
         api.user(),
-        throwsA(isA<GitHubApiException>().having((e) => e.unauthorized, 'unauthorized', true).having((e) => e.message, 'message', contains('Bad credentials'))),
+        throwsA(
+          isA<GitHubApiException>()
+              .having((e) => e.unauthorized, 'unauthorized', true)
+              .having((e) => e.message, 'message', contains('Bad credentials')),
+        ),
       );
     });
 
     test('repos() pages until a short page', () async {
       var calls = 0;
-      final api = GitHubApi('t', client: MockClient((req) async {
-        calls++;
-        final page = int.parse(req.url.queryParameters['page']!);
-        final n = page == 1 ? 100 : 3;
-        return _json([
-          for (var i = 0; i < n; i++)
-            {'full_name': 'o/r$page-$i', 'clone_url': 'https://github.com/o/r$page-$i.git', 'private': i.isEven, 'description': null},
-        ]);
-      }));
+      final api = GitHubApi(
+        't',
+        client: MockClient((req) async {
+          calls++;
+          final page = int.parse(req.url.queryParameters['page']!);
+          final n = page == 1 ? 100 : 3;
+          return _json([
+            for (var i = 0; i < n; i++)
+              {
+                'full_name': 'o/r$page-$i',
+                'clone_url': 'https://github.com/o/r$page-$i.git',
+                'private': i.isEven,
+                'description': null,
+              },
+          ]);
+        }),
+      );
       final repos = await api.repos();
       expect(repos, hasLength(103));
       expect(calls, 2);
@@ -53,19 +68,74 @@ void main() {
 
     test('createRepo posts a private, un-initialised repo and surfaces validation errors', () async {
       late Map<String, dynamic> sent;
-      var api = GitHubApi('t', client: MockClient((req) async {
-        sent = jsonDecode(req.body) as Map<String, dynamic>;
-        return _json({'full_name': 'o/notes', 'clone_url': 'https://github.com/o/notes.git', 'private': true});
-      }));
+      var api = GitHubApi(
+        't',
+        client: MockClient((req) async {
+          sent = jsonDecode(req.body) as Map<String, dynamic>;
+          return _json({'full_name': 'o/notes', 'clone_url': 'https://github.com/o/notes.git', 'private': true});
+        }),
+      );
       final r = await api.createRepo('notes', description: 'd');
       expect(sent, {'name': 'notes', 'private': true, 'description': 'd', 'auto_init': false});
       expect(r.fullName, 'o/notes');
 
-      api = GitHubApi('t', client: MockClient((_) async => _json({
+      api = GitHubApi(
+        't',
+        client: MockClient(
+          (_) async => _json({
             'message': 'Repository creation failed.',
-            'errors': [{'message': 'name already exists on this account'}],
-          }, 422)));
-      await expectLater(api.createRepo('notes'), throwsA(isA<GitHubApiException>().having((e) => e.message, 'm', contains('already exists'))));
+            'errors': [
+              {'message': 'name already exists on this account'},
+            ],
+          }, 422),
+        ),
+      );
+      await expectLater(
+        api.createRepo('notes'),
+        throwsA(isA<GitHubApiException>().having((e) => e.message, 'm', contains('already exists'))),
+      );
+    });
+  });
+
+  group('notes topic marker', () {
+    test('repos() reads topics; isNotesRepo follows the marker', () async {
+      final api = GitHubApi(
+        't',
+        client: MockClient(
+          (_) async => _json([
+            {
+              'full_name': 'o/a',
+              'clone_url': 'u',
+              'private': true,
+              'topics': ['notes2hub', 'x'],
+            },
+            {'full_name': 'o/b', 'clone_url': 'u', 'private': true},
+          ]),
+        ),
+      );
+      final repos = await api.repos();
+      expect(repos[0].isNotesRepo, isTrue);
+      expect(repos[1].isNotesRepo, isFalse);
+    });
+
+    test('ensureNotesTopic adds the marker while keeping existing topics, and is a no-op when present', () async {
+      final puts = <Map<String, dynamic>>[];
+      var existing = ['flutter'];
+      final api = GitHubApi(
+        't',
+        client: MockClient((req) async {
+          expect(req.url.path, '/repos/o/n/topics');
+          if (req.method == 'PUT') {
+            puts.add(jsonDecode(req.body) as Map<String, dynamic>);
+            existing = List<String>.from(puts.last['names'] as List);
+          }
+          return _json({'names': existing});
+        }),
+      );
+      await api.ensureNotesTopic('o/n');
+      expect(puts.single['names'], ['flutter', 'notes2hub']);
+      await api.ensureNotesTopic('o/n');
+      expect(puts, hasLength(1)); // already marked → no second PUT
     });
   });
 
@@ -83,7 +153,13 @@ void main() {
         client: MockClient((req) async {
           if (req.url.path == '/login/device/code') {
             expect(req.bodyFields, {'client_id': 'cid', 'scope': 'repo'});
-            return _json({'device_code': 'dc', 'user_code': 'ABCD-1234', 'verification_uri': 'https://github.com/login/device', 'interval': 5, 'expires_in': 900});
+            return _json({
+              'device_code': 'dc',
+              'user_code': 'ABCD-1234',
+              'verification_uri': 'https://github.com/login/device',
+              'interval': 5,
+              'expires_in': 900,
+            });
           }
           expect(req.bodyFields['device_code'], 'dc');
           return _json(answers.removeAt(0));
@@ -96,11 +172,19 @@ void main() {
     });
 
     test('access_denied and cancellation', () async {
-      final denied = DeviceFlow('c', sleep: (_) async {}, client: MockClient((_) async => _json({'error': 'access_denied'})));
+      final denied = DeviceFlow(
+        'c',
+        sleep: (_) async {},
+        client: MockClient((_) async => _json({'error': 'access_denied'})),
+      );
       const code = DeviceCode(deviceCode: 'd', userCode: 'u', verificationUri: 'v', interval: 1, expiresIn: 60);
       await expectLater(denied.awaitToken(code), throwsA(isA<DeviceFlowException>()));
 
-      final pending = DeviceFlow('c', sleep: (_) async {}, client: MockClient((_) async => _json({'error': 'authorization_pending'})));
+      final pending = DeviceFlow(
+        'c',
+        sleep: (_) async {},
+        client: MockClient((_) async => _json({'error': 'authorization_pending'})),
+      );
       expect(await pending.awaitToken(code, cancelled: () => true), isNull);
     });
   });

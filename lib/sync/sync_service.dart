@@ -212,12 +212,21 @@ class SyncService extends ChangeNotifier with WidgetsBindingObserver {
   Future<GitHubRepo> createRepo(String name, {String? description}) =>
       _apiFactory(_token!).createRepo(name, description: description);
 
+  /// 새 PC에서 로그인했을 때 바로 제안할 저장소들 — Notes2Hub 표식이 붙은 것.
+  Future<List<GitHubRepo>> listNotesRepos() async => [for (final r in await listRepos()) if (r.isNotesRepo) r];
+
   /// 저장소를 연결하고 첫 동기화까지 한다. 실패하면 [SyncException].
   Future<void> connectRepo(GitHubRepo repo) async {
     final r = await _engine.connect(remoteUrl: repo.cloneUrl, token: _token!);
     if (!r.ok) throw SyncException(r.error!, authFailed: r.authFailed, offline: r.offline);
     await _prefs.setString(_kRepoName, repo.fullName);
     await _prefs.setString(_kRepoUrl, repo.cloneUrl);
+    // 다음에 다른 PC에서 로그인하면 이 저장소를 바로 제안하도록 표식을 붙인다. 실패해도 연결은 유효하다.
+    unawaited(() async {
+      try {
+        await _apiFactory(_token!).ensureNotesTopic(repo.fullName);
+      } catch (_) {}
+    }());
     _pullTimer?.cancel();
     _pullTimer = Timer.periodic(pullInterval, (_) => autoPull());
     await _notes.reload(label: deviceLabel);
