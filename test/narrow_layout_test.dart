@@ -8,6 +8,7 @@ import 'package:notes2hub/l10n/app_localizations.dart';
 import 'package:notes2hub/notes/note_store.dart';
 import 'package:notes2hub/notes/notes_controller.dart';
 import 'package:notes2hub/screens/board_view.dart';
+import 'package:notes2hub/screens/note_preview.dart';
 import 'package:notes2hub/screens/notes_screen.dart';
 import 'package:notes2hub/settings/app_settings.dart';
 import 'package:notes2hub/sync/sync_service.dart';
@@ -121,6 +122,15 @@ void main() {
         final w = tester.getSize(find.byType(NoteCard).at(card)).width;
         expect(w, greaterThan(width - 2 * 24 - 1), reason: 'card $card is ${w}px wide in a ${width}px window');
       }
+
+      // tapping a card opens the preview sheet; it must fit the narrow window too
+      await tester.tap(find.text('Second note'));
+      await tester.pumpAndSettle();
+      expect(find.byType(NotePreviewSheet), findsOneWidget);
+      final e3 = tester.takeException();
+      if (e3 != null) fail('preview sheet overflow: $e3');
+      await tester.tap(find.widgetWithText(TextButton, 'Close'));
+      await tester.pumpAndSettle();
 
       // editor: compact toolbar (opened with the card's edit button)
       await tester.tap(editButtonOf('Second note'));

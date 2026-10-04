@@ -137,16 +137,22 @@ class _NotesScreenState extends State<NotesScreen> with WidgetsBindingObserver {
   }
 
   void _open(String id) {
-    ScaffoldMessenger.of(context).hideCurrentSnackBar(); // 미리보기 스낵바가 편집 화면 위에 남지 않게
     c.select(id);
     setState(() => _preview = false);
   }
 
-  /// 카드를 누르면 편집 화면 대신 스낵바로 내용을 미리 보여준다 (Markdown 렌더링, 길면 스크롤).
+  /// 카드를 누르면 편집 화면 대신 아래에서 올라오는 시트로 내용을 미리 보여준다 (Markdown 렌더링, 길면 스크롤).
   void _previewNote(String id) {
     final note = c.noteById(id);
     if (note == null) return;
-    showNotePreview(context, body: note.body, assets: widget.assets, onEdit: () => _open(id));
+    final l10n = AppLocalizations.of(context);
+    showNotePreview(
+      context,
+      title: note.title.isEmpty ? l10n.noteUntitled : note.title,
+      body: note.body,
+      assets: widget.assets,
+      onEdit: () => _open(id),
+    );
   }
 
   /// 편집 화면에서 보드로. 저장하지 않은 편집은 초안으로 남고 카드에 "저장 안 됨"으로 보인다.

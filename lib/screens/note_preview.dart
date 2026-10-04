@@ -46,69 +46,103 @@ class NoteImage extends StatelessWidget {
   }
 }
 
-/// 보드에서 카드를 눌렀을 때 스낵바에 띄우는 미리보기: Markdown을 렌더링해서 보여주고,
-/// 길면 스크롤된다 (편집 화면을 열지 않고 내용만 훑어볼 때).
-class NotePreviewSnack extends StatelessWidget {
-  const NotePreviewSnack({super.key, required this.body, required this.assets, this.maxHeight = 360});
-
-  final String body;
-  final AssetStore assets;
-  final double maxHeight;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return ConstrainedBox(
-      constraints: BoxConstraints(maxHeight: maxHeight),
-      child: Scrollbar(
-        child: SingleChildScrollView(
-          primary: true,
-          padding: const EdgeInsets.only(right: AppSpacing.md),
-          child: MarkdownBody(
-            data: body.trim().isEmpty ? ' ' : body,
-            selectable: true,
-            styleSheet: MarkdownStyleSheet.fromTheme(theme).copyWith(
-              p: userContentStyle(theme.textTheme.bodyMedium),
-              listBullet: userContentStyle(theme.textTheme.bodyMedium),
-            ),
-            imageBuilder: (uri, title, alt) => NoteImage(uri: uri, alt: alt, assets: assets),
-            onTapLink: (text, href, title) {
-              final uri = href == null ? null : Uri.tryParse(href);
-              if (uri != null) launchUrl(uri);
-            },
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-/// 스낵바 미리보기를 보여준다. 닫기 버튼과 "편집" 동작이 있고, 닫을 때까지 남는다.
-void showNotePreview(
+/// 보드에서 카드를 눌렀을 때 아래에서 올라오는 미리보기 시트: Markdown을 렌더링해서 보여주고, 길면 본문이
+/// 스크롤된다 (제목과 [닫기] [편집] 버튼은 고정). 시트의 틀은 branch-dock-flutter의 시트와 같다
+/// (드래그 핸들, 위쪽 모서리 AppRadius.sheet, 화면 높이의 85% 이내).
+Future<void> showNotePreview(
   BuildContext context, {
+  required String title,
   required String body,
   required AssetStore assets,
   required VoidCallback onEdit,
 }) {
-  final l10n = AppLocalizations.of(context);
   final height = MediaQuery.sizeOf(context).height;
-  final messenger = ScaffoldMessenger.of(context);
-  messenger
-    ..clearSnackBars()
-    ..showSnackBar(
-      SnackBar(
-        behavior: SnackBarBehavior.floating,
-        persist: true,
-        showCloseIcon: true,
-        duration: const Duration(days: 1),
-        content: NotePreviewSnack(body: body, assets: assets, maxHeight: (height * 0.5).clamp(160, 420)),
-        action: SnackBarAction(
-          label: l10n.noteEditTab,
-          onPressed: () {
-            messenger.hideCurrentSnackBar();
-            onEdit();
-          },
+  return showModalBottomSheet<void>(
+    context: context,
+    isScrollControlled: true,
+    showDragHandle: true,
+    // 넓은 창에서는 글줄이 너무 길어지지 않게 폭을 제한하고 가운데에 둔다.
+    constraints: BoxConstraints(maxWidth: 720, maxHeight: height * 0.85),
+    shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.sheet))),
+    builder: (sheetContext) => NotePreviewSheet(
+      title: title,
+      body: body,
+      assets: assets,
+      onEdit: () {
+        Navigator.pop(sheetContext);
+        onEdit();
+      },
+    ),
+  );
+}
+
+class NotePreviewSheet extends StatelessWidget {
+  const NotePreviewSheet({
+    super.key,
+    required this.title,
+    required this.body,
+    required this.assets,
+    required this.onEdit,
+  });
+
+  final String title;
+  final String body;
+  final AssetStore assets;
+  final VoidCallback onEdit;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final theme = Theme.of(context);
+    // 좁은 창(세로로 붙인 모양)에서는 여백을 줄인다.
+    final pad = MediaQuery.sizeOf(context).width < 600 ? AppSpacing.lg : AppSpacing.xl;
+    return SafeArea(
+      child: Padding(
+        padding: EdgeInsets.fromLTRB(pad, 0, pad, AppSpacing.lg),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              title.isEmpty ? l10n.noteUntitled : title,
+              style: userContentStyle(theme.textTheme.titleLarge),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+            const SizedBox(height: AppSpacing.md),
+            // 본문만 스크롤된다.
+            Flexible(
+              child: Scrollbar(
+                child: SingleChildScrollView(
+                  primary: true,
+                  child: MarkdownBody(
+                    data: body.trim().isEmpty ? ' ' : body,
+                    selectable: true,
+                    styleSheet: MarkdownStyleSheet.fromTheme(theme).copyWith(
+                      p: userContentStyle(theme.textTheme.bodyLarge),
+                      listBullet: userContentStyle(theme.textTheme.bodyLarge),
+                    ),
+                    imageBuilder: (uri, title, alt) => NoteImage(uri: uri, alt: alt, assets: assets),
+                    onTapLink: (text, href, title) {
+                      final uri = href == null ? null : Uri.tryParse(href);
+                      if (uri != null) launchUrl(uri);
+                    },
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: AppSpacing.lg),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                TextButton(onPressed: () => Navigator.pop(context), child: Text(l10n.commonClose)),
+                const SizedBox(width: AppSpacing.sm),
+                FilledButton(onPressed: onEdit, child: Text(l10n.noteEditTab)),
+              ],
+            ),
+          ],
         ),
       ),
     );
+  }
 }
