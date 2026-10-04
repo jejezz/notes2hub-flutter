@@ -6,6 +6,7 @@ import '../images/asset_store.dart';
 import '../l10n/app_localizations.dart';
 import '../theme/app_theme.dart';
 import '../theme/user_content.dart';
+import 'ctrl_edit_shortcuts.dart';
 
 /// 미리보기의 이미지: `../assets/<이름>`은 첨부 폴더에서, http(s)는 네트워크에서.
 class NoteImage extends StatelessWidget {
@@ -100,37 +101,39 @@ class NotePreviewSheet extends StatelessWidget {
               child: Scrollbar(
                 child: SingleChildScrollView(
                   primary: true,
-                  child: MarkdownBody(
-                    data: body.trim().isEmpty ? ' ' : body,
-                    selectable: true,
-                    // 시트의 본문은 제목(titleLarge)보다 확실히 작게: 본문은 bodyMedium보다 1pt 작은 크기, 본문 안의 제목들도 그 근처로.
-                    styleSheet: MarkdownStyleSheet.fromTheme(theme).copyWith(
-                      p: userContentStyle(sheetBody),
-                      listBullet: userContentStyle(sheetBody),
-                      h1: userContentStyle(theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800)),
-                      h2: userContentStyle(theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w800)),
-                      h3: userContentStyle(theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w800)),
-                      h4: userContentStyle(theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w700)),
-                      h5: userContentStyle(theme.textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w700)),
-                      h6: userContentStyle(theme.textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w700)),
-                      code: theme.textTheme.bodySmall?.copyWith(
-                        fontFamily: 'Menlo',
-                        fontFamilyFallback: const [
-                          'SF Mono',
-                          'Consolas',
-                          'Cascadia Mono',
-                          'DejaVu Sans Mono',
-                          'Noto Sans Mono',
-                          'Courier New',
-                        ],
+                  child: CtrlEditShortcuts(
+                    child: MarkdownBody(
+                      data: body.trim().isEmpty ? ' ' : body,
+                      selectable: true,
+                      // 시트의 본문은 제목(titleLarge)보다 확실히 작게: 본문은 bodyMedium보다 1pt 작은 크기, 본문 안의 제목들도 그 근처로.
+                      styleSheet: MarkdownStyleSheet.fromTheme(theme).copyWith(
+                        p: userContentStyle(sheetBody),
+                        listBullet: userContentStyle(sheetBody),
+                        h1: userContentStyle(theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800)),
+                        h2: userContentStyle(theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w800)),
+                        h3: userContentStyle(theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w800)),
+                        h4: userContentStyle(theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w700)),
+                        h5: userContentStyle(theme.textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w700)),
+                        h6: userContentStyle(theme.textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w700)),
+                        code: theme.textTheme.bodySmall?.copyWith(
+                          fontFamily: 'Menlo',
+                          fontFamilyFallback: const [
+                            'SF Mono',
+                            'Consolas',
+                            'Cascadia Mono',
+                            'DejaVu Sans Mono',
+                            'Noto Sans Mono',
+                            'Courier New',
+                          ],
+                        ),
+                        blockquote: userContentStyle(sheetBody),
                       ),
-                      blockquote: userContentStyle(sheetBody),
+                      imageBuilder: (uri, title, alt) => NoteImage(uri: uri, alt: alt, assets: assets),
+                      onTapLink: (text, href, title) {
+                        final uri = href == null ? null : Uri.tryParse(href);
+                        if (uri != null) launchUrl(uri);
+                      },
                     ),
-                    imageBuilder: (uri, title, alt) => NoteImage(uri: uri, alt: alt, assets: assets),
-                    onTapLink: (text, href, title) {
-                      final uri = href == null ? null : Uri.tryParse(href);
-                      if (uri != null) launchUrl(uri);
-                    },
                   ),
                 ),
               ),

@@ -21,6 +21,7 @@ import '../theme/app_theme.dart';
 import '../theme/user_content.dart';
 import '../window/window_layout.dart';
 import 'board_view.dart';
+import 'ctrl_edit_shortcuts.dart';
 import 'note_preview.dart';
 import 'settings_dialog.dart';
 import 'sync_button.dart';
@@ -707,45 +708,48 @@ class _EditorPane extends StatelessWidget {
             alignment: Alignment.topCenter,
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 820),
-              child: preview
-                  ? Markdown(
-                      data: note.body,
-                      selectable: true,
-                      padding: EdgeInsets.all(pad),
-                      styleSheet: MarkdownStyleSheet.fromTheme(theme).copyWith(
-                        p: userContentStyle(theme.textTheme.bodyLarge),
-                        listBullet: userContentStyle(theme.textTheme.bodyLarge),
-                      ),
-                      imageBuilder: (uri, title, alt) => NoteImage(uri: uri, alt: alt, assets: assets),
-                      onTapLink: (text, href, title) {
-                        final uri = href == null ? null : Uri.tryParse(href);
-                        if (uri != null) launchUrl(uri);
-                      },
-                    )
-                  : Padding(
-                      padding: EdgeInsets.all(pad),
-                      // 붙여넣기: 이미지가 있으면 첨부, 없으면 EditableText의 기본 동작 (callingAction).
-                      child: Actions(
-                        actions: {PasteTextIntent: _PasteImageAction(onPasteImages)},
-                        child: TextField(
-                          controller: editor,
-                          focusNode: focus,
-                          maxLines: null,
-                          expands: true,
-                          textAlignVertical: TextAlignVertical.top,
-                          keyboardType: TextInputType.multiline,
-                          style: userContentStyle(theme.textTheme.bodyLarge),
-                          decoration: InputDecoration(
-                            hintText: l10n.noteBodyHint,
-                            border: InputBorder.none,
-                            enabledBorder: InputBorder.none,
-                            focusedBorder: InputBorder.none,
-                            filled: false,
+              // macOS에서도 Ctrl+C/V/X(복사·붙여넣기·잘라내기)가 되도록 한다 — 편집기와 미리보기 모두.
+              child: CtrlEditShortcuts(
+                child: preview
+                    ? Markdown(
+                        data: note.body,
+                        selectable: true,
+                        padding: EdgeInsets.all(pad),
+                        styleSheet: MarkdownStyleSheet.fromTheme(theme).copyWith(
+                          p: userContentStyle(theme.textTheme.bodyLarge),
+                          listBullet: userContentStyle(theme.textTheme.bodyLarge),
+                        ),
+                        imageBuilder: (uri, title, alt) => NoteImage(uri: uri, alt: alt, assets: assets),
+                        onTapLink: (text, href, title) {
+                          final uri = href == null ? null : Uri.tryParse(href);
+                          if (uri != null) launchUrl(uri);
+                        },
+                      )
+                    : Padding(
+                        padding: EdgeInsets.all(pad),
+                        // 붙여넣기: 이미지가 있으면 첨부, 없으면 EditableText의 기본 동작 (callingAction).
+                        child: Actions(
+                          actions: {PasteTextIntent: _PasteImageAction(onPasteImages)},
+                          child: TextField(
+                            controller: editor,
+                            focusNode: focus,
+                            maxLines: null,
+                            expands: true,
+                            textAlignVertical: TextAlignVertical.top,
+                            keyboardType: TextInputType.multiline,
+                            style: userContentStyle(theme.textTheme.bodyLarge),
+                            decoration: InputDecoration(
+                              hintText: l10n.noteBodyHint,
+                              border: InputBorder.none,
+                              enabledBorder: InputBorder.none,
+                              focusedBorder: InputBorder.none,
+                              filled: false,
+                            ),
+                            onChanged: (v) => controller.edit(note.id, v),
                           ),
-                          onChanged: (v) => controller.edit(note.id, v),
                         ),
                       ),
-                    ),
+              ),
             ),
           ),
         ),
@@ -761,8 +765,11 @@ class _PasteImageAction extends Action<PasteTextIntent> {
 
   @override
   Object? invoke(PasteTextIntent intent) {
+    // callingAction은 invoke가 도는 동안에만 유효하다 — await 뒤에는 null이 되어 글자 붙여넣기가 조용히
+    // 사라진다(Phase 4에서 이 때문에 일반 붙여넣기가 안 됐다). 비동기 작업 전에 미리 붙잡아 둔다.
+    final textPaste = callingAction;
     unawaited(() async {
-      if (!await tryImages()) callingAction?.invoke(intent);
+      if (!await tryImages()) textPaste?.invoke(intent);
     }());
     return null;
   }

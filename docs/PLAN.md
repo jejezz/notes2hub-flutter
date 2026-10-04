@@ -158,6 +158,11 @@ assets/
 - 카드 아래에 **편집·삭제 버튼**: 편집은 편집 화면을 열고, 삭제는 확인 대화상자(기본 포커스 취소)를 거친다. 더블클릭 편집은 단일 클릭 반응을 300ms 늦추므로 두지 않았다.
 - **가장 좁은 창(폭 < 600)은 카드를 한 줄에 하나씩**, 넓으면 카드 폭이 260 밑으로 내려가지 않게 열 수를 정한다. 카드 하단의 날짜·칩은 자리가 모자라면 줄을 바꾼다.
 
+**복사·붙여넣기 (2026-10-04)**
+- **버그 수정**: Phase 4에서 붙여넣기를 이미지 인식용 `Action`으로 덮으면서, 클립보드에 이미지가 없을 때 넘겨야 할 기본 글자 붙여넣기(`callingAction`)를 `await` 뒤에 불러서 **일반 글자 붙여넣기가 조용히 사라졌다**(`callingAction`은 `invoke`가 도는 동안에만 유효). 이미지 붙여넣기만 검증했던 것이 원인. 이제 `await` 전에 붙잡아 둔다.
+- **macOS에서도 Ctrl+C / Ctrl+V / Ctrl+X** 가 된다(⌘ 단축키는 그대로). Flutter macOS 기본 단축키는 ⌘만 연결되어 있어서 Windows·Linux 습관대로 Ctrl을 누르면 반응이 없었다. 같은 Intent에 Ctrl 조합을 더 연결한다(`lib/screens/ctrl_edit_shortcuts.dart`). Ctrl+A는 macOS의 "줄 처음으로"(emacs 방식)와 겹쳐서 건드리지 않는다. 편집기, 미리보기, 카드 미리보기 시트에 적용.
+- 검증: macOS 통합 테스트가 실제 클립보드로 ⌘V, Ctrl+V(선택 영역 대체), Ctrl+C, Ctrl+X를 확인한다.
+
 **자동 검증**: `flutter test`(엔진 9개 시나리오 — 로컬 bare origin으로 충돌·삭제·병합·오프라인 포함 / 서비스 / GitHub API / Device Flow) + `flutter test integration_test/app_test.dart -d macos`(샌드박스 앱에서 키체인·데이터 폴더·CA 번들 + HTTPS clone).
 **실사용 확인(2026-10-04, 사용자)**: 토큰 로그인·저장소 연결·동기화 정상.
 **미검증**: 실제 Device Flow 로그인(Client ID 필요), 두 PC 간 실제 충돌.

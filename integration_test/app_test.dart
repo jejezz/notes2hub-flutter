@@ -63,11 +63,15 @@ void main() {
     expect(File('${dir.path}/README').existsSync(), isTrue);
   });
 
-  testWidgets('pasting a clipboard image attaches it: asset file written, markdown inserted, preview shows it', (tester) async {
+  testWidgets('pasting a clipboard image attaches it: asset file written, markdown inserted, preview shows it', (
+    tester,
+  ) async {
     final base = await appDataDir();
     final dir = Directory('${base.path}/it-paste-${DateTime.now().millisecondsSinceEpoch}');
     addTearDown(() => dir.deleteSync(recursive: true));
-    final notes = NotesController(NoteStore(notesDir: Directory('${dir.path}/data/notes'), draftsDir: Directory('${dir.path}/drafts')));
+    final notes = NotesController(
+      NoteStore(notesDir: Directory('${dir.path}/data/notes'), draftsDir: Directory('${dir.path}/drafts')),
+    );
     await notes.load();
     SharedPreferences.setMockInitialValues({});
     final settings = await AppSettings.load();
@@ -83,15 +87,17 @@ void main() {
     tester.view.physicalSize = const Size(1400, 900);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
-    await tester.pumpWidget(AppSettingsScope(
-      settings: settings,
-      child: MaterialApp(
-        locale: const Locale('en'),
-        localizationsDelegates: AppLocalizations.localizationsDelegates,
-        supportedLocales: AppLocalizations.supportedLocales,
-        home: NotesScreen(controller: notes, sync: sync, assets: assets, onAbout: () {}),
+    await tester.pumpWidget(
+      AppSettingsScope(
+        settings: settings,
+        child: MaterialApp(
+          locale: const Locale('en'),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: NotesScreen(controller: notes, sync: sync, assets: assets, onAbout: () {}),
+        ),
       ),
-    ));
+    );
     await tester.pumpAndSettle();
     await tester.tap(find.text('New note'));
     await tester.pumpAndSettle();
@@ -122,48 +128,140 @@ void main() {
     expect(find.byType(Image), findsWidgets);
   });
 
-  testWidgets('real window: dock left/right, widen for editing, collapse, undock (screen_retriever + window_manager coordinates agree)', (
-    tester,
-  ) async {
-    await windowManager.ensureInitialized();
-    SharedPreferences.setMockInitialValues({}); // 메모리 안에서만 — 실제 앱 설정을 건드리지 않는다
-    final prefs = await SharedPreferences.getInstance();
-    final port = DesktopWindowPort();
-    final layout = WindowLayout(prefs: prefs, port: port, settleDelay: const Duration(milliseconds: 10));
-    addTearDown(layout.dispose);
+  testWidgets(
+    'real window: dock left/right, widen for editing, collapse, undock (screen_retriever + window_manager coordinates agree)',
+    (tester) async {
+      await windowManager.ensureInitialized();
+      SharedPreferences.setMockInitialValues({}); // 메모리 안에서만 — 실제 앱 설정을 건드리지 않는다
+      final prefs = await SharedPreferences.getInstance();
+      final port = DesktopWindowPort();
+      final layout = WindowLayout(prefs: prefs, port: port, settleDelay: const Duration(milliseconds: 10));
+      addTearDown(layout.dispose);
 
-    final start = await windowManager.getBounds();
-    final areas = await port.visibleAreas();
-    final area = displayContaining(start, areas);
-    // ignore: avoid_print
-    print('START $start  AREAS $areas  USING $area');
+      final start = await windowManager.getBounds();
+      final areas = await port.visibleAreas();
+      final area = displayContaining(start, areas);
+      // ignore: avoid_print
+      print('START $start  AREAS $areas  USING $area');
 
-    Future<void> settle() => Future<void>.delayed(const Duration(milliseconds: 600));
-    void near(Rect actual, Rect expected, String what) {
-      expect((actual.left - expected.left).abs(), lessThanOrEqualTo(3), reason: '$what left: $actual vs $expected');
-      expect((actual.top - expected.top).abs(), lessThanOrEqualTo(3), reason: '$what top: $actual vs $expected');
-      expect((actual.width - expected.width).abs(), lessThanOrEqualTo(3), reason: '$what width: $actual vs $expected');
-      expect((actual.height - expected.height).abs(), lessThanOrEqualTo(3), reason: '$what height: $actual vs $expected');
+      Future<void> settle() => Future<void>.delayed(const Duration(milliseconds: 600));
+      void near(Rect actual, Rect expected, String what) {
+        expect((actual.left - expected.left).abs(), lessThanOrEqualTo(3), reason: '$what left: $actual vs $expected');
+        expect((actual.top - expected.top).abs(), lessThanOrEqualTo(3), reason: '$what top: $actual vs $expected');
+        expect(
+          (actual.width - expected.width).abs(),
+          lessThanOrEqualTo(3),
+          reason: '$what width: $actual vs $expected',
+        );
+        expect(
+          (actual.height - expected.height).abs(),
+          lessThanOrEqualTo(3),
+          reason: '$what height: $actual vs $expected',
+        );
+      }
+
+      await layout.dockTo(DockSide.left);
+      await settle();
+      near(await windowManager.getBounds(), dockBounds(area, DockSide.left, 420), 'dock left');
+
+      await layout.beginEditing();
+      await settle();
+      near(await windowManager.getBounds(), expandBounds(area, DockSide.left, 900), 'expanded');
+
+      await layout.endEditing();
+      await settle();
+      near(await windowManager.getBounds(), dockBounds(area, DockSide.left, 420), 'collapsed');
+
+      await layout.dockTo(DockSide.right);
+      await settle();
+      near(await windowManager.getBounds(), dockBounds(area, DockSide.right, 420), 'dock right');
+
+      await layout.undock();
+      await settle();
+      near(await windowManager.getBounds(), start, 'undocked back to the original window');
+    },
+  );
+
+  testWidgets('editor clipboard on real macOS: ⌘V and Ctrl+V paste text, Ctrl+C copies, Ctrl+X cuts', (tester) async {
+    // 실제 클립보드를 쓰는 테스트라, 끝나면 원래 글자 내용을 되돌려 놓는다.
+    final before = (await Clipboard.getData(Clipboard.kTextPlain))?.text;
+    addTearDown(() async {
+      if (before != null) await Clipboard.setData(ClipboardData(text: before));
+    });
+    final base = await appDataDir();
+    final dir = Directory('${base.path}/it-clip-${DateTime.now().millisecondsSinceEpoch}');
+    addTearDown(() => dir.deleteSync(recursive: true));
+    final notes = NotesController(
+      NoteStore(notesDir: Directory('${dir.path}/data/notes'), draftsDir: Directory('${dir.path}/drafts')),
+    );
+    await notes.load();
+    SharedPreferences.setMockInitialValues({});
+    final settings = await AppSettings.load();
+    final sync = SyncService(
+      prefs: await SharedPreferences.getInstance(),
+      tokens: MemoryTokenStore(),
+      engine: LibGit2Engine(dir: Directory('${dir.path}/data')),
+      notes: notes,
+    );
+    addTearDown(sync.dispose);
+    tester.view.physicalSize = const Size(1200, 800);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    await tester.pumpWidget(
+      AppSettingsScope(
+        settings: settings,
+        child: MaterialApp(
+          locale: const Locale('en'),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: NotesScreen(
+            controller: notes,
+            sync: sync,
+            assets: AssetStore(Directory('${dir.path}/data/assets')),
+            onAbout: () {},
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('New note'));
+    await tester.pumpAndSettle();
+    final field = find.byType(TextField).last;
+    await tester.tap(field);
+    await tester.pumpAndSettle();
+    String text() => tester.widget<TextField>(field).controller!.text;
+
+    Future<void> chord(LogicalKeyboardKey modifier, LogicalKeyboardKey key) async {
+      await tester.sendKeyDownEvent(modifier);
+      await tester.sendKeyEvent(key);
+      await tester.sendKeyUpEvent(modifier);
+      for (var i = 0; i < 10; i++) {
+        await tester.pump(const Duration(milliseconds: 50));
+      }
     }
 
-    await layout.dockTo(DockSide.left);
-    await settle();
-    near(await windowManager.getBounds(), dockBounds(area, DockSide.left, 420), 'dock left');
+    await Clipboard.setData(const ClipboardData(text: 'first paste'));
+    await chord(LogicalKeyboardKey.meta, LogicalKeyboardKey.keyV);
+    expect(text(), 'first paste', reason: '⌘V should paste plain text through the image-aware paste action');
 
-    await layout.beginEditing();
-    await settle();
-    near(await windowManager.getBounds(), expandBounds(area, DockSide.left, 900), 'expanded');
+    await chord(LogicalKeyboardKey.meta, LogicalKeyboardKey.keyA); // select all
+    await Clipboard.setData(const ClipboardData(text: 'ctrl paste'));
+    await chord(LogicalKeyboardKey.control, LogicalKeyboardKey.keyV);
+    expect(text(), 'ctrl paste', reason: 'Ctrl+V should paste (replacing the selection)');
 
-    await layout.endEditing();
-    await settle();
-    near(await windowManager.getBounds(), dockBounds(area, DockSide.left, 420), 'collapsed');
+    await chord(LogicalKeyboardKey.meta, LogicalKeyboardKey.keyA);
+    await Clipboard.setData(const ClipboardData(text: 'old'));
+    await chord(LogicalKeyboardKey.control, LogicalKeyboardKey.keyC);
+    expect(
+      (await Clipboard.getData(Clipboard.kTextPlain))?.text,
+      'ctrl paste',
+      reason: 'Ctrl+C should copy the selection',
+    );
+    expect(text(), 'ctrl paste');
 
-    await layout.dockTo(DockSide.right);
-    await settle();
-    near(await windowManager.getBounds(), dockBounds(area, DockSide.right, 420), 'dock right');
-
-    await layout.undock();
-    await settle();
-    near(await windowManager.getBounds(), start, 'undocked back to the original window');
+    await chord(LogicalKeyboardKey.control, LogicalKeyboardKey.keyX);
+    expect(text(), '', reason: 'Ctrl+X should cut the selection');
+    expect((await Clipboard.getData(Clipboard.kTextPlain))?.text, 'ctrl paste');
+    await tester.pump(const Duration(seconds: 2)); // 초안 저장 타이머를 비운다
   });
 }
