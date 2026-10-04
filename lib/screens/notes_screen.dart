@@ -391,23 +391,30 @@ class _NotesScreenState extends State<NotesScreen> with WidgetsBindingObserver {
     }
 
     if (narrow) {
+      // 앱 이름은 좁아도 남긴다. 아이콘 간격을 줄여 자리를 만들고, 그래도 모자라면 말줄임표로 줄인다.
+      Widget tight(Widget w) => IconButtonTheme(
+        data: IconButtonThemeData(style: IconButton.styleFrom(visualDensity: VisualDensity.compact)),
+        child: w,
+      );
       return AppBar(
-        titleSpacing: AppSpacing.sm,
-        title: const SizedBox.shrink(),
+        titleSpacing: AppSpacing.md,
+        title: const Text(AppIdentity.displayName, maxLines: 1, overflow: TextOverflow.ellipsis),
         actions: [
-          syncButton,
-          newNote,
-          const ThemeMenuButton(),
-          const LanguageMenuButton(),
-          PopupMenuButton<String>(
-            tooltip: l10n.moreTooltip,
-            icon: const Icon(Icons.more_vert_rounded),
-            onSelected: onWindowChoice,
-            itemBuilder: (_) => [
-              PopupMenuItem(value: 'settings', child: Text(l10n.settingsTooltip)),
-              ...windowItems,
-              PopupMenuItem(value: 'about', child: Text(l10n.aboutTooltip)),
-            ],
+          tight(syncButton),
+          tight(newNote),
+          tight(const ThemeMenuButton()),
+          tight(const LanguageMenuButton()),
+          tight(
+            PopupMenuButton<String>(
+              tooltip: l10n.moreTooltip,
+              icon: const Icon(Icons.more_vert_rounded),
+              onSelected: onWindowChoice,
+              itemBuilder: (_) => [
+                PopupMenuItem(value: 'settings', child: Text(l10n.settingsTooltip)),
+                ...windowItems,
+                PopupMenuItem(value: 'about', child: Text(l10n.aboutTooltip)),
+              ],
+            ),
           ),
         ],
       );

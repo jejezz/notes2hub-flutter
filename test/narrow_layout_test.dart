@@ -96,8 +96,8 @@ void main() {
       await pumpScreen(tester, s);
       await tester.pumpAndSettle();
 
-      // board: capture + search stacked, one card column, compact app bar (no title text)
-      expect(find.text('Notes2Hub'), findsNothing);
+      // board: capture + search stacked, one card column; the app name stays even at the narrowest width
+      expect(find.text('Notes2Hub'), findsOneWidget);
       expect(find.text('Second note'), findsOneWidget);
       final e0 = tester.takeException();
       if (e0 != null) fail('board overflow: $e0');
