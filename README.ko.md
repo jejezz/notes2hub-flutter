@@ -65,7 +65,7 @@ flutter pub get
 flutter run -d macos
 ```
 
-macOS 빌드는 Apple Silicon 전용입니다(동봉된 libgit2가 arm64이고 macOS 26이 필요합니다). Linux에서는 OpenSSL 3(`libssl3`)이 설치되어 있어야 합니다. 브라우저 로그인을 쓰려면 *Device Flow*를 켠 GitHub OAuth App을 만들고 `--dart-define=NOTES2HUB_GITHUB_CLIENT_ID=<client id>`로 넘기세요. 없으면 개인 액세스 토큰(`repo` 권한)으로 로그인합니다. 설계와 결정 기록: [docs/PLAN.md](docs/PLAN.md).
+macOS 빌드는 Apple Silicon 전용입니다(동봉된 libgit2가 arm64이고 macOS 26이 필요합니다). Linux에서는 OpenSSL 3(`libssl3`)과, 저장된 토큰을 위한 비밀 저장소(gnome-keyring 등, `libsecret-1-0`)가 있어야 합니다. 브라우저 로그인을 쓰려면 *Device Flow*를 켠 GitHub OAuth App을 만들고 `--dart-define=NOTES2HUB_GITHUB_CLIENT_ID=<client id>`로 넘기세요. 없으면 개인 액세스 토큰(`repo` 권한)으로 로그인합니다. 설계와 결정 기록: [docs/PLAN.md](docs/PLAN.md).
 
 릴리스: `scripts/bump-version.sh patch` → 병합 → `vX.Y.Z` 태그. CI가 모든 플랫폼을 빌드해서 올립니다. 규칙: [application-release-templates/conventions](https://github.com/jejezz/application-release-templates/tree/main/conventions).
 

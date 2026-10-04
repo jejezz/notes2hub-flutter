@@ -9,7 +9,7 @@
 **Windows**: 설치 프로그램에 아직 코드 서명이 없어서 SmartScreen이 "Windows의 PC 보호" 창을 띄웁니다. **추가 정보 → 실행**을 누르면 설치가 진행됩니다.
 The installer isn't code-signed yet, so SmartScreen shows "Windows protected your PC" — choose **More info → Run anyway**.
 
-**Linux**: OpenSSL 3(`libssl3`)이 필요합니다. / Requires OpenSSL 3 (`libssl3`).
+**Linux**: OpenSSL 3(`libssl3`)과 비밀 저장소(`libsecret-1-0` + gnome-keyring 등)가 필요합니다. / Requires OpenSSL 3 (`libssl3`) and a secret service (`libsecret-1-0` + e.g. gnome-keyring).
 
 받은 파일은 `SHA256SUMS.txt`로 확인할 수 있습니다: `shasum -a 256 -c SHA256SUMS.txt --ignore-missing`
 

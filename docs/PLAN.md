@@ -65,7 +65,7 @@ GitHub private repo를 저장소로 쓰는 Markdown 메모 앱. 별도 서버·�
 2. **충돌 해소 후 스테이징은 경로를 명시**: `index.addAll(repo.status.keys)`는 충돌 사본(새 파일)을 빠뜨렸다. 해소한 파일은 `index.add(path)`로 직접 추가한다.
 3. **fast-forward**는 `Merge.analysis`가 `fastForward`를 줄 때 `Reference.setTarget` + `Checkout.head(force)`로 처리한다 (merge 커밋 불필요).
 4. **⚠ macOS 제약**: 동봉된 `libgit2.dylib`가 **arm64 전용, 최소 macOS 26.0**이다. → 이 엔진으로는 Apple Silicon + macOS 26 이상에서만 동작(Intel Mac, 구버전 macOS 불가). 릴리스 템플릿의 `macos-universal.dmg` 가정과도 어긋난다. 대응안: (a) macOS 26+/arm64 전용으로 선언, (b) libgit2를 직접 universal·낮은 deployment target으로 빌드, (c) 구형 macOS는 `GitCliEngine`(시스템 git) 사용. **→ 결정(2026-10-04): (a) 채택.** macOS는 Apple Silicon + macOS 26.0 이상 전용. 배포 산출물은 `Notes2Hub-<버전>-macos-arm64.dmg`, deployment target 26.0, arm64 단일 빌드(`Release/Debug.xcconfig`·Podfile에서 고정, 릴리스 빌드 `lipo`/`vtool`로 확인). 구형 macOS/Intel 요구가 생기면 (c) `GitCliEngine`을 추가한다.
-5. **Linux**는 배포 시 `libssl` 의존을 README에 명시.
+5. **Linux**는 배포 시 `libssl3`(git2dart)과 `libsecret-1-0` + 키링 서비스(flutter_secure_storage)를 README·릴리스 노트에 명시. CI 빌드에는 `libssl-dev`, `libsecret-1-dev`가 필요하다 (첫 CI 실행에서 libsecret 누락으로 실패해 확인됨).
 
 ## 4. 아키텍처
 
