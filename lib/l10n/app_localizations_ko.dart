@@ -333,4 +333,38 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get syncUnpushed => '올리지 못한 변경';
+
+  @override
+  String get imageAdd => '이미지 추가';
+
+  @override
+  String get imageDropHere => '이미지를 놓아서 추가';
+
+  @override
+  String get imageBroken => '이미지를 찾을 수 없습니다';
+
+  @override
+  String imageConverted(String name, String before, String after) {
+    return '$name: 1MB를 넘어 JPEG로 줄였습니다 ($before → $after)';
+  }
+
+  @override
+  String imageStillLarge(String name, String size) {
+    return '$name: 최대한 줄였지만 여전히 1MB가 넘습니다 ($size)';
+  }
+
+  @override
+  String imageAnimatedTooLarge(String name) {
+    return '$name: 움직이는 이미지는 줄일 수 없어서 1MB를 넘는 파일은 추가하지 못했습니다';
+  }
+
+  @override
+  String imageUnsupported(String name) {
+    return '$name: 지원하지 않거나 읽을 수 없는 이미지입니다';
+  }
+
+  @override
+  String imageFailed(String name, String error) {
+    return '$name: 이미지를 추가하지 못했습니다: $error';
+  }
 }

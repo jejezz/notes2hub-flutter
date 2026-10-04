@@ -7,6 +7,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:notes2hub/settings/app_settings.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:notes2hub/l10n/app_localizations.dart';
+import 'package:notes2hub/images/asset_store.dart';
 import 'package:notes2hub/notes/note_store.dart';
 import 'package:notes2hub/auth/token_store.dart';
 import 'package:notes2hub/notes/notes_controller.dart';
@@ -42,7 +43,7 @@ void main() {
         locale: const Locale('en'),
         localizationsDelegates: AppLocalizations.localizationsDelegates,
         supportedLocales: AppLocalizations.supportedLocales,
-        home: NotesScreen(controller: c, sync: sync, onAbout: () {}),
+        home: NotesScreen(controller: c, sync: sync, assets: AssetStore(Directory('${tmp.path}/assets')), onAbout: () {}),
       ),
     ));
     expect(find.text('No notes yet'), findsOneWidget);

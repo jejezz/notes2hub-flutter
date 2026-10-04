@@ -673,6 +673,54 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'올리지 못한 변경'**
   String get syncUnpushed;
+
+  /// No description provided for @imageAdd.
+  ///
+  /// In ko, this message translates to:
+  /// **'이미지 추가'**
+  String get imageAdd;
+
+  /// No description provided for @imageDropHere.
+  ///
+  /// In ko, this message translates to:
+  /// **'이미지를 놓아서 추가'**
+  String get imageDropHere;
+
+  /// No description provided for @imageBroken.
+  ///
+  /// In ko, this message translates to:
+  /// **'이미지를 찾을 수 없습니다'**
+  String get imageBroken;
+
+  /// No description provided for @imageConverted.
+  ///
+  /// In ko, this message translates to:
+  /// **'{name}: 1MB를 넘어 JPEG로 줄였습니다 ({before} → {after})'**
+  String imageConverted(String name, String before, String after);
+
+  /// No description provided for @imageStillLarge.
+  ///
+  /// In ko, this message translates to:
+  /// **'{name}: 최대한 줄였지만 여전히 1MB가 넘습니다 ({size})'**
+  String imageStillLarge(String name, String size);
+
+  /// No description provided for @imageAnimatedTooLarge.
+  ///
+  /// In ko, this message translates to:
+  /// **'{name}: 움직이는 이미지는 줄일 수 없어서 1MB를 넘는 파일은 추가하지 못했습니다'**
+  String imageAnimatedTooLarge(String name);
+
+  /// No description provided for @imageUnsupported.
+  ///
+  /// In ko, this message translates to:
+  /// **'{name}: 지원하지 않거나 읽을 수 없는 이미지입니다'**
+  String imageUnsupported(String name);
+
+  /// No description provided for @imageFailed.
+  ///
+  /// In ko, this message translates to:
+  /// **'{name}: 이미지를 추가하지 못했습니다: {error}'**
+  String imageFailed(String name, String error);
 }
 
 class _AppLocalizationsDelegate

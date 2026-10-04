@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:uuid/uuid.dart';
 
+import '../images/asset_store.dart';
 import 'note.dart';
 import 'note_store.dart';
 
@@ -48,6 +49,14 @@ class NotesController extends ChangeNotifier {
   int get unsavedCount => _working.values.where((n) => n.body.trim().isNotEmpty).length;
 
   Note? get selected => _selectedId == null ? null : (_working[_selectedId] ?? _saved[_selectedId]);
+
+  /// 편집 중인 내용을 포함한 메모 본문.
+  String bodyOf(String id) => (_working[id] ?? _saved[id])?.body ?? '';
+
+  /// 어떤 메모(저장본·편집본)라도 참조하는 첨부 파일 이름 — 고아 정리의 기준.
+  Set<String> get referencedAssets => {
+        for (final n in {..._saved, ..._working}.values) ...AssetStore.referencedIn(n.body),
+      };
 
   bool isDirty(String id) => _working.containsKey(id);
   bool isNew(String id) => !_saved.containsKey(id);

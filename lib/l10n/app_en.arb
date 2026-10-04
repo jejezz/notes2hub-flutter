@@ -200,5 +200,60 @@
       }
     }
   },
-  "syncUnpushed": "Changes not uploaded yet"
+  "syncUnpushed": "Changes not uploaded yet",
+  "imageAdd": "Add image",
+  "imageDropHere": "Drop to add images",
+  "imageBroken": "Image not found",
+  "imageConverted": "{name}: over 1 MB, reduced to JPEG ({before} → {after})",
+  "@imageConverted": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "before": {
+        "type": "String"
+      },
+      "after": {
+        "type": "String"
+      }
+    }
+  },
+  "imageStillLarge": "{name}: reduced as far as possible but still over 1 MB ({size})",
+  "@imageStillLarge": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "size": {
+        "type": "String"
+      }
+    }
+  },
+  "imageAnimatedTooLarge": "{name}: animated images can't be reduced, so files over 1 MB were not added",
+  "@imageAnimatedTooLarge": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "imageUnsupported": "{name}: unsupported or unreadable image",
+  "@imageUnsupported": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "imageFailed": "{name}: could not add the image: {error}",
+  "@imageFailed": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "error": {
+        "type": "String"
+      }
+    }
+  }
 }

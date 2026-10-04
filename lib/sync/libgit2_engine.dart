@@ -143,22 +143,30 @@ SyncResult _connect(String path, String? ca, String url, String token) {
   }
 }
 
-/// notes/*.md를 인덱스에 맞춘다: 새·바뀐 파일은 추가, 사라진 파일은 제거.
+/// 동기화 대상: `notes/*.md`와 첨부 이미지 `assets/*`. 그 밖의 파일(임시 `.tmp` 포함)은 건드리지 않는다.
+const _assets = 'assets/';
+
+bool _tracked(String rel) =>
+    (rel.startsWith(_notes) && rel.endsWith('.md')) || (rel.startsWith(_assets) && !rel.endsWith('.tmp'));
+
+/// 대상 파일을 인덱스에 맞춘다: 새·바뀐 파일은 추가, 사라진 파일은 제거.
 /// (status 목록은 새 폴더를 폴더 하나로만 보고하고, 충돌 후 새 파일을 빠뜨린다 — PoC.)
 void _stage(Repository repo, String path) {
   final index = repo.index;
   final onDisk = <String>{};
-  final dir = Directory('$path/notes');
-  if (dir.existsSync()) {
+  for (final folder in ['notes', 'assets']) {
+    final dir = Directory('$path/$folder');
+    if (!dir.existsSync()) continue;
     for (final e in dir.listSync()) {
-      if (e is! File || !e.path.endsWith('.md')) continue;
-      final rel = '$_notes${e.uri.pathSegments.last}';
+      if (e is! File) continue;
+      final rel = '$folder/${e.uri.pathSegments.last}';
+      if (!_tracked(rel)) continue;
       onDisk.add(rel);
       index.add(rel);
     }
   }
   for (final entry in index.toList()) {
-    if (entry.path.startsWith(_notes) && !onDisk.contains(entry.path)) index.remove(entry.path);
+    if (_tracked(entry.path) && !onDisk.contains(entry.path)) index.remove(entry.path);
   }
   index.write();
 }
@@ -181,7 +189,7 @@ int _commit(Repository repo, String path, Signature sig, String label) {
     updateRef: 'HEAD',
     author: sig,
     committer: sig,
-    message: 'sync: $n notes @ $label',
+    message: 'sync: $n files @ $label',
     tree: tree,
     parents: _unborn(repo, path) ? [] : [Commit.lookup(repo: repo, oid: repo.head.target)],
   );

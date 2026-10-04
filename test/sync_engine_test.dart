@@ -235,4 +235,25 @@ void main() {
     write(da, 'solo', '# not a repo yet');
     expect((await a.status()).isClean, isTrue);
   });
+
+  test('attached images under assets/ sync both ways, deletions included; .tmp files are ignored', () async {
+    File asset(Directory d, String name) => File('${d.path}/assets/$name');
+    await a.connect(remoteUrl: origin, token: '');
+    write(da, 'withimg', '# pic\n![x](../assets/p1.jpg)');
+    asset(da, 'p1.jpg')
+      ..parent.createSync(recursive: true)
+      ..writeAsBytesSync([0xFF, 0xD8, 0xFF, 1, 2, 3]);
+    asset(da, 'half.jpg.tmp').writeAsBytesSync([9]); // an interrupted write
+    expect((await a.status()).changed, 2); // note + image, not the .tmp
+    expect((await sync(a)).pushed, isTrue);
+
+    await b.connect(remoteUrl: origin, token: '');
+    expect(asset(db, 'p1.jpg').readAsBytesSync(), [0xFF, 0xD8, 0xFF, 1, 2, 3]);
+    expect(asset(db, 'half.jpg.tmp').existsSync(), isFalse);
+
+    asset(da, 'p1.jpg').deleteSync();
+    await sync(a);
+    await sync(b);
+    expect(asset(db, 'p1.jpg').existsSync(), isFalse);
+  });
 }

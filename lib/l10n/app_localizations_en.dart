@@ -336,4 +336,38 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get syncUnpushed => 'Changes not uploaded yet';
+
+  @override
+  String get imageAdd => 'Add image';
+
+  @override
+  String get imageDropHere => 'Drop to add images';
+
+  @override
+  String get imageBroken => 'Image not found';
+
+  @override
+  String imageConverted(String name, String before, String after) {
+    return '$name: over 1 MB, reduced to JPEG ($before → $after)';
+  }
+
+  @override
+  String imageStillLarge(String name, String size) {
+    return '$name: reduced as far as possible but still over 1 MB ($size)';
+  }
+
+  @override
+  String imageAnimatedTooLarge(String name) {
+    return '$name: animated images can\'t be reduced, so files over 1 MB were not added';
+  }
+
+  @override
+  String imageUnsupported(String name) {
+    return '$name: unsupported or unreadable image';
+  }
+
+  @override
+  String imageFailed(String name, String error) {
+    return '$name: could not add the image: $error';
+  }
 }

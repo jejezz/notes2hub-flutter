@@ -5,6 +5,7 @@
 //   언어 해석 · macOS 앱 메뉴 About · 앱 바 [테마 | 언어 | 정보] · 빈 상태.
 // 기존 앱에는 통째로 덮어쓰지 말고 필요한 부분만 옮긴다.
 
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -17,6 +18,7 @@ import 'about/extra_licenses.dart';
 import 'app_identity.dart';
 import 'l10n/app_localizations.dart';
 import 'auth/token_store.dart';
+import 'images/asset_store.dart';
 import 'notes/app_paths.dart';
 import 'notes/note_store.dart';
 import 'notes/notes_controller.dart';
@@ -55,6 +57,7 @@ Future<void> main() async {
     notesDir: Directory('${base.path}/data/notes'),
     draftsDir: Directory('${base.path}/drafts'),
   ));
+  final assets = AssetStore(Directory('${base.path}/data/assets'));
   final engine = LibGit2Engine(dir: Directory('${base.path}/data'), caCertPath: await ensureCaBundle(base));
   final sync = SyncService(
     prefs: await SharedPreferences.getInstance(),
@@ -62,15 +65,16 @@ Future<void> main() async {
     engine: engine,
     notes: notes,
   );
-  runApp(App(settings: settings, notes: notes, sync: sync));
+  runApp(App(settings: settings, notes: notes, sync: sync, assets: assets));
 }
 
 class App extends StatefulWidget {
-  const App({super.key, required this.settings, required this.notes, required this.sync});
+  const App({super.key, required this.settings, required this.notes, required this.sync, required this.assets});
 
   final AppSettings settings;
   final NotesController notes;
   final SyncService sync;
+  final AssetStore assets;
 
   @override
   State<App> createState() => _AppState();
@@ -91,6 +95,8 @@ class _AppState extends State<App> with WidgetsBindingObserver {
   Future<void> _loadNotes() async {
     try {
       await widget.notes.load();
+      // 어떤 메모도 참조하지 않는 오래된 첨부를 정리한다 (7일 지난 것만).
+      unawaited(widget.assets.collectOrphans(widget.notes.referencedAssets));
       // 메모를 읽은 뒤에 연결 상태를 복원한다 — 시작 pull이 끝나면 목록을 다시 읽는다.
       await widget.sync.init();
     } catch (e) {
@@ -151,7 +157,7 @@ class _AppState extends State<App> with WidgetsBindingObserver {
           supportedLocales: AppLocalizations.supportedLocales,
           localeResolutionCallback: AppSettings.resolveLocale,
           builder: (context, child) => AppMenuBar(onAbout: _showAbout, child: child!),
-          home: NotesScreen(controller: widget.notes, sync: widget.sync, onAbout: _showAbout),
+          home: NotesScreen(controller: widget.notes, sync: widget.sync, assets: widget.assets, onAbout: _showAbout),
         ),
       ),
     );
