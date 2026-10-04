@@ -30,14 +30,16 @@
 
 ## 기능
 
-- **{{TODO: 기능}}** — {{TODO: 무엇을 하는지 구체적으로 (이름, 숫자, 형식)}}
-- **{{TODO: 기능}}** — {{TODO: …}}
-- **{{TODO: 기능}}** — {{TODO: …}}
+- **내 메모, 내 GitHub 저장소** — 메모 하나가 내가 가진 저장소의 Markdown 파일 하나(`notes/<id>.md`)입니다. 무료이고 서버도 구독도 없으며, 앱이 없어도 메모를 읽을 수 있습니다.
+- **저장과 동기화는 별개** — *저장*(⌘S)은 로컬 파일에만 씁니다. *동기화*(⇧⌘S)가 git 작업(커밋, 병합, push)을 합니다. 기본은 수동이고, 저장 30초 뒤 자동으로 바꿀 수 있습니다.
+- **여러 PC에서 안전하게** — 시작할 때, 창으로 돌아올 때, 5분마다 가져옵니다. 두 PC에서 같은 메모를 고치면 원격 내용이 본 메모가 되고 내 내용은 "(충돌 …)" 사본으로 남습니다 — 덮어쓰는 일도, 충돌 표시를 직접 지우는 일도 없습니다.
+- **목록이 아닌 보드** — 빠른 메모 입력창(쓰고 Enter)과 날짜별 카드, 이미지 표지, 메모별 동기화 상태. 카드를 열면 미리보기가 있는 전체 화면 Markdown 편집기가 열립니다.
+- **이미지** — 스크린샷을 붙여넣거나, 파일을 끌어다 놓거나, 골라서 넣습니다. 1MiB 이상이면 저장소가 커지지 않게 JPEG로 줄입니다(품질 85 → 50, 그다음 작은 크기). 투명 PNG는 흰 배경이 됩니다.
 - **라이트·다크, 한국어·English** — 시스템 설정을 따르거나 툴바에서 고를 수 있습니다
 
 <p align="center">
-  <img src="docs/screenshots/home.png" width="360" alt="{{TODO: 화면 1}}">
-  <img src="docs/screenshots/detail.png" width="360" alt="{{TODO: 화면 2}}">
+  <img src="docs/screenshots/home.png" width="360" alt="보드: 빠른 메모 입력창과 메모 카드">
+  <img src="docs/screenshots/detail.png" width="360" alt="Markdown 미리보기가 있는 편집기">
 </p>
 
 ## 설치
@@ -54,7 +56,7 @@
 
 ## 동작 방식
 
-{{TODO: 궁금한 사람을 위한 2~4문장 — 흥미로운 기술적 선택 한 가지. 말할 것이 없으면 이 절을 지웁니다.}}
+Notes2Hub는 `git2dart`(libgit2)로 백그라운드 isolate에서 GitHub와 통신하므로 `git`을 따로 설치할 필요가 없고, push 중에도 화면이 멈추지 않습니다. 병합은 파일 단위로 이뤄지는데, 메모마다 UUID 파일 이름을 쓰기 때문에 두 PC가 같은 파일을 건드리는 일은 거의 없습니다. GitHub 토큰은 OS 키체인에만 저장됩니다.
 
 ## 개발
 
@@ -63,14 +65,13 @@ flutter pub get
 flutter run -d macos
 ```
 
-{{TODO: 빌드에 더 필요한 것(네이티브 도구, 환경 변수). 구조 문서 링크: [ARCHITECTURE.md](ARCHITECTURE.md), [UI_UX.md](UI_UX.md).}}
+macOS 빌드는 Apple Silicon 전용입니다(동봉된 libgit2가 arm64이고 macOS 26이 필요합니다). Linux에서는 OpenSSL 3(`libssl3`)이 설치되어 있어야 합니다. 브라우저 로그인을 쓰려면 *Device Flow*를 켠 GitHub OAuth App을 만들고 `--dart-define=NOTES2HUB_GITHUB_CLIENT_ID=<client id>`로 넘기세요. 없으면 개인 액세스 토큰(`repo` 권한)으로 로그인합니다. 설계와 결정 기록: [docs/PLAN.md](docs/PLAN.md).
 
 릴리스: `scripts/bump-version.sh patch` → 병합 → `vX.Y.Z` 태그. CI가 모든 플랫폼을 빌드해서 올립니다. 규칙: [application-release-templates/conventions](https://github.com/jejezz/application-release-templates/tree/main/conventions).
 
 ## 크레딧
 
 - 글꼴: [서울남산체](https://www.seoul.go.kr/seoul/font.do) (서울특별시)
-- 아이콘: [Icons8](https://icons8.com)
 
 ## 라이선스
 

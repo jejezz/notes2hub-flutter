@@ -30,14 +30,16 @@
 
 ## Features
 
-- **{{TODO: Feature}}** — {{TODO: what it does, concretely (names, numbers, formats)}}
-- **{{TODO: Feature}}** — {{TODO: …}}
-- **{{TODO: Feature}}** — {{TODO: …}}
+- **Your notes, your GitHub repo** — every note is one Markdown file (`notes/<id>.md`) in a repository you own. Free, no server, no subscription, and the notes stay readable without the app.
+- **Save and sync are separate** — *Save* (⌘S) writes a local file only. *Sync* (⇧⌘S) does the git work: commit, merge, push. Manual by default, or automatic 30 seconds after you save.
+- **Safe across PCs** — pulls happen at launch, on window focus and every 5 minutes. If two PCs edit the same note, the remote version wins and yours is kept as a "(conflict …)" copy — nothing is overwritten and nothing asks you to resolve markers.
+- **Board, not a list** — a quick-capture bar (type, Enter) and cards grouped by day, with image covers and a per-note sync badge. Open a card for a full-screen Markdown editor with preview.
+- **Images** — paste a screenshot, drop files, or pick them. Anything of 1 MiB or more becomes a JPEG (quality 85 → 50, then smaller sizes) so the repository stays small; transparent PNGs get a white background.
 - **Light & dark, English & 한국어** — follows the system, or pick one in the toolbar
 
 <p align="center">
-  <img src="docs/screenshots/home.png" width="360" alt="{{TODO: screen 1}}">
-  <img src="docs/screenshots/detail.png" width="360" alt="{{TODO: screen 2}}">
+  <img src="docs/screenshots/home.png" width="360" alt="The board: quick-capture bar and note cards">
+  <img src="docs/screenshots/detail.png" width="360" alt="The editor with Markdown preview">
 </p>
 
 ## Install
@@ -54,7 +56,7 @@ Download from [**Releases**](https://github.com/jejezz/notes2hub-flutter/release
 
 ## How it works
 
-{{TODO: 2–4 sentences for the curious — the one interesting technical choice (e.g. "Dart drives the UI; a 100-line Swift bridge covers Trash and Full Disk Access"). Delete this section if there is nothing interesting to say.}}
+Notes2Hub talks to GitHub with libgit2 (via `git2dart`) inside a background isolate, so it needs no installed `git` and the UI never freezes during a push. Merges happen per file, and because each note has its own UUID filename, two PCs almost never touch the same file. Your GitHub token lives only in the OS keychain.
 
 ## Development
 
@@ -63,14 +65,13 @@ flutter pub get
 flutter run -d macos
 ```
 
-{{TODO: Anything else needed to build (native tools, env vars). Link docs/ for architecture: [ARCHITECTURE.md](ARCHITECTURE.md), [UI_UX.md](UI_UX.md).}}
+macOS builds are Apple Silicon only (the bundled libgit2 is arm64 and needs macOS 26). On Linux the app needs OpenSSL 3 (`libssl3`) installed. For browser sign-in, create a GitHub OAuth App with *Device Flow* enabled and pass `--dart-define=NOTES2HUB_GITHUB_CLIENT_ID=<client id>`; without it the app signs in with a personal access token (`repo` scope). Design notes and decisions: [docs/PLAN.md](docs/PLAN.md).
 
 Releasing: `scripts/bump-version.sh patch`, merge, then tag `vX.Y.Z` — CI builds and publishes every platform. Rules: [application-release-templates/conventions](https://github.com/jejezz/application-release-templates/tree/main/conventions).
 
 ## Credits
 
 - Font: [SeoulNamsan](https://www.seoul.go.kr/seoul/font.do) (Seoul Metropolitan Government)
-- Icons: [Icons8](https://icons8.com)
 
 ## License
 
