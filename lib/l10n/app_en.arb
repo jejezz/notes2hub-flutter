@@ -271,5 +271,17 @@
   "loginRetry": "Try again",
   "repoSuggested": "Notes2Hub repositories",
   "repoSuggestedHint": "Repositories Notes2Hub has used on this account. Connect one to continue with your notes from another PC.",
-  "repoUseThis": "Connect this repository"
+  "repoUseThis": "Connect this repository",
+  "windowTooltip": "Window layout",
+  "windowDockLeft": "Dock to the left edge",
+  "windowDockRight": "Dock to the right edge",
+  "windowUndock": "Restore size",
+  "moreTooltip": "More",
+  "settingsWindow": "Window",
+  "settingsWindowDock": "Dock to screen edge",
+  "settingsDockNone": "Off",
+  "settingsDockLeft": "Left",
+  "settingsDockRight": "Right",
+  "settingsAutoExpand": "Widen the window while editing",
+  "settingsAutoExpandHint": "When the window is docked to a screen edge, opening a note widens it, and returning to the board restores the docked width."
 }

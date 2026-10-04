@@ -817,6 +817,78 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'이 저장소로 연결'**
   String get repoUseThis;
+
+  /// No description provided for @windowTooltip.
+  ///
+  /// In ko, this message translates to:
+  /// **'창 배치'**
+  String get windowTooltip;
+
+  /// No description provided for @windowDockLeft.
+  ///
+  /// In ko, this message translates to:
+  /// **'화면 왼쪽에 붙이기'**
+  String get windowDockLeft;
+
+  /// No description provided for @windowDockRight.
+  ///
+  /// In ko, this message translates to:
+  /// **'화면 오른쪽에 붙이기'**
+  String get windowDockRight;
+
+  /// No description provided for @windowUndock.
+  ///
+  /// In ko, this message translates to:
+  /// **'원래 크기로'**
+  String get windowUndock;
+
+  /// No description provided for @moreTooltip.
+  ///
+  /// In ko, this message translates to:
+  /// **'더 보기'**
+  String get moreTooltip;
+
+  /// No description provided for @settingsWindow.
+  ///
+  /// In ko, this message translates to:
+  /// **'창'**
+  String get settingsWindow;
+
+  /// No description provided for @settingsWindowDock.
+  ///
+  /// In ko, this message translates to:
+  /// **'화면에 붙이기'**
+  String get settingsWindowDock;
+
+  /// No description provided for @settingsDockNone.
+  ///
+  /// In ko, this message translates to:
+  /// **'안 붙임'**
+  String get settingsDockNone;
+
+  /// No description provided for @settingsDockLeft.
+  ///
+  /// In ko, this message translates to:
+  /// **'왼쪽'**
+  String get settingsDockLeft;
+
+  /// No description provided for @settingsDockRight.
+  ///
+  /// In ko, this message translates to:
+  /// **'오른쪽'**
+  String get settingsDockRight;
+
+  /// No description provided for @settingsAutoExpand.
+  ///
+  /// In ko, this message translates to:
+  /// **'편집할 때 창을 자동으로 넓히기'**
+  String get settingsAutoExpand;
+
+  /// No description provided for @settingsAutoExpandHint.
+  ///
+  /// In ko, this message translates to:
+  /// **'창이 화면 가장자리에 붙어 있으면, 메모를 열 때 폭을 넓히고 보드로 돌아오면 원래대로 되돌립니다.'**
+  String get settingsAutoExpandHint;
 }
 
 class _AppLocalizationsDelegate

@@ -62,6 +62,41 @@ class NotesBoard extends StatelessWidget {
       groups.putIfAbsent(groupOf(l10n, n.updated.toLocal(), now), () => []).add(n);
     }
 
+    // 창을 화면 가장자리에 세로로 붙이면(좁은 창) 입력창과 검색창을 위아래로 쌓고 여백을 줄인다.
+    final narrow = MediaQuery.sizeOf(context).width < 600;
+    final pad = narrow ? AppSpacing.md : AppSpacing.xl;
+    final captureField = TextField(
+      controller: capture,
+      focusNode: captureFocus,
+      textInputAction: TextInputAction.done,
+      style: userContentStyle(theme.textTheme.bodyLarge),
+      decoration: InputDecoration(hintText: l10n.boardCaptureHint, prefixIcon: const Icon(Icons.add_rounded, size: 20)),
+      onSubmitted: (v) {
+        if (v.trim().isEmpty) return;
+        onCapture(v);
+        // Enter 뒤에도 계속 이어서 쓸 수 있게 입력창에 포커스를 둔다.
+        captureFocus.requestFocus();
+      },
+    );
+    final searchField = TextField(
+      controller: search,
+      focusNode: searchFocus,
+      onChanged: controller.setQuery,
+      decoration: InputDecoration(
+        hintText: l10n.notesSearchHint,
+        prefixIcon: const Icon(Icons.search_rounded, size: 18),
+        suffixIcon: controller.query.isEmpty
+            ? null
+            : IconButton(
+                icon: const Icon(Icons.close_rounded, size: 16),
+                onPressed: () {
+                  search.clear();
+                  controller.setQuery('');
+                },
+              ),
+      ),
+    );
+
     return Align(
       alignment: Alignment.topCenter,
       child: ConstrainedBox(
@@ -69,52 +104,24 @@ class NotesBoard extends StatelessWidget {
         child: CustomScrollView(
           slivers: [
             SliverPadding(
-              padding: const EdgeInsets.fromLTRB(AppSpacing.xl, AppSpacing.xl, AppSpacing.xl, AppSpacing.md),
+              padding: EdgeInsets.fromLTRB(pad, narrow ? AppSpacing.md : AppSpacing.xl, pad, AppSpacing.md),
               sliver: SliverToBoxAdapter(
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: TextField(
-                        controller: capture,
-                        focusNode: captureFocus,
-                        textInputAction: TextInputAction.done,
-                        style: userContentStyle(theme.textTheme.bodyLarge),
-                        decoration: InputDecoration(
-                          hintText: l10n.boardCaptureHint,
-                          prefixIcon: const Icon(Icons.add_rounded, size: 20),
-                        ),
-                        onSubmitted: (v) {
-                          if (v.trim().isEmpty) return;
-                          onCapture(v);
-                          // Enter 뒤에도 계속 이어서 쓸 수 있게 입력창에 포커스를 둔다.
-                          captureFocus.requestFocus();
-                        },
+                child: narrow
+                    ? Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          captureField,
+                          const SizedBox(height: AppSpacing.sm),
+                          searchField,
+                        ],
+                      )
+                    : Row(
+                        children: [
+                          Expanded(child: captureField),
+                          const SizedBox(width: AppSpacing.md),
+                          SizedBox(width: 240, child: searchField),
+                        ],
                       ),
-                    ),
-                    const SizedBox(width: AppSpacing.md),
-                    SizedBox(
-                      width: 240,
-                      child: TextField(
-                        controller: search,
-                        focusNode: searchFocus,
-                        onChanged: controller.setQuery,
-                        decoration: InputDecoration(
-                          hintText: l10n.notesSearchHint,
-                          prefixIcon: const Icon(Icons.search_rounded, size: 18),
-                          suffixIcon: controller.query.isEmpty
-                              ? null
-                              : IconButton(
-                                  icon: const Icon(Icons.close_rounded, size: 16),
-                                  onPressed: () {
-                                    search.clear();
-                                    controller.setQuery('');
-                                  },
-                                ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
               ),
             ),
             if (notes.isEmpty)
@@ -143,7 +150,7 @@ class NotesBoard extends StatelessWidget {
             else
               for (final entry in groups.entries) ...[
                 SliverPadding(
-                  padding: const EdgeInsets.fromLTRB(AppSpacing.xl, AppSpacing.lg, AppSpacing.xl, AppSpacing.sm),
+                  padding: EdgeInsets.fromLTRB(pad, AppSpacing.lg, pad, AppSpacing.sm),
                   sliver: SliverToBoxAdapter(
                     child: Text(
                       entry.key,
@@ -153,7 +160,7 @@ class NotesBoard extends StatelessWidget {
                 ),
                 // 카드 높이는 내용에 맞춘다 (표지 이미지가 있으면 더 크게) — 쌓아 올리는 보드 배치.
                 SliverPadding(
-                  padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
+                  padding: EdgeInsets.symmetric(horizontal: pad),
                   sliver: SliverMasonryGrid.extent(
                     maxCrossAxisExtent: 280,
                     crossAxisSpacing: AppSpacing.md,

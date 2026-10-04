@@ -3,25 +3,25 @@ import 'package:flutter/material.dart';
 import '../l10n/app_localizations.dart';
 import '../sync/sync_service.dart';
 import '../theme/app_theme.dart';
+import '../window/window_layout.dart';
 import 'login_dialog.dart';
 import 'repo_dialog.dart';
 
-Future<void> showSettingsDialog(BuildContext context, SyncService sync) => showDialog<void>(
-  context: context,
-  builder: (_) => _SettingsDialog(sync: sync),
-);
+Future<void> showSettingsDialog(BuildContext context, SyncService sync, [WindowLayout? layout]) =>
+    showDialog<void>(context: context, builder: (_) => _SettingsDialog(sync: sync, layout: layout));
 
 class _SettingsDialog extends StatelessWidget {
-  const _SettingsDialog({required this.sync});
+  const _SettingsDialog({required this.sync, this.layout});
 
   final SyncService sync;
+  final WindowLayout? layout;
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
     return ListenableBuilder(
-      listenable: sync,
+      listenable: Listenable.merge([sync, ?layout]),
       builder: (context, _) => AlertDialog(
         title: Text(l10n.settingsTitle),
         content: SizedBox(
@@ -79,6 +79,31 @@ class _SettingsDialog extends StatelessWidget {
                 ),
                 const SizedBox(height: AppSpacing.sm),
                 Text(l10n.settingsSyncHint, style: theme.textTheme.bodySmall),
+                if (layout != null) ...[
+                  const SizedBox(height: AppSpacing.xl),
+                  _Section(l10n.settingsWindow),
+                  Text(l10n.settingsWindowDock, style: theme.textTheme.bodySmall),
+                  const SizedBox(height: AppSpacing.xs),
+                  SegmentedButton<DockSide>(
+                    showSelectedIcon: false,
+                    segments: [
+                      ButtonSegment(value: DockSide.none, label: Text(l10n.settingsDockNone)),
+                      ButtonSegment(value: DockSide.left, label: Text(l10n.settingsDockLeft)),
+                      ButtonSegment(value: DockSide.right, label: Text(l10n.settingsDockRight)),
+                    ],
+                    selected: {layout!.dock},
+                    onSelectionChanged: (v) => layout!.dockTo(v.first),
+                  ),
+                  const SizedBox(height: AppSpacing.sm),
+                  SwitchListTile(
+                    contentPadding: EdgeInsets.zero,
+                    dense: true,
+                    title: Text(l10n.settingsAutoExpand),
+                    subtitle: Text(l10n.settingsAutoExpandHint, style: theme.textTheme.bodySmall),
+                    value: layout!.autoExpand,
+                    onChanged: (v) => layout!.setAutoExpand(v),
+                  ),
+                ],
               ],
             ),
           ),

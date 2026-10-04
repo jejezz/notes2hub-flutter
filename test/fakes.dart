@@ -1,4 +1,7 @@
+import 'dart:ui';
+
 import 'package:notes2hub/sync/sync_models.dart';
+import 'package:notes2hub/window/window_layout.dart';
 
 /// 호출을 기록하고 미리 정한 결과를 돌려주는 가짜 엔진.
 class FakeEngine implements SyncEngine {
@@ -24,6 +27,7 @@ class FakeEngine implements SyncEngine {
     inFlight--;
     return r;
   }
+
   String? lastToken;
   GitIdentity? lastIdentity;
 
@@ -37,7 +41,8 @@ class FakeEngine implements SyncEngine {
   }
 
   @override
-  Future<SyncStatus> status() => _track(() => SyncStatus(changed: pending, unpushed: unpushed, pendingNotes: pendingNotes));
+  Future<SyncStatus> status() =>
+      _track(() => SyncStatus(changed: pending, unpushed: unpushed, pendingNotes: pendingNotes));
 
   @override
   Future<SyncResult> sync({required String token, required GitIdentity identity, required String deviceLabel}) async {
@@ -56,4 +61,24 @@ class FakeEngine implements SyncEngine {
       return pullResult;
     });
   }
+}
+
+/// 창 API 대신 상태만 들고 있는 가짜 — 호출된 영역을 기록한다.
+class FakePort implements WindowPort {
+  FakePort(this.areas, this.current);
+  List<Rect> areas;
+  Rect current;
+  final applied = <Rect>[];
+
+  @override
+  Future<Rect> bounds() async => current;
+
+  @override
+  Future<void> setBounds(Rect r) async {
+    current = r;
+    applied.add(r);
+  }
+
+  @override
+  Future<List<Rect>> visibleAreas() async => areas;
 }

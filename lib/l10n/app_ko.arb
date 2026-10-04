@@ -288,5 +288,17 @@
   "loginRetry": "다시 시도",
   "repoSuggested": "Notes2Hub 저장소",
   "repoSuggestedHint": "이 계정에서 Notes2Hub가 쓰던 저장소입니다. 다른 PC에서 쓰던 메모를 이어서 쓰려면 연결하세요.",
-  "repoUseThis": "이 저장소로 연결"
+  "repoUseThis": "이 저장소로 연결",
+  "windowTooltip": "창 배치",
+  "windowDockLeft": "화면 왼쪽에 붙이기",
+  "windowDockRight": "화면 오른쪽에 붙이기",
+  "windowUndock": "원래 크기로",
+  "moreTooltip": "더 보기",
+  "settingsWindow": "창",
+  "settingsWindowDock": "화면에 붙이기",
+  "settingsDockNone": "안 붙임",
+  "settingsDockLeft": "왼쪽",
+  "settingsDockRight": "오른쪽",
+  "settingsAutoExpand": "편집할 때 창을 자동으로 넓히기",
+  "settingsAutoExpandHint": "창이 화면 가장자리에 붙어 있으면, 메모를 열 때 폭을 넓히고 보드로 돌아오면 원래대로 되돌립니다."
 }

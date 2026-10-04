@@ -420,4 +420,41 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get repoUseThis => 'Connect this repository';
+
+  @override
+  String get windowTooltip => 'Window layout';
+
+  @override
+  String get windowDockLeft => 'Dock to the left edge';
+
+  @override
+  String get windowDockRight => 'Dock to the right edge';
+
+  @override
+  String get windowUndock => 'Restore size';
+
+  @override
+  String get moreTooltip => 'More';
+
+  @override
+  String get settingsWindow => 'Window';
+
+  @override
+  String get settingsWindowDock => 'Dock to screen edge';
+
+  @override
+  String get settingsDockNone => 'Off';
+
+  @override
+  String get settingsDockLeft => 'Left';
+
+  @override
+  String get settingsDockRight => 'Right';
+
+  @override
+  String get settingsAutoExpand => 'Widen the window while editing';
+
+  @override
+  String get settingsAutoExpandHint =>
+      'When the window is docked to a screen edge, opening a note widens it, and returning to the board restores the docked width.';
 }

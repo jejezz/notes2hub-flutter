@@ -14,6 +14,7 @@ class SyncButton extends StatelessWidget {
     required this.shortcut,
     required this.onOpenSettings,
     required this.onSync,
+    this.compact = false,
   });
 
   final SyncService sync;
@@ -21,6 +22,9 @@ class SyncButton extends StatelessWidget {
   final String shortcut;
   final VoidCallback onOpenSettings;
   final VoidCallback onSync;
+
+  /// 좁은 창: 라벨 없이 아이콘만 (라벨은 툴팁으로).
+  final bool compact;
 
   static String ago(AppLocalizations l10n, DateTime t) {
     final d = DateTime.now().difference(t);
@@ -41,20 +45,29 @@ class SyncButton extends StatelessWidget {
       if (sync.needsReauth) return (Icons.lock_reset_rounded, AppColors.warning, l10n.syncReauth, sync.error);
       if (sync.offline) return (Icons.cloud_off_rounded, AppColors.warning, l10n.syncOffline, null);
       if (sync.error != null) return (Icons.error_outline_rounded, theme.colorScheme.error, l10n.syncError, sync.error);
-      if (sync.pending > 0) return (Icons.cloud_upload_outlined, AppColors.warning, l10n.syncPending(sync.pending), null);
+      if (sync.pending > 0) {
+        return (Icons.cloud_upload_outlined, AppColors.warning, l10n.syncPending(sync.pending), null);
+      }
       if (sync.unpushed) return (Icons.cloud_upload_outlined, AppColors.warning, l10n.syncUnpushed, null);
       if (sync.remoteAhead) return (Icons.cloud_download_outlined, AppColors.warning, l10n.syncRemoteAhead, null);
       final t = sync.lastSync;
       return (Icons.cloud_done_outlined, muted, t == null ? l10n.syncDone : l10n.syncDoneAgo(ago(l10n, t)), null);
     }();
 
+    final message =
+        '$label\n${detail ?? '${l10n.syncTooltip} ($shortcut)'}${sync.repoFullName == null ? '' : '\n${sync.repoFullName}'}';
+    final onPressed = sync.syncing ? null : (sync.connected && !sync.needsReauth ? onSync : onOpenSettings);
+    final leading = sync.syncing
+        ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
+        : Icon(icon, size: 18, color: color);
+    if (compact) {
+      return IconButton(tooltip: message, onPressed: onPressed, icon: leading);
+    }
     return Tooltip(
       message: detail ?? '${l10n.syncTooltip} ($shortcut)${sync.repoFullName == null ? '' : '\n${sync.repoFullName}'}',
       child: TextButton.icon(
-        onPressed: sync.syncing ? null : (sync.connected && !sync.needsReauth ? onSync : onOpenSettings),
-        icon: sync.syncing
-            ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
-            : Icon(icon, size: 18, color: color),
+        onPressed: onPressed,
+        icon: leading,
         label: Text(label, style: theme.textTheme.bodySmall?.copyWith(color: color)),
       ),
     );

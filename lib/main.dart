@@ -26,6 +26,7 @@ import 'screens/notes_screen.dart';
 import 'sync/ca_bundle.dart';
 import 'sync/libgit2_engine.dart';
 import 'sync/sync_service.dart';
+import 'window/window_layout.dart';
 import 'settings/app_settings.dart';
 import 'theme/app_theme.dart';
 
@@ -35,16 +36,18 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   registerExtraLicenses();
 
+  final prefs = await SharedPreferences.getInstance();
+  WindowLayout? windowLayout;
   if (_isDesktop) {
     await windowManager.ensureInitialized();
-    // ui-ux.md §5: 최소 크기는 960×600 이하 (1366×768 노트북).
-    const options = WindowOptions(
-      size: Size(1200, 720),
-      minimumSize: Size(960, 600),
-      center: true,
-      title: AppIdentity.displayName,
-    );
+    final layout = WindowLayout(prefs: prefs, port: DesktopWindowPort());
+    windowLayout = layout;
+    // ui-ux.md §5: 최소 크기는 960×600 이하. 이 앱은 화면 가장자리에 세로로 붙여 쓰는 메모 앱이라
+    // 훨씬 좁게(320) 줄일 수 있다. 크기·위치는 직접 정하지 않고 저장된 값(또는 도킹)을 복원한다.
+    const options = WindowOptions(minimumSize: Size(320, 420), title: AppIdentity.displayName);
     await windowManager.waitUntilReadyToShow(options, () async {
+      await layout.restore(); // 창을 보이기 전에 위치·크기를 맞춘다 (깜빡임 방지)
+      windowManager.addListener(layout);
       await windowManager.show();
       await windowManager.focus();
     });
@@ -60,21 +63,29 @@ Future<void> main() async {
   final assets = AssetStore(Directory('${base.path}/data/assets'));
   final engine = LibGit2Engine(dir: Directory('${base.path}/data'), caCertPath: await ensureCaBundle(base));
   final sync = SyncService(
-    prefs: await SharedPreferences.getInstance(),
+    prefs: prefs,
     tokens: SecureTokenStore(),
     engine: engine,
     notes: notes,
   );
-  runApp(App(settings: settings, notes: notes, sync: sync, assets: assets));
+  runApp(App(settings: settings, notes: notes, sync: sync, assets: assets, windowLayout: windowLayout));
 }
 
 class App extends StatefulWidget {
-  const App({super.key, required this.settings, required this.notes, required this.sync, required this.assets});
+  const App({
+    super.key,
+    required this.settings,
+    required this.notes,
+    required this.sync,
+    required this.assets,
+    this.windowLayout,
+  });
 
   final AppSettings settings;
   final NotesController notes;
   final SyncService sync;
   final AssetStore assets;
+  final WindowLayout? windowLayout;
 
   @override
   State<App> createState() => _AppState();
@@ -157,7 +168,7 @@ class _AppState extends State<App> with WidgetsBindingObserver {
           supportedLocales: AppLocalizations.supportedLocales,
           localeResolutionCallback: AppSettings.resolveLocale,
           builder: (context, child) => AppMenuBar(onAbout: _showAbout, child: child!),
-          home: NotesScreen(controller: widget.notes, sync: widget.sync, assets: widget.assets, onAbout: _showAbout),
+          home: NotesScreen(controller: widget.notes, sync: widget.sync, assets: widget.assets, windowLayout: widget.windowLayout, onAbout: _showAbout),
         ),
       ),
     );

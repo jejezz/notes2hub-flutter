@@ -19,6 +19,7 @@ import '../settings/settings_menus.dart';
 import '../sync/sync_service.dart';
 import '../theme/app_theme.dart';
 import '../theme/user_content.dart';
+import '../window/window_layout.dart';
 import 'board_view.dart';
 import 'settings_dialog.dart';
 import 'sync_button.dart';
@@ -39,12 +40,16 @@ class NotesScreen extends StatefulWidget {
     required this.sync,
     required this.assets,
     required this.onAbout,
+    this.windowLayout,
   });
 
   final NotesController controller;
   final SyncService sync;
   final AssetStore assets;
   final VoidCallback onAbout;
+
+  /// 데스크톱에서만 있다 — 창 크기 기억, 좌/우 도킹, 편집 중 확장.
+  final WindowLayout? windowLayout;
 
   @override
   State<NotesScreen> createState() => _NotesScreenState();
@@ -64,12 +69,15 @@ class _NotesScreenState extends State<NotesScreen> with WidgetsBindingObserver {
   NotesController get c => widget.controller;
   SyncService get sync => widget.sync;
   StreamSubscription<SyncEvent>? _syncEvents;
+  bool _wasEditing = false;
+  WindowLayout? get layout => widget.windowLayout;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     c.addListener(_syncEditor);
+    c.addListener(_onSelectionChanged);
     _syncEditor();
     _syncEvents = sync.events.listen(_onSyncEvent);
   }
@@ -78,6 +86,7 @@ class _NotesScreenState extends State<NotesScreen> with WidgetsBindingObserver {
   void dispose() {
     _syncEvents?.cancel();
     c.removeListener(_syncEditor);
+    c.removeListener(_onSelectionChanged);
     WidgetsBinding.instance.removeObserver(this);
     _editor.dispose();
     _editorFocus.dispose();
@@ -92,6 +101,16 @@ class _NotesScreenState extends State<NotesScreen> with WidgetsBindingObserver {
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state != AppLifecycleState.resumed) c.flush();
+  }
+
+  /// 메모를 열면(편집 화면) 도킹된 창을 넓히고, 보드로 돌아오면 원래 폭으로 되돌린다.
+  void _onSelectionChanged() {
+    final editing = c.selectedId != null;
+    if (editing == _wasEditing) return;
+    _wasEditing = editing;
+    final l = layout;
+    if (l == null) return;
+    unawaited(editing ? l.beginEditing() : l.endEditing());
   }
 
   /// 선택이 바뀌었거나 외부에서(변경 취소 등) 본문이 바뀌면 에디터 글자를 맞춘다.
@@ -178,7 +197,7 @@ class _NotesScreenState extends State<NotesScreen> with WidgetsBindingObserver {
     }
   }
 
-  void _openSettings() => showSettingsDialog(context, sync);
+  void _openSettings() => showSettingsDialog(context, sync, layout);
 
   // ---- 이미지 첨부 -----------------------------------------------------------
 
@@ -329,6 +348,95 @@ class _NotesScreenState extends State<NotesScreen> with WidgetsBindingObserver {
     }
   }
 
+  /// 창이 좁으면(화면 가장자리에 세로로 붙인 모양) 제목과 라벨을 줄이고 덜 쓰는 단추는 "더 보기"로 모은다.
+  PreferredSizeWidget _buildAppBar(BuildContext context, AppLocalizations l10n) {
+    final narrow = MediaQuery.sizeOf(context).width < 720;
+    final l = layout;
+    final syncButton = ListenableBuilder(
+      listenable: Listenable.merge([sync, c]),
+      builder: (context, _) => SyncButton(
+        sync: sync,
+        notes: c,
+        shortcut: _syncShortcut,
+        onOpenSettings: _openSettings,
+        onSync: _syncNow,
+        compact: narrow,
+      ),
+    );
+    final newNote = IconButton(
+      tooltip: '${l10n.noteNew} (${_mod}N)',
+      icon: const Icon(Icons.edit_note_rounded),
+      onPressed: _create,
+    );
+    final windowItems = l == null
+        ? const <PopupMenuEntry<String>>[]
+        : [
+            PopupMenuItem(value: 'left', child: Text(l10n.windowDockLeft)),
+            PopupMenuItem(value: 'right', child: Text(l10n.windowDockRight)),
+            if (l.docked) PopupMenuItem(value: 'undock', child: Text(l10n.windowUndock)),
+          ];
+    void onWindowChoice(String v) {
+      switch (v) {
+        case 'left':
+          l?.dockTo(DockSide.left);
+        case 'right':
+          l?.dockTo(DockSide.right);
+        case 'undock':
+          l?.undock();
+        case 'settings':
+          _openSettings();
+        case 'about':
+          widget.onAbout();
+      }
+    }
+
+    if (narrow) {
+      return AppBar(
+        titleSpacing: AppSpacing.sm,
+        title: const SizedBox.shrink(),
+        actions: [
+          syncButton,
+          newNote,
+          const ThemeMenuButton(),
+          const LanguageMenuButton(),
+          PopupMenuButton<String>(
+            tooltip: l10n.moreTooltip,
+            icon: const Icon(Icons.more_vert_rounded),
+            onSelected: onWindowChoice,
+            itemBuilder: (_) => [
+              PopupMenuItem(value: 'settings', child: Text(l10n.settingsTooltip)),
+              ...windowItems,
+              PopupMenuItem(value: 'about', child: Text(l10n.aboutTooltip)),
+            ],
+          ),
+        ],
+      );
+    }
+    return AppBar(
+      title: const Text(AppIdentity.displayName),
+      actions: [
+        syncButton,
+        newNote,
+        if (l != null)
+          PopupMenuButton<String>(
+            tooltip: l10n.windowTooltip,
+            icon: const Icon(Icons.view_sidebar_outlined),
+            onSelected: onWindowChoice,
+            itemBuilder: (_) => windowItems,
+          ),
+        IconButton(
+          tooltip: '${l10n.settingsTooltip} ($_mod,)',
+          icon: const Icon(Icons.settings_outlined),
+          onPressed: _openSettings,
+        ),
+        const ThemeMenuButton(),
+        const LanguageMenuButton(),
+        IconButton(tooltip: l10n.aboutTooltip, icon: const Icon(Icons.info_outline_rounded), onPressed: widget.onAbout),
+        const SizedBox(width: AppSpacing.sm),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
@@ -341,44 +449,18 @@ class _NotesScreenState extends State<NotesScreen> with WidgetsBindingObserver {
         _primary(LogicalKeyboardKey.keyI, shift: true): _pickImages,
         _primary(LogicalKeyboardKey.keyF): _focusSearch,
         const SingleActivator(LogicalKeyboardKey.escape): _back,
+        SingleActivator(LogicalKeyboardKey.arrowLeft, meta: _isMac, control: !_isMac, alt: true): () =>
+            layout?.dockTo(DockSide.left),
+        SingleActivator(LogicalKeyboardKey.arrowRight, meta: _isMac, control: !_isMac, alt: true): () =>
+            layout?.dockTo(DockSide.right),
+        SingleActivator(LogicalKeyboardKey.arrowDown, meta: _isMac, control: !_isMac, alt: true): () =>
+            layout?.undock(),
         _primary(LogicalKeyboardKey.keyE): () => setState(() => _preview = !_preview),
       },
       child: Focus(
         autofocus: true,
         child: Scaffold(
-          appBar: AppBar(
-            title: const Text(AppIdentity.displayName),
-            actions: [
-              ListenableBuilder(
-                listenable: Listenable.merge([sync, c]),
-                builder: (context, _) => SyncButton(
-                  sync: sync,
-                  notes: c,
-                  shortcut: _syncShortcut,
-                  onOpenSettings: _openSettings,
-                  onSync: _syncNow,
-                ),
-              ),
-              IconButton(
-                tooltip: '${l10n.noteNew} (${_mod}N)',
-                icon: const Icon(Icons.edit_note_rounded),
-                onPressed: _create,
-              ),
-              IconButton(
-                tooltip: '${l10n.settingsTooltip} ($_mod,)',
-                icon: const Icon(Icons.settings_outlined),
-                onPressed: _openSettings,
-              ),
-              const ThemeMenuButton(),
-              const LanguageMenuButton(),
-              IconButton(
-                tooltip: l10n.aboutTooltip,
-                icon: const Icon(Icons.info_outline_rounded),
-                onPressed: widget.onAbout,
-              ),
-              const SizedBox(width: AppSpacing.sm),
-            ],
-          ),
+          appBar: _buildAppBar(context, l10n),
           body: DropTarget(
             onDragEntered: (_) => setState(() => _dragging = true),
             onDragExited: (_) => setState(() => _dragging = false),
@@ -498,59 +580,97 @@ class _EditorPane extends StatelessWidget {
     final theme = Theme.of(context);
     final note = controller.selected!;
     final dirty = controller.isDirty(note.id);
+    // 창을 화면 가장자리에 세로로 붙인 좁은 모양: 글자 라벨 대신 아이콘으로 줄인다.
+    final compact = MediaQuery.sizeOf(context).width < 840;
+    final pad = compact ? AppSpacing.md : AppSpacing.xl;
+    const dense = VisualDensity.compact;
     return Column(
       children: [
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg, vertical: AppSpacing.sm),
+          padding: EdgeInsets.symmetric(horizontal: compact ? 2 : AppSpacing.lg, vertical: AppSpacing.sm),
           child: Row(
             children: [
               IconButton(
                 tooltip: '${l10n.editorBack} (Esc)',
+                visualDensity: compact ? dense : null,
                 icon: const Icon(Icons.arrow_back_rounded, size: 20),
                 onPressed: onBack,
               ),
-              const SizedBox(width: AppSpacing.sm),
+              SizedBox(width: compact ? 2 : AppSpacing.sm),
               SegmentedButton<bool>(
                 showSelectedIcon: false,
+                style: compact ? const ButtonStyle(visualDensity: dense) : null,
                 segments: [
-                  ButtonSegment(value: false, label: Text(l10n.noteEditTab)),
-                  ButtonSegment(value: true, label: Text(l10n.notePreviewTab)),
+                  ButtonSegment(
+                    value: false,
+                    icon: compact ? const Icon(Icons.edit_outlined, size: 16) : null,
+                    tooltip: compact ? l10n.noteEditTab : null,
+                    label: compact ? null : Text(l10n.noteEditTab),
+                  ),
+                  ButtonSegment(
+                    value: true,
+                    icon: compact ? const Icon(Icons.visibility_outlined, size: 16) : null,
+                    tooltip: compact ? l10n.notePreviewTab : null,
+                    label: compact ? null : Text(l10n.notePreviewTab),
+                  ),
                 ],
                 selected: {preview},
                 onSelectionChanged: (s) => onPreviewChanged(s.first),
               ),
-              const SizedBox(width: AppSpacing.md),
-              Icon(
-                dirty ? Icons.circle : Icons.check_circle_outline_rounded,
-                size: dirty ? 8 : 16,
-                color: dirty ? AppColors.warning : theme.colorScheme.onSurfaceVariant,
-              ),
-              const SizedBox(width: AppSpacing.xs),
-              Expanded(
-                child: Text(
-                  dirty ? l10n.noteUnsaved : l10n.noteSaved,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+              if (compact)
+                // 좁으면 글자·점 대신 저장 단추가 켜져 있는지(= 저장 안 됨)로 알린다.
+                const Spacer()
+              else ...[
+                const SizedBox(width: AppSpacing.md),
+                Icon(
+                  dirty ? Icons.circle : Icons.check_circle_outline_rounded,
+                  size: dirty ? 8 : 16,
+                  color: dirty ? AppColors.warning : theme.colorScheme.onSurfaceVariant,
                 ),
-              ),
+                const SizedBox(width: AppSpacing.xs),
+                Expanded(
+                  child: Text(
+                    dirty ? l10n.noteUnsaved : l10n.noteSaved,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+                  ),
+                ),
+              ],
               if (dirty && !controller.isNew(note.id))
-                TextButton(onPressed: () => controller.revert(note.id), child: Text(l10n.noteRevert)),
+                compact
+                    ? IconButton(
+                        tooltip: l10n.noteRevert,
+                        visualDensity: dense,
+                        icon: const Icon(Icons.undo_rounded, size: 18),
+                        onPressed: () => controller.revert(note.id),
+                      )
+                    : TextButton(onPressed: () => controller.revert(note.id), child: Text(l10n.noteRevert)),
               IconButton(
                 tooltip: '${l10n.imageAdd} ($_mod⇧I)',
+                visualDensity: compact ? dense : null,
                 icon: const Icon(Icons.add_photo_alternate_outlined, size: 18),
                 onPressed: onAddImage,
               ),
-              Tooltip(
-                message: '${l10n.noteSave} (${_mod}S)',
-                child: FilledButton.icon(
+              if (compact)
+                IconButton.filled(
+                  tooltip: '${l10n.noteSave} (${_mod}S)',
+                  visualDensity: dense,
                   onPressed: dirty ? onSave : null,
                   icon: const Icon(Icons.save_rounded, size: 18),
-                  label: Text(l10n.noteSave),
+                )
+              else
+                Tooltip(
+                  message: '${l10n.noteSave} (${_mod}S)',
+                  child: FilledButton.icon(
+                    onPressed: dirty ? onSave : null,
+                    icon: const Icon(Icons.save_rounded, size: 18),
+                    label: Text(l10n.noteSave),
+                  ),
                 ),
-              ),
               IconButton(
                 tooltip: l10n.noteDelete,
+                visualDensity: compact ? dense : null,
                 icon: const Icon(Icons.delete_outline_rounded, size: 18),
                 onPressed: onDelete,
               ),
@@ -568,7 +688,7 @@ class _EditorPane extends StatelessWidget {
                   ? Markdown(
                       data: note.body,
                       selectable: true,
-                      padding: const EdgeInsets.all(AppSpacing.xl),
+                      padding: EdgeInsets.all(pad),
                       styleSheet: MarkdownStyleSheet.fromTheme(theme).copyWith(
                         p: userContentStyle(theme.textTheme.bodyLarge),
                         listBullet: userContentStyle(theme.textTheme.bodyLarge),
@@ -580,7 +700,7 @@ class _EditorPane extends StatelessWidget {
                       },
                     )
                   : Padding(
-                      padding: const EdgeInsets.all(AppSpacing.xl),
+                      padding: EdgeInsets.all(pad),
                       // 붙여넣기: 이미지가 있으면 첨부, 없으면 EditableText의 기본 동작 (callingAction).
                       child: Actions(
                         actions: {PasteTextIntent: _PasteImageAction(onPasteImages)},

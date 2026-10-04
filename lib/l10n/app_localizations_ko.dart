@@ -417,4 +417,41 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get repoUseThis => '이 저장소로 연결';
+
+  @override
+  String get windowTooltip => '창 배치';
+
+  @override
+  String get windowDockLeft => '화면 왼쪽에 붙이기';
+
+  @override
+  String get windowDockRight => '화면 오른쪽에 붙이기';
+
+  @override
+  String get windowUndock => '원래 크기로';
+
+  @override
+  String get moreTooltip => '더 보기';
+
+  @override
+  String get settingsWindow => '창';
+
+  @override
+  String get settingsWindowDock => '화면에 붙이기';
+
+  @override
+  String get settingsDockNone => '안 붙임';
+
+  @override
+  String get settingsDockLeft => '왼쪽';
+
+  @override
+  String get settingsDockRight => '오른쪽';
+
+  @override
+  String get settingsAutoExpand => '편집할 때 창을 자동으로 넓히기';
+
+  @override
+  String get settingsAutoExpandHint =>
+      '창이 화면 가장자리에 붙어 있으면, 메모를 열 때 폭을 넓히고 보드로 돌아오면 원래대로 되돌립니다.';
 }

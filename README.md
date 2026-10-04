@@ -34,6 +34,7 @@
 - **Save and sync are separate** — *Save* (⌘S) writes a local file only. *Sync* (⇧⌘S) does the git work: commit, merge, push. Manual by default, or automatic 30 seconds after you save.
 - **Safe across PCs** — pulls happen at launch, on window focus and every 5 minutes. If two PCs edit the same note, the remote version wins and yours is kept as a "(conflict …)" copy — nothing is overwritten and nothing asks you to resolve markers.
 - **Board, not a list** — a quick-capture bar (type, Enter) and cards grouped by day, with image covers and a per-note sync badge. Open a card for a full-screen Markdown editor with preview.
+- **A notes window that stays out of the way** — remembers its size and position, and can dock to the left or right screen edge as a tall, narrow strip. Open a note and the docked window widens for comfortable editing; go back to the board and it narrows again.
 - **Images** — paste a screenshot, drop files, or pick them. Anything of 1 MiB or more becomes a JPEG (quality 85 → 50, then smaller sizes) so the repository stays small; transparent PNGs get a white background.
 - **Light & dark, English & 한국어** — follows the system, or pick one in the toolbar
 

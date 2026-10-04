@@ -17,6 +17,8 @@ import 'package:notes2hub/notes/notes_controller.dart';
 import 'package:notes2hub/screens/notes_screen.dart';
 import 'package:notes2hub/settings/app_settings.dart';
 import 'package:notes2hub/sync/sync_service.dart';
+import 'package:notes2hub/window/window_layout.dart';
+import 'package:window_manager/window_manager.dart' hide DockSide;
 import 'package:notes2hub/notes/app_paths.dart';
 import 'package:notes2hub/notes/note.dart';
 import 'package:notes2hub/notes/note_store.dart';
@@ -118,5 +120,50 @@ void main() {
     await tester.tap(find.text('Preview'));
     await tester.pumpAndSettle();
     expect(find.byType(Image), findsWidgets);
+  });
+
+  testWidgets('real window: dock left/right, widen for editing, collapse, undock (screen_retriever + window_manager coordinates agree)', (
+    tester,
+  ) async {
+    await windowManager.ensureInitialized();
+    SharedPreferences.setMockInitialValues({}); // 메모리 안에서만 — 실제 앱 설정을 건드리지 않는다
+    final prefs = await SharedPreferences.getInstance();
+    final port = DesktopWindowPort();
+    final layout = WindowLayout(prefs: prefs, port: port, settleDelay: const Duration(milliseconds: 10));
+    addTearDown(layout.dispose);
+
+    final start = await windowManager.getBounds();
+    final areas = await port.visibleAreas();
+    final area = displayContaining(start, areas);
+    // ignore: avoid_print
+    print('START $start  AREAS $areas  USING $area');
+
+    Future<void> settle() => Future<void>.delayed(const Duration(milliseconds: 600));
+    void near(Rect actual, Rect expected, String what) {
+      expect((actual.left - expected.left).abs(), lessThanOrEqualTo(3), reason: '$what left: $actual vs $expected');
+      expect((actual.top - expected.top).abs(), lessThanOrEqualTo(3), reason: '$what top: $actual vs $expected');
+      expect((actual.width - expected.width).abs(), lessThanOrEqualTo(3), reason: '$what width: $actual vs $expected');
+      expect((actual.height - expected.height).abs(), lessThanOrEqualTo(3), reason: '$what height: $actual vs $expected');
+    }
+
+    await layout.dockTo(DockSide.left);
+    await settle();
+    near(await windowManager.getBounds(), dockBounds(area, DockSide.left, 420), 'dock left');
+
+    await layout.beginEditing();
+    await settle();
+    near(await windowManager.getBounds(), expandBounds(area, DockSide.left, 900), 'expanded');
+
+    await layout.endEditing();
+    await settle();
+    near(await windowManager.getBounds(), dockBounds(area, DockSide.left, 420), 'collapsed');
+
+    await layout.dockTo(DockSide.right);
+    await settle();
+    near(await windowManager.getBounds(), dockBounds(area, DockSide.right, 420), 'dock right');
+
+    await layout.undock();
+    await settle();
+    near(await windowManager.getBounds(), start, 'undocked back to the original window');
   });
 }
