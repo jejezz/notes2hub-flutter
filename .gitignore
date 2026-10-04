@@ -46,3 +46,6 @@ app.*.map.json
 
 # Widget Preview related
 .widget_preview/
+
+# 로컬 개발용 빌드 값 (GitHub Client ID 등) — 올리지 않는다. 견본: dart_defines.local.example.json
+/dart_defines.local.json

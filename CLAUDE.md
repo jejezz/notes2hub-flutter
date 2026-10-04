@@ -15,6 +15,7 @@ GitHub 저장소를 백엔드로 쓰는 Markdown 메모 앱. 서버/구독 없�
 - **macOS는 Apple Silicon + macOS 26.0+ 전용** (git2dart 동봉 libgit2가 arm64·minos 26.0). DMG 이름은 `macos-arm64`. Intel/구형 macOS가 필요해지면 `GitCliEngine` 추가.
 - 소스 repo(`notes2hub-flutter`)와 메모 데이터 repo(`notes2hub-data` 등)는 별개.
 - 토큰은 보안 저장소에만, 로그/파일 금지.
+- 로컬 개발용 빌드 값(GitHub Client ID)은 git 제외 파일 `dart_defines.local.json`(견본 `dart_defines.local.example.json`)에 두고 `tool/flutter_local.sh run|build|test …`로 실행한다. 실제 값은 커밋하지 않는다. 배포는 repo 변수 `NOTES2HUB_GITHUB_CLIENT_ID`.
 
 ## 현재 단계
 Phase 0(뼈대 + macOS PoC), Phase 1(로컬 메모 CRUD·검색·Markdown 편집/미리보기·저장·초안 복구) 완료. Phase 2(GitHub 로그인·repo 생성/선택·동기화·자동 pull, 실사용 확인됨)와 Phase 3(자동 재시도·올리지 못한 변경 추적·git 작업 직렬화·상태 표시) 완료. Phase 4(이미지 첨부: 붙여넣기·드롭·선택, 1MiB 초과 시 JPEG 변환, assets/ 동기화) 완료. Phase 5 완료: CI 빌드 검증(macOS·Windows·Linux) 통과, `v0.1.0-rc.1` 프리릴리스 게시·파일 확인됨(2026-10-04), rc.2 불필요. 남은 것: Windows/Linux 실기기 실행 확인, 실제 스크린샷·데모 GIF, 아이콘(임시 글리프), 브라우저 로그인용 Client ID, 정식 v0.1.0. 이후 Phase는 docs/PLAN.md §8.

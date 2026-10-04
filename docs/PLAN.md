@@ -141,7 +141,7 @@ assets/
 **로그인 장벽 줄이기 (2026-10-04)**
 - 문제: PAT는 사용자가 직접 만들어 보관해야 하고, 여러 앱이 한 토큰을 같이 쓰면 잃어버려 재발급할 때 다른 앱과의 연결도 끊긴다.
 - 해결: **브라우저 로그인(Device Flow)을 기본**으로 한다 — 로그인 창을 열면 바로 시작해 코드를 보여주고 브라우저를 연다. 로그인마다 *이 앱·이 PC 전용* 토큰이 발급되므로 키를 만들거나 보관할 필요가 없고, 한 PC의 토큰을 잃어도 다른 PC·앱에는 영향이 없다. 토큰 입력은 "고급"으로 내렸다(Client ID가 없는 빌드는 처음부터 토큰 입력만 보인다).
-- **OAuth App 등록은 원작자 한 번뿐**이다 (Client ID는 비밀이 아니고 Device Flow는 Client Secret이 필요 없다). 사용자는 등록 없이 승인만 한다. 값은 repo 변수 `NOTES2HUB_GITHUB_CLIENT_ID`(워크플로가 `--dart-define`으로 넣음).
+- **OAuth App 등록은 원작자 한 번뿐**이다 (Client ID는 비밀이 아니고 Device Flow는 Client Secret이 필요 없다). 사용자는 등록 없이 승인만 한다. 값은 repo 변수 `NOTES2HUB_GITHUB_CLIENT_ID`(워크플로가 `--dart-define`으로 넣음). 로컬 개발에서는 git 제외 파일 `dart_defines.local.json`에 두고 `tool/flutter_local.sh`로 실행하면 `--dart-define-from-file`이 자동으로 붙는다(파일이 없으면 값 없이 실행 → 토큰 입력만 보임).
 - **저장소 자동 제안**: 저장소를 연결하면 GitHub 토픽 `notes2hub`를 붙인다(기존 토픽은 유지, 실패해도 연결은 유효). 새 PC에서 로그인하면 이 표식이 붙은 저장소를 대화상자 맨 위에 "이 저장소로 연결" 한 번 클릭으로 제안하고, 로그인 직후 저장소 연결 대화상자가 자동으로 이어서 열린다.
 - 보류: 권한을 메모 저장소 하나로 좁히는 **GitHub App**(user-to-server 토큰, 8시간 만료·갱신 필요). 지금은 `repo` 범위(비공개 저장소 전체).
 

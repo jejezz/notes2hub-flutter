@@ -65,6 +65,12 @@ flutter pub get
 flutter run -d macos
 ```
 
+Local build values (such as the GitHub Client ID) live in `dart_defines.local.json`, which is git-ignored. Copy `dart_defines.local.example.json` to that name, fill it in, and run through the wrapper — it adds `--dart-define-from-file` only when the file exists:
+
+```bash
+tool/flutter_local.sh run -d macos
+```
+
 macOS builds are Apple Silicon only (the bundled libgit2 is arm64 and needs macOS 26). On Linux the app needs OpenSSL 3 (`libssl3`) and a secret service such as gnome-keyring (`libsecret-1-0`) for the saved token. For browser sign-in, create a GitHub OAuth App with *Device Flow* enabled and pass `--dart-define=NOTES2HUB_GITHUB_CLIENT_ID=<client id>`; without it the app signs in with a personal access token (`repo` scope). Design notes and decisions: [docs/PLAN.md](docs/PLAN.md).
 
 Releasing: `scripts/bump-version.sh patch`, merge, then tag `vX.Y.Z` — CI builds and publishes every platform. Rules: [application-release-templates/conventions](https://github.com/jejezz/application-release-templates/tree/main/conventions).
