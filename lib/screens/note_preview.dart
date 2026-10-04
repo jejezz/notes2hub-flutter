@@ -96,6 +96,7 @@ class NotePreviewSheet extends StatelessWidget {
     final theme = Theme.of(context);
     // 좁은 창(세로로 붙인 모양)에서는 여백을 줄인다.
     final pad = MediaQuery.sizeOf(context).width < 600 ? AppSpacing.lg : AppSpacing.xl;
+    final sheetBody = theme.textTheme.bodyMedium!.copyWith(fontSize: (theme.textTheme.bodyMedium!.fontSize ?? 13) - 1);
     return SafeArea(
       child: Padding(
         padding: EdgeInsets.fromLTRB(pad, 0, pad, AppSpacing.lg),
@@ -118,9 +119,28 @@ class NotePreviewSheet extends StatelessWidget {
                   child: MarkdownBody(
                     data: body.trim().isEmpty ? ' ' : body,
                     selectable: true,
+                    // 시트의 본문은 제목(titleLarge)보다 확실히 작게: 본문은 bodyMedium보다 1pt 작은 크기, 본문 안의 제목들도 그 근처로.
                     styleSheet: MarkdownStyleSheet.fromTheme(theme).copyWith(
-                      p: userContentStyle(theme.textTheme.bodyLarge),
-                      listBullet: userContentStyle(theme.textTheme.bodyLarge),
+                      p: userContentStyle(sheetBody),
+                      listBullet: userContentStyle(sheetBody),
+                      h1: userContentStyle(theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800)),
+                      h2: userContentStyle(theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w800)),
+                      h3: userContentStyle(theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w800)),
+                      h4: userContentStyle(theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w700)),
+                      h5: userContentStyle(theme.textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w700)),
+                      h6: userContentStyle(theme.textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w700)),
+                      code: theme.textTheme.bodySmall?.copyWith(
+                        fontFamily: 'Menlo',
+                        fontFamilyFallback: const [
+                          'SF Mono',
+                          'Consolas',
+                          'Cascadia Mono',
+                          'DejaVu Sans Mono',
+                          'Noto Sans Mono',
+                          'Courier New',
+                        ],
+                      ),
+                      blockquote: userContentStyle(sheetBody),
                     ),
                     imageBuilder: (uri, title, alt) => NoteImage(uri: uri, alt: alt, assets: assets),
                     onTapLink: (text, href, title) {
