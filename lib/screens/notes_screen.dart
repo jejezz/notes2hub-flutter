@@ -152,7 +152,14 @@ class _NotesScreenState extends State<NotesScreen> with WidgetsBindingObserver {
   void _previewNote(String id) {
     final note = c.noteById(id);
     if (note == null) return;
-    showNotePreview(context, body: note.body, assets: widget.assets, onEdit: () => _open(id));
+    showNotePreview(
+      context,
+      body: note.body,
+      assets: widget.assets,
+      onEdit: () => _open(id),
+      // 저장하지 않은 메모(새로 쓰거나 고친 것)는 시트에서 바로 저장할 수 있다.
+      onSave: c.isDirty(id) ? () => _saveNote(id) : null,
+    );
   }
 
   /// 편집 화면에서 보드로. 저장하지 않은 편집은 초안으로 남고 카드에 "저장 안 됨"으로 보인다.
@@ -179,7 +186,11 @@ class _NotesScreenState extends State<NotesScreen> with WidgetsBindingObserver {
 
   Future<void> _save() async {
     final id = c.selectedId;
-    if (id == null || !c.isDirty(id)) return;
+    if (id != null) await _saveNote(id);
+  }
+
+  Future<void> _saveNote(String id) async {
+    if (!c.isDirty(id)) return;
     try {
       await c.save(id);
     } catch (e) {

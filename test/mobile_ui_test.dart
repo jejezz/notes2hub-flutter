@@ -12,6 +12,7 @@ import 'package:notes2hub/notes/note_store.dart';
 import 'package:notes2hub/notes/notes_controller.dart';
 import 'package:notes2hub/platform_kind.dart';
 import 'package:notes2hub/screens/md_format.dart';
+import 'package:notes2hub/screens/note_preview.dart';
 import 'package:notes2hub/screens/notes_screen.dart';
 import 'package:notes2hub/settings/app_settings.dart';
 import 'package:notes2hub/sync/sync_service.dart';
@@ -220,6 +221,47 @@ void main() {
       expect(find.byType(ImageBusyOverlay), findsNothing);
       expect(c.selected!.body, contains('](../assets/'));
       await tester.pump(const Duration(seconds: 10)); // 안내 스낵바·초안 타이머를 비운다
+    });
+
+    testWidgets('preview sheet: [Close][Edit] for a saved note, [Save][Close][Edit] for an unsaved one', (tester) async {
+      await pump(tester);
+      final id = c.notes.first.id;
+      Finder button(String label) => find.descendant(of: find.byType(NotePreviewSheet), matching: find.text(label));
+
+      // 저장된 메모: 지금까지처럼 [닫기] [편집]
+      await tester.tap(find.text('Phone note'));
+      await tester.pumpAndSettle();
+      expect(find.byType(NotePreviewSheet), findsOneWidget);
+      expect(button('Save'), findsNothing);
+      expect(button('Close'), findsOneWidget);
+      expect(button('Edit'), findsOneWidget);
+      await tester.tap(button('Close'));
+      await tester.pumpAndSettle();
+
+      // 고쳐서 저장하지 않은 메모: [저장] [닫기] [편집] 순서
+      c.edit(id, 'Phone note edited');
+      await tester.pumpAndSettle();
+      expect(c.isDirty(id), isTrue);
+      await tester.tap(find.text('Phone note edited'));
+      await tester.pumpAndSettle();
+      final save = tester.getTopLeft(button('Save')).dx;
+      final close = tester.getTopLeft(button('Close')).dx;
+      final edit = tester.getTopLeft(button('Edit')).dx;
+      expect(save, lessThan(close));
+      expect(close, lessThan(edit));
+      expect(tester.takeException(), isNull);
+
+      // [저장]: 시트가 닫히고 저장된다
+      await tester.tap(button('Save'));
+      for (var i = 0; i < 40 && c.isDirty(id); i++) {
+        await tester.runAsync(() => Future<void>.delayed(const Duration(milliseconds: 50)));
+        await tester.pump();
+      }
+      await tester.pumpAndSettle();
+      expect(find.byType(NotePreviewSheet), findsNothing);
+      expect(c.isDirty(id), isFalse);
+      expect(c.noteById(id)!.body, 'Phone note edited');
+      await tester.pump(const Duration(seconds: 2)); // 초안 타이머를 비운다
     });
   });
 }
