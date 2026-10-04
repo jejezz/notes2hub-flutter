@@ -63,7 +63,12 @@ void main() {
     await tester.pump();
     expect(find.text('Saved'), findsOneWidget);
     expect(Directory('${tmp.path}/notes').listSync().whereType<File>().length, 1);
-    expect(find.text('Shopping'), findsWidgets); // list title
+    // back to the board: the saved note is a card with a title
+    await tester.tap(find.byIcon(Icons.arrow_back_rounded));
+    await tester.pumpAndSettle();
+    expect(find.text('Shopping'), findsOneWidget);
+    await tester.tap(find.text('Shopping'));
+    await tester.pumpAndSettle();
 
     await tester.tap(find.text('Preview'));
     await tester.pumpAndSettle();

@@ -367,4 +367,34 @@ class AppLocalizationsKo extends AppLocalizations {
   String imageFailed(String name, String error) {
     return '$name: 이미지를 추가하지 못했습니다: $error';
   }
+
+  @override
+  String get boardCaptureHint => '생각나는 대로 쓰고 Enter를 누르세요';
+
+  @override
+  String get boardToday => '오늘';
+
+  @override
+  String get boardYesterday => '어제';
+
+  @override
+  String get boardThisWeek => '이번 주';
+
+  @override
+  String get boardEarlier => '이전';
+
+  @override
+  String get chipSynced => '동기화됨';
+
+  @override
+  String get chipPending => '동기화 대기';
+
+  @override
+  String get chipConflict => '충돌 사본';
+
+  @override
+  String get editorBack => '보드로 돌아가기';
+
+  @override
+  String get boardEmptyHint => '위 입력창에 바로 쓰거나 새 메모를 만드세요.';
 }

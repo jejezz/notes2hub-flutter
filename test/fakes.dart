@@ -7,6 +7,7 @@ class FakeEngine implements SyncEngine {
   SyncResult pullResult = const SyncResult();
   int pending = 0;
   bool unpushed = false;
+  Set<String> pendingNotes = {};
   final calls = <String>[];
 
   /// 호출마다 걸리는 시간. 겹침 검사용으로 늘려 쓴다.
@@ -36,7 +37,7 @@ class FakeEngine implements SyncEngine {
   }
 
   @override
-  Future<SyncStatus> status() => _track(() => SyncStatus(changed: pending, unpushed: unpushed));
+  Future<SyncStatus> status() => _track(() => SyncStatus(changed: pending, unpushed: unpushed, pendingNotes: pendingNotes));
 
   @override
   Future<SyncResult> sync({required String token, required GitIdentity identity, required String deviceLabel}) async {

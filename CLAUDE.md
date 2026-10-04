@@ -8,6 +8,8 @@ GitHub 저장소를 백엔드로 쓰는 Markdown 메모 앱. 서버/구독 없�
 - **저장** = 로컬 파일 기록만(git 없음). **동기화** = commit + pull(merge) + push. 수동이 기본, 옵션으로 저장 후 30초 자동.
 - 메모 1개 = 파일 1개(`notes/<uuid>.md`). 충돌 시 원격을 본 파일로, 로컬은 "충돌 사본"으로 보존 — 사용자에게 묻지 않는다.
 - 전부 공유(선택적 공유 없음). 에디터는 Markdown 편집 + 미리보기.
+- UI: 시작 화면 = 카드 **보드**(빠른 메모 입력창 + 날짜별 masonry 카드 + 동기화 칩), 카드를 열면 **전체 화면 편집 페이지**(←/Esc로 복귀). 보드·편집기 코드는 `lib/screens/board_view.dart`, `notes_screen.dart`.
+- **통합 테스트(`-d macos`)는 실제 앱의 키체인·컨테이너를 공유한다** — 테스트 전용 키/임시 폴더만 쓸 것.
 - 이미지 1MiB 이상이면 JPEG로 자동 변환(GIF/움직이는 이미지는 변환 없이 거부). 첨부는 `assets/`, 메모에서는 `../assets/<파일>`로 참조.
 - git 엔진은 `SyncEngine` 인터페이스 뒤에 둔다: git2dart(libgit2, 기본) → 실패 시 git CLI(데스크톱)/REST API(모바일).
 - **macOS는 Apple Silicon + macOS 26.0+ 전용** (git2dart 동봉 libgit2가 arm64·minos 26.0). DMG 이름은 `macos-arm64`. Intel/구형 macOS가 필요해지면 `GitCliEngine` 추가.

@@ -256,4 +256,26 @@ void main() {
     await sync(b);
     expect(asset(db, 'p1.jpg').existsSync(), isFalse);
   });
+
+  test('status lists which notes are pending: saved-but-uncommitted, then committed-but-unpushed', () async {
+    await a.connect(remoteUrl: origin, token: '');
+    write(da, 'one', '# one');
+    write(da, 'two', '# two');
+    await sync(a);
+    expect((await a.status()).pendingNotes, isEmpty);
+
+    write(da, 'one', '# one edited'); // saved, not yet committed
+    expect((await a.status()).pendingNotes, {'one'});
+
+    write(da, 'three', '# three');
+    Directory(origin).renameSync('${origin}_gone');
+    await sync(a); // commits, push fails
+    final st = await a.status();
+    expect(st.changed, 0);
+    expect(st.unpushed, isTrue);
+    expect(st.pendingNotes, {'one', 'three'});
+    Directory('${origin}_gone').renameSync(origin);
+    await sync(a);
+    expect((await a.status()).pendingNotes, isEmpty);
+  });
 }

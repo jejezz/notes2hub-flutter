@@ -33,7 +33,9 @@ class LibGit2Engine implements SyncEngine {
       if (!Directory('$path/.git').existsSync()) return const SyncStatus();
       final repo = Repository.open(path);
       try {
-        return SyncStatus(changed: _pending(repo, path), unpushed: _unpushed(repo, path));
+        final changed = _pending(repo, path);
+        final unpushed = _unpushed(repo, path);
+        return SyncStatus(changed: changed, unpushed: unpushed, pendingNotes: _pendingNotes(repo, path, unpushed));
       } finally {
         repo.free();
       }
@@ -208,6 +210,34 @@ bool _unpushed(Repository repo, String path) {
   final a = Merge.analysis(repo: repo, theirHead: theirs).result;
   // 원격이 앞서 있기만 하면(fast-forward) 올릴 것은 없다. 나머지는 로컬 커밋이 있다.
   return !a.contains(GitMergeAnalysis.fastForward);
+}
+
+/// 아직 원격에 없는 메모 id들: 인덱스와 HEAD의 차이 + (push 전이면) HEAD와 원격 브랜치의 차이.
+Set<String> _pendingNotes(Repository repo, String path, bool unpushed) {
+  final ids = <String>{};
+  void collect(Diff d) {
+    for (final delta in d.deltas) {
+      final p = delta.newFile.path.isNotEmpty ? delta.newFile.path : delta.oldFile.path;
+      if (p.startsWith(_notes) && p.endsWith('.md')) ids.add(p.substring(_notes.length, p.length - 3));
+    }
+    d.free();
+  }
+
+  final headTree = _unborn(repo, path) ? null : Commit.lookup(repo: repo, oid: repo.head.target).tree;
+  collect(Diff.treeToIndex(repo: repo, tree: headTree, index: repo.index));
+  if (unpushed && headTree != null) {
+    final theirsName = 'refs/remotes/origin/${_headBranch(path)}';
+    final theirsTree = Reference.list(repo).contains(theirsName)
+        ? Commit.lookup(repo: repo, oid: Reference.lookup(repo: repo, name: theirsName).target).tree
+        : null;
+    if (theirsTree != null) {
+      collect(Diff.treeToTree(repo: repo, oldTree: theirsTree, newTree: headTree));
+    } else {
+      // 원격에 브랜치가 아직 없으면 커밋한 메모 전부가 올릴 대상이다.
+      collect(Diff.treeToTree(repo: repo, oldTree: null, newTree: headTree));
+    }
+  }
+  return ids;
 }
 
 class _Integration {

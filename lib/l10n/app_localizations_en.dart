@@ -370,4 +370,34 @@ class AppLocalizationsEn extends AppLocalizations {
   String imageFailed(String name, String error) {
     return '$name: could not add the image: $error';
   }
+
+  @override
+  String get boardCaptureHint => 'Write something and press Enter';
+
+  @override
+  String get boardToday => 'Today';
+
+  @override
+  String get boardYesterday => 'Yesterday';
+
+  @override
+  String get boardThisWeek => 'This week';
+
+  @override
+  String get boardEarlier => 'Earlier';
+
+  @override
+  String get chipSynced => 'Synced';
+
+  @override
+  String get chipPending => 'Waiting to sync';
+
+  @override
+  String get chipConflict => 'Conflict copy';
+
+  @override
+  String get editorBack => 'Back to board';
+
+  @override
+  String get boardEmptyHint => 'Type in the box above, or create a new note.';
 }

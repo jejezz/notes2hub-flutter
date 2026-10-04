@@ -16,10 +16,27 @@ class Note {
   final DateTime updated;
   final String body;
 
-  /// 본문의 첫 비어 있지 않은 줄에서 Markdown 머리표(`#`)를 뗀 것. 없으면 빈 문자열.
-  String get title {
+  static final _imageLine = RegExp(r'^\s*!\[[^\]]*\]\([^)]*\)\s*$');
+  static final _imageRef = RegExp(r'!\[[^\]]*\]\(\.\./assets/([^)\s]+)\)');
+
+  /// 본문에서 이미지만 있는 줄을 뺀, 글이 있는 줄들 (공백 줄 제외, 앞뒤 공백 제거).
+  Iterable<String> get _textLines sync* {
     for (final line in body.split('\n')) {
-      final t = line.replaceFirst(RegExp(r'^\s*#{1,6}\s*'), '').trim();
+      final t = line.trim();
+      if (t.isNotEmpty && !_imageLine.hasMatch(t)) yield t;
+    }
+  }
+
+  static String _plain(String line) => line
+      .replaceFirst(RegExp(r'^#{1,6}\s*'), '')
+      .replaceAllMapped(RegExp(r'\[([^\]]*)\]\([^)]*\)'), (m) => m[1]!)
+      .replaceAll(RegExp(r'[*_`~]'), '')
+      .trim();
+
+  /// 본문의 첫 글 줄에서 Markdown 머리표(`#`)를 뗀 것. 이미지 줄은 건너뛴다. 없으면 빈 문자열.
+  String get title {
+    for (final line in _textLines) {
+      final t = _plain(line);
       if (t.isNotEmpty) return t;
     }
     return '';
@@ -28,19 +45,42 @@ class Note {
   /// 동기화 충돌로 만들어진 사본인가 — 제목 끝의 "(충돌 …)" 표시로 알아본다 ([conflictCopyOf]).
   bool get isConflictCopy => RegExp(r'\(충돌 [^)]*\)$').hasMatch(title);
 
-  /// 목록 미리보기용: 제목 줄 다음의 첫 비어 있지 않은 줄.
+  /// 제목 줄 다음의 글 줄 하나 (목록 미리보기용).
   String get snippet {
     var seenTitle = false;
-    for (final line in body.split('\n')) {
-      final t = line.trim();
-      if (t.isEmpty) continue;
+    for (final line in _textLines) {
       if (!seenTitle) {
         seenTitle = true;
         continue;
       }
-      return t.replaceFirst(RegExp(r'^#{1,6}\s*'), '');
+      final t = _plain(line);
+      if (t.isNotEmpty) return t;
     }
     return '';
+  }
+
+  /// 카드용 발췌: 제목 다음 글 줄들을 이어 붙인 것 (최대 [max]자).
+  String excerpt({int max = 160}) {
+    final parts = <String>[];
+    var seenTitle = false;
+    for (final line in _textLines) {
+      if (!seenTitle) {
+        seenTitle = true;
+        continue;
+      }
+      final t = _plain(line);
+      if (t.isEmpty) continue;
+      parts.add(t);
+      if (parts.join(' ').length >= max) break;
+    }
+    final text = parts.join(' ');
+    return text.length <= max ? text : '${text.substring(0, max).trimRight()}…';
+  }
+
+  /// 본문이 처음 참조하는 첨부 이미지 파일 이름 (카드 표지). 없으면 null.
+  String? get coverAsset {
+    final m = _imageRef.firstMatch(body);
+    return m == null ? null : Uri.decodeComponent(m.group(1)!);
   }
 
   Note copyWith({String? body, DateTime? updated}) => Note(

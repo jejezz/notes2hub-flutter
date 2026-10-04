@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:flutter/foundation.dart' show setEquals;
 import 'package:flutter/widgets.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -65,6 +66,7 @@ class SyncService extends ChangeNotifier with WidgetsBindingObserver {
   DateTime? _lastSync;
   int _pending = 0;
   bool _unpushed = false;
+  Set<String> _pendingNotes = const {};
   int _retryStep = 0;
   Future<void> _tail = Future.value();
   Timer? _retryTimer, _tick;
@@ -99,6 +101,9 @@ class SyncService extends ChangeNotifier with WidgetsBindingObserver {
 
   /// 커밋은 했지만 아직 push하지 못한 것이 있다 (오프라인 등으로 동기화가 중간에 실패).
   bool get unpushed => _unpushed;
+
+  /// 아직 원격에 반영되지 않은 메모 id들 — 보드 카드의 동기화 상태 표시용.
+  Set<String> get pendingNotes => _pendingNotes;
 
   /// 동기화할 것이 남았는가 — 상태 표시와 자동 재시도의 기준.
   bool get hasPendingWork => _pending > 0 || _unpushed;
@@ -229,6 +234,7 @@ class SyncService extends ChangeNotifier with WidgetsBindingObserver {
     _remoteAhead = false;
     _pending = 0;
     _unpushed = false;
+    _pendingNotes = const {};
     notifyListeners();
   }
 
@@ -267,9 +273,10 @@ class SyncService extends ChangeNotifier with WidgetsBindingObserver {
     if (!connected) return;
     try {
       final st = await _serial(_engine.status);
-      if (st.changed != _pending || st.unpushed != _unpushed) {
+      if (st.changed != _pending || st.unpushed != _unpushed || !setEquals(st.pendingNotes, _pendingNotes)) {
         _pending = st.changed;
         _unpushed = st.unpushed;
+        _pendingNotes = st.pendingNotes;
         notifyListeners();
       }
     } catch (_) {

@@ -255,5 +255,15 @@
         "type": "String"
       }
     }
-  }
+  },
+  "boardCaptureHint": "Write something and press Enter",
+  "boardToday": "Today",
+  "boardYesterday": "Yesterday",
+  "boardThisWeek": "This week",
+  "boardEarlier": "Earlier",
+  "chipSynced": "Synced",
+  "chipPending": "Waiting to sync",
+  "chipConflict": "Conflict copy",
+  "editorBack": "Back to board",
+  "boardEmptyHint": "Type in the box above, or create a new note."
 }

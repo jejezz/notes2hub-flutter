@@ -39,13 +39,16 @@ class SyncResult {
 
 /// 로컬에서 아직 원격에 반영되지 않은 것.
 class SyncStatus {
-  const SyncStatus({this.changed = 0, this.unpushed = false});
+  const SyncStatus({this.changed = 0, this.unpushed = false, this.pendingNotes = const {}});
 
   /// 저장했지만 아직 커밋하지 않은 메모 파일 수.
   final int changed;
 
   /// 커밋은 했지만 아직 push하지 못했다 (오프라인이었거나 push가 실패했다).
   final bool unpushed;
+
+  /// 아직 원격에 반영되지 않은 메모 id들 (저장은 했지만 커밋 전이거나, 커밋은 했지만 push 전).
+  final Set<String> pendingNotes;
 
   bool get isClean => changed == 0 && !unpushed;
 }

@@ -43,4 +43,26 @@ void main() {
     expect(copy.body, contains('mine'));
     expect(conflictCopyOf(Note(id: 'c', created: t, updated: t, body: ''), newId: 'd', label: 'x', now: t).title, '(충돌 x)');
   });
+
+  test('image-only lines are skipped for title, excerpt and snippet; cover is the first attached image', () {
+    final n = Note(
+      id: 'a',
+      created: t,
+      updated: t,
+      body: '![shot](../assets/p1.jpg)\n\n# Trip **notes**\n![x](../assets/p2.png)\nFlights and [hotel](https://x.y) booked\n\n- car',
+    );
+    expect(n.title, 'Trip notes');
+    expect(n.snippet, 'Flights and hotel booked');
+    expect(n.excerpt(), 'Flights and hotel booked - car');
+    expect(n.coverAsset, 'p1.jpg');
+    expect(Note(id: 'b', created: t, updated: t, body: 'no image').coverAsset, isNull);
+    expect(Note(id: 'c', created: t, updated: t, body: '![only](../assets/z.jpg)').title, '');
+  });
+
+  test('excerpt is cut at the limit with an ellipsis', () {
+    final n = Note(id: 'a', created: t, updated: t, body: 'T\n${'word ' * 100}');
+    final e = n.excerpt(max: 40);
+    expect(e.length, lessThanOrEqualTo(41));
+    expect(e, endsWith('…'));
+  });
 }

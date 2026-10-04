@@ -721,6 +721,66 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'{name}: 이미지를 추가하지 못했습니다: {error}'**
   String imageFailed(String name, String error);
+
+  /// No description provided for @boardCaptureHint.
+  ///
+  /// In ko, this message translates to:
+  /// **'생각나는 대로 쓰고 Enter를 누르세요'**
+  String get boardCaptureHint;
+
+  /// No description provided for @boardToday.
+  ///
+  /// In ko, this message translates to:
+  /// **'오늘'**
+  String get boardToday;
+
+  /// No description provided for @boardYesterday.
+  ///
+  /// In ko, this message translates to:
+  /// **'어제'**
+  String get boardYesterday;
+
+  /// No description provided for @boardThisWeek.
+  ///
+  /// In ko, this message translates to:
+  /// **'이번 주'**
+  String get boardThisWeek;
+
+  /// No description provided for @boardEarlier.
+  ///
+  /// In ko, this message translates to:
+  /// **'이전'**
+  String get boardEarlier;
+
+  /// No description provided for @chipSynced.
+  ///
+  /// In ko, this message translates to:
+  /// **'동기화됨'**
+  String get chipSynced;
+
+  /// No description provided for @chipPending.
+  ///
+  /// In ko, this message translates to:
+  /// **'동기화 대기'**
+  String get chipPending;
+
+  /// No description provided for @chipConflict.
+  ///
+  /// In ko, this message translates to:
+  /// **'충돌 사본'**
+  String get chipConflict;
+
+  /// No description provided for @editorBack.
+  ///
+  /// In ko, this message translates to:
+  /// **'보드로 돌아가기'**
+  String get editorBack;
+
+  /// No description provided for @boardEmptyHint.
+  ///
+  /// In ko, this message translates to:
+  /// **'위 입력창에 바로 쓰거나 새 메모를 만드세요.'**
+  String get boardEmptyHint;
 }
 
 class _AppLocalizationsDelegate

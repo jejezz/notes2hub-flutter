@@ -272,5 +272,15 @@
         "type": "String"
       }
     }
-  }
+  },
+  "boardCaptureHint": "생각나는 대로 쓰고 Enter를 누르세요",
+  "boardToday": "오늘",
+  "boardYesterday": "어제",
+  "boardThisWeek": "이번 주",
+  "boardEarlier": "이전",
+  "chipSynced": "동기화됨",
+  "chipPending": "동기화 대기",
+  "chipConflict": "충돌 사본",
+  "editorBack": "보드로 돌아가기",
+  "boardEmptyHint": "위 입력창에 바로 쓰거나 새 메모를 만드세요."
 }

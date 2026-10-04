@@ -45,6 +45,8 @@ void main() {
 
     c = make();
     await c.load();
+    expect(c.selectedId, isNull, reason: 'the app starts on the board');
+    c.select(id);
     expect(c.isDirty(id), isTrue);
     expect(c.selected!.body, 'v2 unsaved');
     expect(File('${tmp.path}/notes/$id.md').readAsStringSync(), contains('v1'));
@@ -61,6 +63,7 @@ void main() {
     c = make();
     await c.load();
     expect(c.isNew(id), isTrue);
+    c.select(id);
     expect(c.selected!.body, 'never saved');
   });
 
@@ -103,7 +106,7 @@ void main() {
     expect(c.notes.any((n) => n.id == blank), isFalse);
   });
 
-  test('delete removes file and draft and selects another note', () async {
+  test('delete removes file and draft and returns to the board', () async {
     final c = make();
     await c.load();
     final a = c.create();
@@ -114,7 +117,8 @@ void main() {
     await c.save(b);
     await c.delete(b);
     expect(File('${tmp.path}/notes/$b.md').existsSync(), isFalse);
-    expect(c.selectedId, a);
+    expect(c.selectedId, isNull);
+    expect(c.notes.map((n) => n.id), [a]);
   });
 
   test('search filters by body, newest first', () async {
@@ -130,5 +134,31 @@ void main() {
     expect(c.notes.map((n) => n.id), [b, a]);
     c.setQuery('banana');
     expect(c.notes.map((n) => n.id), [b]);
+  });
+
+  test('capture saves a note straight to disk without opening it', () async {
+    final c = make();
+    await c.load();
+    final id = await c.capture('  Buy milk\nand eggs  ');
+    expect(c.selectedId, isNull);
+    expect(c.isDirty(id), isFalse);
+    expect(File('${tmp.path}/notes/$id.md').readAsStringSync(), endsWith('Buy milk\nand eggs'));
+    expect(c.notes.single.title, 'Buy milk');
+  });
+
+  test('deselect returns to the board, keeps edits as drafts and drops an empty new note', () async {
+    final c = make();
+    await c.load();
+    final a = c.create();
+    c.edit(a, 'text');
+    await c.save(a);
+    c.edit(a, 'text edited');
+    c.deselect();
+    expect(c.selectedId, isNull);
+    expect(c.isDirty(a), isTrue);
+
+    final blank = c.create();
+    c.deselect();
+    expect(c.notes.any((n) => n.id == blank), isFalse);
   });
 }

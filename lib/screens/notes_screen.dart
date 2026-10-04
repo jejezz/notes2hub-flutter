@@ -7,7 +7,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
-import 'package:intl/intl.dart';
 import 'package:pasteboard/pasteboard.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -15,12 +14,12 @@ import '../app_identity.dart';
 import '../images/asset_store.dart';
 import '../images/image_processor.dart';
 import '../l10n/app_localizations.dart';
-import '../notes/note.dart';
 import '../notes/notes_controller.dart';
 import '../settings/settings_menus.dart';
 import '../sync/sync_service.dart';
 import '../theme/app_theme.dart';
 import '../theme/user_content.dart';
+import 'board_view.dart';
 import 'settings_dialog.dart';
 import 'sync_button.dart';
 
@@ -56,6 +55,8 @@ class _NotesScreenState extends State<NotesScreen> with WidgetsBindingObserver {
   final _editorFocus = FocusNode();
   final _search = TextEditingController();
   final _searchFocus = FocusNode();
+  final _capture = TextEditingController();
+  final _captureFocus = FocusNode();
   bool _preview = false;
   String? _editorId;
   bool _dragging = false;
@@ -82,6 +83,8 @@ class _NotesScreenState extends State<NotesScreen> with WidgetsBindingObserver {
     _editorFocus.dispose();
     _search.dispose();
     _searchFocus.dispose();
+    _capture.dispose();
+    _captureFocus.dispose();
     super.dispose();
   }
 
@@ -105,12 +108,39 @@ class _NotesScreenState extends State<NotesScreen> with WidgetsBindingObserver {
     }
   }
 
-  Future<void> _create() async {
-    final id = c.create();
+  /// 새 메모의 편집 화면을 연다.
+  void _create() {
+    c.create();
     setState(() => _preview = false);
     // 다음 프레임에 에디터가 만들어진 뒤 포커스.
     WidgetsBinding.instance.addPostFrameCallback((_) => _editorFocus.requestFocus());
-    assert(id.isNotEmpty);
+  }
+
+  void _open(String id) {
+    c.select(id);
+    setState(() => _preview = false);
+  }
+
+  /// 편집 화면에서 보드로. 저장하지 않은 편집은 초안으로 남고 카드에 "저장 안 됨"으로 보인다.
+  void _back() {
+    if (c.selectedId == null) return;
+    c.deselect();
+    setState(() {});
+  }
+
+  /// 보드의 빠른 메모: 입력한 글로 메모를 만들어 바로 저장한다.
+  Future<void> _quickCapture(String text) async {
+    try {
+      await c.capture(text);
+      _capture.clear();
+    } catch (e) {
+      if (mounted) _showError(AppLocalizations.of(context).noteSaveFailed('$e'));
+    }
+  }
+
+  void _focusSearch() {
+    if (c.selectedId != null) _back();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _searchFocus.requestFocus());
   }
 
   Future<void> _save() async {
@@ -309,7 +339,8 @@ class _NotesScreenState extends State<NotesScreen> with WidgetsBindingObserver {
         _primary(LogicalKeyboardKey.keyS, shift: true): _syncNow,
         _primary(LogicalKeyboardKey.comma): _openSettings,
         _primary(LogicalKeyboardKey.keyI, shift: true): _pickImages,
-        _primary(LogicalKeyboardKey.keyF): () => _searchFocus.requestFocus(),
+        _primary(LogicalKeyboardKey.keyF): _focusSearch,
+        const SingleActivator(LogicalKeyboardKey.escape): _back,
         _primary(LogicalKeyboardKey.keyE): () => setState(() => _preview = !_preview),
       },
       child: Focus(
@@ -359,36 +390,40 @@ class _NotesScreenState extends State<NotesScreen> with WidgetsBindingObserver {
               children: [
                 Positioned.fill(
                   child: ListenableBuilder(
-                    listenable: c,
+                    listenable: Listenable.merge([c, sync]),
                     builder: (context, _) {
                       if (!c.loaded) return const Center(child: CircularProgressIndicator());
-                      if (c.isEmpty) return _EmptyState(onCreate: _create);
-                      return Row(
-                        children: [
-                          SizedBox(
-                            width: 300,
-                            child: _NoteList(controller: c, search: _search, searchFocus: _searchFocus),
-                          ),
-                          VerticalDivider(width: 1, color: Theme.of(context).dividerColor),
-                          Expanded(
-                            child: c.selected == null
-                                ? Center(
-                                    child: Text(l10n.noteSelectHint, style: Theme.of(context).textTheme.bodyMedium),
-                                  )
-                                : _EditorPane(
-                                    controller: c,
-                                    editor: _editor,
-                                    focus: _editorFocus,
-                                    preview: _preview,
-                                    onPreviewChanged: (v) => setState(() => _preview = v),
-                                    onSave: _save,
-                                    onDelete: _delete,
-                                    assets: widget.assets,
-                                    onAddImage: _pickImages,
-                                    onPasteImages: _pasteImages,
-                                  ),
-                          ),
-                        ],
+                      final editing = c.selected != null;
+                      return AnimatedSwitcher(
+                        duration: const Duration(milliseconds: 160),
+                        child: editing
+                            ? _EditorPane(
+                                key: const ValueKey('editor'),
+                                controller: c,
+                                editor: _editor,
+                                focus: _editorFocus,
+                                preview: _preview,
+                                onPreviewChanged: (v) => setState(() => _preview = v),
+                                onSave: _save,
+                                onDelete: _delete,
+                                onBack: _back,
+                                assets: widget.assets,
+                                onAddImage: _pickImages,
+                                onPasteImages: _pasteImages,
+                              )
+                            : NotesBoard(
+                                key: const ValueKey('board'),
+                                controller: c,
+                                sync: sync,
+                                assets: widget.assets,
+                                capture: _capture,
+                                captureFocus: _captureFocus,
+                                search: _search,
+                                searchFocus: _searchFocus,
+                                onCapture: _quickCapture,
+                                onOpen: _open,
+                                onCreate: _create,
+                              ),
                       );
                     },
                   ),
@@ -427,150 +462,9 @@ class _DropOverlay extends StatelessWidget {
   }
 }
 
-class _EmptyState extends StatelessWidget {
-  const _EmptyState({required this.onCreate});
-
-  final VoidCallback onCreate;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Image.asset(AppIdentity.iconAsset, width: 48, height: 48),
-          const SizedBox(height: AppSpacing.lg),
-          Text(l10n.homeEmptyTitle, style: Theme.of(context).textTheme.titleMedium),
-          const SizedBox(height: AppSpacing.lg),
-          FilledButton(onPressed: onCreate, child: Text(l10n.homeEmptyAction)),
-        ],
-      ),
-    );
-  }
-}
-
-class _NoteList extends StatelessWidget {
-  const _NoteList({required this.controller, required this.search, required this.searchFocus});
-
-  final NotesController controller;
-  final TextEditingController search;
-  final FocusNode searchFocus;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    final notes = controller.notes;
-    return Column(
-      children: [
-        Padding(
-          padding: const EdgeInsets.all(AppSpacing.md),
-          child: TextField(
-            controller: search,
-            focusNode: searchFocus,
-            onChanged: controller.setQuery,
-            decoration: InputDecoration(
-              hintText: '${l10n.notesSearchHint} (${_mod}F)',
-              prefixIcon: const Icon(Icons.search_rounded, size: 18),
-              isDense: true,
-              suffixIcon: controller.query.isEmpty
-                  ? null
-                  : IconButton(
-                      icon: const Icon(Icons.close_rounded, size: 16),
-                      onPressed: () {
-                        search.clear();
-                        controller.setQuery('');
-                      },
-                    ),
-            ),
-          ),
-        ),
-        Expanded(
-          child: notes.isEmpty
-              ? Center(child: Text(l10n.notesNoResults, style: Theme.of(context).textTheme.bodySmall))
-              : ListView.builder(
-                  itemCount: notes.length,
-                  itemBuilder: (context, i) => _NoteTile(
-                    note: notes[i],
-                    selected: notes[i].id == controller.selectedId,
-                    dirty: controller.isDirty(notes[i].id),
-                    onTap: () => controller.select(notes[i].id),
-                  ),
-                ),
-        ),
-      ],
-    );
-  }
-}
-
-class _NoteTile extends StatelessWidget {
-  const _NoteTile({required this.note, required this.selected, required this.dirty, required this.onTap});
-
-  final Note note;
-  final bool selected;
-  final bool dirty;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    final theme = Theme.of(context);
-    final locale = Localizations.localeOf(context).toLanguageTag();
-    final date = DateFormat.yMd(locale).add_Hm().format(note.updated.toLocal());
-    final title = note.title.isEmpty ? l10n.noteUntitled : note.title;
-    return InkWell(
-      onTap: onTap,
-      splashFactory: NoSplash.splashFactory,
-      child: Container(
-        color: selected ? theme.colorScheme.primary.withValues(alpha: 0.12) : null,
-        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg, vertical: AppSpacing.md),
-        child: Row(
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: userContentStyle(
-                      theme.textTheme.bodyMedium?.copyWith(
-                        fontWeight: FontWeight.w700,
-                        color: note.title.isEmpty ? theme.colorScheme.onSurfaceVariant : null,
-                      ),
-                    ),
-                  ),
-                  if (note.snippet.isNotEmpty)
-                    Text(
-                      note.snippet,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: userContentStyle(theme.textTheme.bodySmall),
-                    ),
-                  Text(date, style: theme.textTheme.labelSmall?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
-                ],
-              ),
-            ),
-            if (note.isConflictCopy)
-              const Padding(
-                padding: EdgeInsets.only(left: AppSpacing.sm),
-                child: Icon(Icons.call_split_rounded, size: 16, color: AppColors.warning),
-              ),
-            if (dirty)
-              Tooltip(
-                message: l10n.noteUnsaved,
-                child: const Icon(Icons.circle, size: 8, color: AppColors.warning),
-              ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
 class _EditorPane extends StatelessWidget {
   const _EditorPane({
+    super.key,
     required this.controller,
     required this.editor,
     required this.focus,
@@ -578,6 +472,7 @@ class _EditorPane extends StatelessWidget {
     required this.onPreviewChanged,
     required this.onSave,
     required this.onDelete,
+    required this.onBack,
     required this.assets,
     required this.onAddImage,
     required this.onPasteImages,
@@ -590,6 +485,7 @@ class _EditorPane extends StatelessWidget {
   final ValueChanged<bool> onPreviewChanged;
   final VoidCallback onSave;
   final VoidCallback onDelete;
+  final VoidCallback onBack;
   final AssetStore assets;
   final VoidCallback onAddImage;
 
@@ -608,6 +504,12 @@ class _EditorPane extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg, vertical: AppSpacing.sm),
           child: Row(
             children: [
+              IconButton(
+                tooltip: '${l10n.editorBack} (Esc)',
+                icon: const Icon(Icons.arrow_back_rounded, size: 20),
+                onPressed: onBack,
+              ),
+              const SizedBox(width: AppSpacing.sm),
               SegmentedButton<bool>(
                 showSelectedIcon: false,
                 segments: [
@@ -657,45 +559,52 @@ class _EditorPane extends StatelessWidget {
         ),
         Divider(height: 1, color: theme.dividerColor),
         Expanded(
-          child: preview
-              ? Markdown(
-                  data: note.body,
-                  selectable: true,
-                  padding: const EdgeInsets.all(AppSpacing.xl),
-                  styleSheet: MarkdownStyleSheet.fromTheme(theme).copyWith(
-                    p: userContentStyle(theme.textTheme.bodyLarge),
-                    listBullet: userContentStyle(theme.textTheme.bodyLarge),
-                  ),
-                  imageBuilder: (uri, title, alt) => _NoteImage(uri: uri, alt: alt, assets: assets),
-                  onTapLink: (text, href, title) {
-                    final uri = href == null ? null : Uri.tryParse(href);
-                    if (uri != null) launchUrl(uri);
-                  },
-                )
-              : Padding(
-                  padding: const EdgeInsets.all(AppSpacing.xl),
-                  // 붙여넣기: 이미지가 있으면 첨부, 없으면 EditableText의 기본 동작 (callingAction).
-                  child: Actions(
-                    actions: {PasteTextIntent: _PasteImageAction(onPasteImages)},
-                    child: TextField(
-                      controller: editor,
-                      focusNode: focus,
-                      maxLines: null,
-                      expands: true,
-                      textAlignVertical: TextAlignVertical.top,
-                      keyboardType: TextInputType.multiline,
-                      style: userContentStyle(theme.textTheme.bodyLarge),
-                      decoration: InputDecoration(
-                        hintText: l10n.noteBodyHint,
-                        border: InputBorder.none,
-                        enabledBorder: InputBorder.none,
-                        focusedBorder: InputBorder.none,
-                        filled: false,
+          // 글 읽기·쓰기 좋은 폭으로 가운데에 모은다.
+          child: Align(
+            alignment: Alignment.topCenter,
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 820),
+              child: preview
+                  ? Markdown(
+                      data: note.body,
+                      selectable: true,
+                      padding: const EdgeInsets.all(AppSpacing.xl),
+                      styleSheet: MarkdownStyleSheet.fromTheme(theme).copyWith(
+                        p: userContentStyle(theme.textTheme.bodyLarge),
+                        listBullet: userContentStyle(theme.textTheme.bodyLarge),
                       ),
-                      onChanged: (v) => controller.edit(note.id, v),
+                      imageBuilder: (uri, title, alt) => _NoteImage(uri: uri, alt: alt, assets: assets),
+                      onTapLink: (text, href, title) {
+                        final uri = href == null ? null : Uri.tryParse(href);
+                        if (uri != null) launchUrl(uri);
+                      },
+                    )
+                  : Padding(
+                      padding: const EdgeInsets.all(AppSpacing.xl),
+                      // 붙여넣기: 이미지가 있으면 첨부, 없으면 EditableText의 기본 동작 (callingAction).
+                      child: Actions(
+                        actions: {PasteTextIntent: _PasteImageAction(onPasteImages)},
+                        child: TextField(
+                          controller: editor,
+                          focusNode: focus,
+                          maxLines: null,
+                          expands: true,
+                          textAlignVertical: TextAlignVertical.top,
+                          keyboardType: TextInputType.multiline,
+                          style: userContentStyle(theme.textTheme.bodyLarge),
+                          decoration: InputDecoration(
+                            hintText: l10n.noteBodyHint,
+                            border: InputBorder.none,
+                            enabledBorder: InputBorder.none,
+                            focusedBorder: InputBorder.none,
+                            filled: false,
+                          ),
+                          onChanged: (v) => controller.edit(note.id, v),
+                        ),
+                      ),
                     ),
-                  ),
-                ),
+            ),
+          ),
         ),
       ],
     );

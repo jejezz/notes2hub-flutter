@@ -74,8 +74,7 @@ class NotesController extends ChangeNotifier {
         _working[d.id] = d;
       }
     }
-    final first = notes;
-    _selectedId = first.isEmpty ? null : first.first.id;
+    _selectedId = null; // 시작은 보드 — 메모를 고르면 편집 화면이 열린다.
     _loaded = true;
     notifyListeners();
   }
@@ -96,6 +95,25 @@ class NotesController extends ChangeNotifier {
     _dropEmptyNew(except: id);
     _selectedId = id;
     notifyListeners();
+  }
+
+  /// 편집 화면에서 보드로 돌아간다. 대기 중인 초안은 기록하고, 아무것도 쓰지 않은 새 메모는 버린다.
+  void deselect() {
+    _flushDrafts();
+    _dropEmptyNew(except: '');
+    _selectedId = null;
+    notifyListeners();
+  }
+
+  /// 빠른 메모: 글 한 덩이로 메모를 만들어 바로 저장한다 (편집 화면을 열지 않음). 만든 id를 돌려준다.
+  Future<String> capture(String text) async {
+    final now = DateTime.now();
+    final note = Note(id: _uuid.v4(), created: now, updated: now, body: text.trim());
+    await _store.save(note);
+    _saved[note.id] = note;
+    notifyListeners();
+    onLocalChange?.call();
+    return note.id;
   }
 
   /// 새 메모는 저장하기 전까지 파일이 없다 (빈 파일이 저장소에 쌓이지 않게).
@@ -182,13 +200,7 @@ class NotesController extends ChangeNotifier {
       await _store.save(copy);
       _saved[copy.id] = copy;
     }
-    if (_selectedId != null && selected == null) {
-      final rest = notes;
-      _selectedId = rest.isEmpty ? null : rest.first.id;
-    } else if (_selectedId == null) {
-      final rest = notes;
-      _selectedId = rest.isEmpty ? null : rest.first.id;
-    }
+    if (_selectedId != null && selected == null) _selectedId = null; // 원격에서 지워졌다
     notifyListeners();
   }
 
@@ -205,9 +217,7 @@ class NotesController extends ChangeNotifier {
   }
 
   void _afterRemoval(String id) {
-    if (_selectedId != id) return;
-    final rest = notes;
-    _selectedId = rest.isEmpty ? null : rest.first.id;
+    if (_selectedId == id) _selectedId = null; // 지운 메모의 편집 화면에서 보드로 돌아간다.
   }
 
   /// 대기 중인 초안을 즉시 기록한다 (선택 변경, 앱이 백그라운드로 갈 때).

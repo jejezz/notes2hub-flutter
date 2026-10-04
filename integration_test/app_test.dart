@@ -27,7 +27,8 @@ void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
   testWidgets('secure storage round-trip in the sandbox', (tester) async {
-    final store = SecureTokenStore();
+    // 실제 앱의 토큰(기본 키 'github_token')을 건드리지 않도록 테스트 전용 키를 쓴다.
+    final store = SecureTokenStore(key: 'github_token_integration_test');
     await store.delete();
     expect(await store.read(), isNull);
     await store.write('ghp_integration_test_value');
