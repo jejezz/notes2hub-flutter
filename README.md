@@ -46,7 +46,7 @@ Download from [**Releases**](https://github.com/jejezz/notes2hub-flutter/release
 
 | OS | File |
 |---|---|
-| macOS 12.0+ | `Notes2Hub-<version>-macos-universal.dmg` — open it and drag Notes2Hub to Applications |
+| macOS 26.0+ (Apple Silicon) | `Notes2Hub-<version>-macos-arm64.dmg` — open it and drag Notes2Hub to Applications |
 | Windows 10/11 (x64) | `Notes2Hub-<version>-windows-x64-setup.exe` |
 | Linux (x64) | `Notes2Hub-<version>-linux-x64.tar.gz` — extract and run `./install.sh` (`--remove` to uninstall) |
 

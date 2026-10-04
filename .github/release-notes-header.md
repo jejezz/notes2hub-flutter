@@ -2,7 +2,7 @@
 
 | OS | 받을 파일 / File |
 |---|---|
-| macOS (12.0 이상) | `*-macos-universal.dmg` — 열어서 앱을 Applications로 끌어다 놓으세요 |
+| macOS (26.0 이상, Apple Silicon) | `*-macos-arm64.dmg` — 열어서 앱을 Applications로 끌어다 놓으세요 |
 | Windows 10/11 (x64) | `*-windows-x64-setup.exe` |
 | Linux (x64) | `*-linux-x64.tar.gz` — 압축을 풀고 `./install.sh`를 실행하세요 (`--remove`로 제거) |
 

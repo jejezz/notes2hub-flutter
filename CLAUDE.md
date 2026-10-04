@@ -10,8 +10,9 @@ GitHub 저장소를 백엔드로 쓰는 Markdown 메모 앱. 서버/구독 없�
 - 전부 공유(선택적 공유 없음). 에디터는 Markdown 편집 + 미리보기.
 - 이미지 1MB 초과 시 JPEG 저화질로 자동 변환.
 - git 엔진은 `SyncEngine` 인터페이스 뒤에 둔다: git2dart(libgit2, 기본) → 실패 시 git CLI(데스크톱)/REST API(모바일).
+- **macOS는 Apple Silicon + macOS 26.0+ 전용** (git2dart 동봉 libgit2가 arm64·minos 26.0). DMG 이름은 `macos-arm64`. Intel/구형 macOS가 필요해지면 `GitCliEngine` 추가.
 - 소스 repo(`notes2hub-flutter`)와 메모 데이터 repo(`notes2hub-data` 등)는 별개.
 - 토큰은 보안 저장소에만, 로그/파일 금지.
 
 ## 현재 단계
-Phase 0: 뼈대 + git2dart PoC. 이후 Phase는 docs/PLAN.md §8.
+Phase 0 완료(뼈대 + macOS PoC). 다음: Phase 1(로컬 메모 CRUD·에디터). 이후 Phase는 docs/PLAN.md §8.

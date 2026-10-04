@@ -213,13 +213,12 @@ jobs:
 
           codesign --verify --deep --strict --verbose=2 "$APP_PATH"
 
-      # conventions/packaging.md §1: <FileName>-<version>-macos-universal.dmg
-      # (Flutter's release build is universal by default; if a native
-      # dependency limits it to one architecture, write that instead).
+      # conventions/packaging.md §1: <FileName>-<version>-macos-<arch>.dmg
+      # git2dart's libgit2 is arm64-only (macOS 26+), so this app is arm64.
       - name: Package DMG
         run: |
           APP_PATH="build/macos/Build/Products/Release/$(ls build/macos/Build/Products/Release | grep '\.app$' | head -1)"
-          DMG_PATH="${FILE_NAME}-${VERSION}-macos-universal.dmg"
+          DMG_PATH="${FILE_NAME}-${VERSION}-macos-arm64.dmg"
 
           # create-dmg is known to sometimes exit non-zero over unrelated
           # warnings even after producing a working DMG, so don't treat that

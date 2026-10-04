@@ -46,7 +46,7 @@
 
 | OS | 파일 |
 |---|---|
-| macOS 12.0 이상 | `Notes2Hub-<버전>-macos-universal.dmg` — 열어서 앱을 Applications 폴더로 끌어다 놓으세요 |
+| macOS 26.0 이상 (Apple Silicon) | `Notes2Hub-<버전>-macos-arm64.dmg` — 열어서 앱을 Applications 폴더로 끌어다 놓으세요 |
 | Windows 10/11 (x64) | `Notes2Hub-<버전>-windows-x64-setup.exe` |
 | Linux (x64) | `Notes2Hub-<버전>-linux-x64.tar.gz` — 압축을 풀고 `./install.sh` 실행 (`--remove`로 제거) |
 

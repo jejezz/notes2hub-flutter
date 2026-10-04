@@ -1,2 +1,6 @@
 #include "../../Flutter/Flutter-Release.xcconfig"
 #include "Warnings.xcconfig"
+
+// git2dart ships an arm64-only libgit2 (docs/PLAN.md §3) — build arm64 only.
+ARCHS = arm64
+EXCLUDED_ARCHS = x86_64
