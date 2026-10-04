@@ -111,8 +111,18 @@ assets/
 
 **CA 번들**: `assets/certs/cacert.pem`(Mozilla, git2dart_binaries 동봉본)을 시작 시 앱 데이터 폴더로 풀어 `Libgit2.setSSLCertLocations`에 지정한다. 라이선스 안내는 `assets/licenses/mozilla-ca-bundle.txt`(원문 확인 필요).
 
+**Phase 3 보강 (2026-10-04)**
+- **올리지 못한 변경 추적**: 커밋은 했지만 push가 실패한 경우를 `SyncStatus.unpushed`로 감지한다(마지막으로 가져온 원격 상태와 비교, 네트워크 불필요). 이전에는 "대기 0 = 동기화됨"으로 잘못 보였다. 상태 버튼에 "올리지 못한 변경"으로 표시.
+- **자동 재시도(자동 모드만)**: 동기화가 실패(오프라인 등)하면 30초 → 1분 → 2분 → 5분(반복) 간격으로 다시 시도, 성공하면 멈춘다. 토큰이 거절된 경우(`authFailed`)는 재시도하지 않고 "다시 로그인"을 표시. 수동 모드는 스스로 재시도하지 않는다.
+- **창 복귀·주기 pull로 네트워크가 되는 것을 확인하면**, 자동 모드에서 남은 변경을 바로 올린다.
+- **동기화 중 저장**하면 끝난 뒤 한 번 더 예약한다(자동 모드).
+- **git 작업 직렬화**: status·pull·sync·connect가 겹치면 index 잠금 충돌이 나므로 서비스에서 한 번에 하나씩 실행한다.
+- **표시**: "3분 전" 같은 상대 시간을 30초마다 갱신. 충돌 사본은 목록에서 분기 아이콘으로 구별.
+- **알려진 한계**: 동기화 도중 앱을 강제 종료하면 `.git/index.lock`이 남을 수 있다(다음 동기화 오류로 드러남 — 수동 삭제). 메뉴 막대(File 메뉴)는 아직 없고 단축키/툴바만 있다.
+
 **자동 검증**: `flutter test`(엔진 9개 시나리오 — 로컬 bare origin으로 충돌·삭제·병합·오프라인 포함 / 서비스 / GitHub API / Device Flow) + `flutter test integration_test/app_test.dart -d macos`(샌드박스 앱에서 키체인·데이터 폴더·CA 번들 + HTTPS clone).
-**미검증**: 실제 GitHub private repo에 토큰으로 push, 실제 Device Flow 로그인(Client ID 필요).
+**실사용 확인(2026-10-04, 사용자)**: 토큰 로그인·저장소 연결·동기화 정상.
+**미검증**: 실제 Device Flow 로그인(Client ID 필요), 두 PC 간 실제 충돌.
 
 ## 5. 동작 규칙
 

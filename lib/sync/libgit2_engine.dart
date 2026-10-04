@@ -27,13 +27,13 @@ class LibGit2Engine implements SyncEngine {
   }
 
   @override
-  Future<int> pendingCount() {
+  Future<SyncStatus> status() {
     final path = dir.path;
     return Isolate.run(() {
-      if (!Directory('$path/.git').existsSync()) return 0;
+      if (!Directory('$path/.git').existsSync()) return const SyncStatus();
       final repo = Repository.open(path);
       try {
-        return _pending(repo, path);
+        return SyncStatus(changed: _pending(repo, path), unpushed: _unpushed(repo, path));
       } finally {
         repo.free();
       }
@@ -186,6 +186,20 @@ int _commit(Repository repo, String path, Signature sig, String label) {
     parents: _unborn(repo, path) ? [] : [Commit.lookup(repo: repo, oid: repo.head.target)],
   );
   return n;
+}
+
+/// 커밋이 원격보다 앞서 있는가 (push하지 못한 커밋). 원격에 브랜치가 아예 없어도 true.
+bool _unpushed(Repository repo, String path) {
+  if (_unborn(repo, path)) return false;
+  final branch = _headBranch(path);
+  final theirsName = 'refs/remotes/origin/$branch';
+  if (!Reference.list(repo).contains(theirsName)) return true;
+  final ours = repo.head.target;
+  final theirs = Reference.lookup(repo: repo, name: theirsName).target;
+  if (ours.sha == theirs.sha) return false;
+  final a = Merge.analysis(repo: repo, theirHead: theirs).result;
+  // 원격이 앞서 있기만 하면(fast-forward) 올릴 것은 없다. 나머지는 로컬 커밋이 있다.
+  return !a.contains(GitMergeAnalysis.fastForward);
 }
 
 class _Integration {

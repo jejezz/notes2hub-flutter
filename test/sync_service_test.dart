@@ -203,4 +203,90 @@ void main() {
     again.dispose();
     // the first service lost its onLocalChange hook to `again`; fine for this test
   });
+
+  test('status shows unpushed work even when nothing is uncommitted', () async {
+    await svc.loginWithToken('good');
+    await svc.connectRepo(repo);
+    engine.unpushed = true;
+    await svc.refreshPending();
+    expect(svc.unpushed, isTrue);
+    expect(svc.hasPendingWork, isTrue);
+  });
+
+  test('auto mode retries after a failure with growing delays, then stops once it succeeds', () async {
+    SharedPreferences.setMockInitialValues({});
+    final s = SyncService(
+      prefs: await SharedPreferences.getInstance(),
+      tokens: tokens,
+      engine: engine,
+      notes: notes,
+      apiFactory: fakeApi,
+      autoSyncDelay: const Duration(milliseconds: 20),
+      retryDelays: const [Duration(milliseconds: 40), Duration(milliseconds: 80)],
+      pullInterval: const Duration(hours: 1),
+    );
+    await s.init();
+    await s.loginWithToken('good');
+    await s.connectRepo(repo);
+    await s.setAutoSync(true);
+    engine.calls.clear();
+    engine.syncQueue = [
+      const SyncResult(error: 'failed to resolve address', offline: true),
+      const SyncResult(error: 'failed to resolve address', offline: true),
+      const SyncResult(pushed: true),
+    ];
+    await s.sync();
+    expect(s.offline, isTrue);
+    await Future<void>.delayed(const Duration(milliseconds: 400));
+    expect(engine.calls.where((c) => c == 'sync'), hasLength(3)); // initial + 2 retries
+    expect(s.offline, isFalse);
+    expect(s.error, isNull);
+    await Future<void>.delayed(const Duration(milliseconds: 200));
+    expect(engine.calls.where((c) => c == 'sync'), hasLength(3)); // no further retries
+    s.dispose();
+  });
+
+  test('manual mode never retries by itself, and a rejected token is not retried in auto mode', () async {
+    await svc.loginWithToken('good');
+    await svc.connectRepo(repo);
+    engine.calls.clear();
+    engine.syncResult = const SyncResult(error: 'offline', offline: true);
+    await svc.sync();
+    await Future<void>.delayed(const Duration(milliseconds: 150));
+    expect(engine.calls.where((c) => c == 'sync'), hasLength(1));
+
+    await svc.setAutoSync(true);
+    engine.calls.clear();
+    engine.syncResult = const SyncResult(error: '401', authFailed: true);
+    await svc.sync();
+    await Future<void>.delayed(const Duration(milliseconds: 150));
+    expect(engine.calls.where((c) => c == 'sync'), hasLength(1));
+    expect(svc.needsReauth, isTrue);
+  });
+
+  test('git operations never overlap (status/pull/sync are queued)', () async {
+    await svc.loginWithToken('good');
+    await svc.connectRepo(repo);
+    engine.latency = const Duration(milliseconds: 20);
+    engine.maxInFlight = 0;
+    await Future.wait([svc.refreshPending(), svc.autoPull(), svc.sync(), svc.refreshPending()]);
+    expect(engine.maxInFlight, 1);
+  });
+
+  test('saving while a sync is running schedules another one in auto mode', () async {
+    await svc.loginWithToken('good');
+    await svc.connectRepo(repo);
+    await svc.setAutoSync(true);
+    engine.calls.clear();
+    engine.latency = const Duration(milliseconds: 60);
+    final running = svc.sync();
+    await Future<void>.delayed(const Duration(milliseconds: 10));
+    engine.pending = 1; // a save lands mid-sync
+    final id = notes.create();
+    notes.edit(id, 'late edit');
+    await notes.save(id);
+    await running;
+    await Future<void>.delayed(const Duration(milliseconds: 400));
+    expect(engine.calls.where((c) => c == 'sync').length, greaterThanOrEqualTo(2));
+  });
 }

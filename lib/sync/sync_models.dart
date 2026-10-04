@@ -37,14 +37,27 @@ class SyncResult {
   bool get ok => error == null;
 }
 
+/// 로컬에서 아직 원격에 반영되지 않은 것.
+class SyncStatus {
+  const SyncStatus({this.changed = 0, this.unpushed = false});
+
+  /// 저장했지만 아직 커밋하지 않은 메모 파일 수.
+  final int changed;
+
+  /// 커밋은 했지만 아직 push하지 못했다 (오프라인이었거나 push가 실패했다).
+  final bool unpushed;
+
+  bool get isClean => changed == 0 && !unpushed;
+}
+
 abstract class SyncEngine {
   /// [dir]에 git 저장소를 만들고(이미 있으면 재사용) 원격을 연결한 뒤, 원격에 이력이
   /// 있으면 그 브랜치를 체크아웃한다. 로컬에 있던 메모 파일은 그대로 남아 다음
   /// 동기화에서 커밋된다.
   Future<SyncResult> connect({required String remoteUrl, required String token});
 
-  /// 저장된 메모 중 아직 커밋되지 않은 파일 수.
-  Future<int> pendingCount();
+  /// 동기화가 필요한 것이 남았는지. 마지막으로 가져온 원격 상태와 비교한다(네트워크 없음).
+  Future<SyncStatus> status();
 
   /// 커밋 → 가져오기(병합) → 푸시.
   Future<SyncResult> sync({required String token, required GitIdentity identity, required String deviceLabel});

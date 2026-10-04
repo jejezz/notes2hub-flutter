@@ -199,5 +199,6 @@
         "type": "int"
       }
     }
-  }
+  },
+  "syncUnpushed": "Changes not uploaded yet"
 }

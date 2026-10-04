@@ -382,6 +382,11 @@ class _NoteTile extends StatelessWidget {
                 ],
               ),
             ),
+            if (note.isConflictCopy)
+              const Padding(
+                padding: EdgeInsets.only(left: AppSpacing.sm),
+                child: Icon(Icons.call_split_rounded, size: 16, color: AppColors.warning),
+              ),
             if (dirty)
               Tooltip(
                 message: l10n.noteUnsaved,

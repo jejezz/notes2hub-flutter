@@ -22,6 +22,7 @@ class SyncService extends ChangeNotifier with WidgetsBindingObserver {
     GitHubApi Function(String token)? apiFactory,
     this.autoSyncDelay = const Duration(seconds: 30),
     this.pullInterval = const Duration(minutes: 5),
+    this.retryDelays = const [Duration(seconds: 30), Duration(minutes: 1), Duration(minutes: 2), Duration(minutes: 5)],
     String? deviceLabel,
   })  : _apiFactory = apiFactory ?? GitHubApi.new,
         deviceLabel = deviceLabel ?? _defaultDeviceLabel() {
@@ -50,6 +51,9 @@ class SyncService extends ChangeNotifier with WidgetsBindingObserver {
   final GitHubApi Function(String token) _apiFactory;
   final Duration autoSyncDelay;
   final Duration pullInterval;
+
+  /// 자동 모드에서 동기화가 실패(오프라인 등)했을 때 다시 시도하는 간격. 마지막 값을 반복한다.
+  final List<Duration> retryDelays;
   final String deviceLabel;
 
   String? _token;
@@ -60,6 +64,10 @@ class SyncService extends ChangeNotifier with WidgetsBindingObserver {
   String? _error;
   DateTime? _lastSync;
   int _pending = 0;
+  bool _unpushed = false;
+  int _retryStep = 0;
+  Future<void> _tail = Future.value();
+  Timer? _retryTimer, _tick;
   int _lastConflictCopies = 0;
   Timer? _autoTimer, _pullTimer, _pendingTimer;
   final _events = StreamController<SyncEvent>.broadcast();
@@ -89,6 +97,12 @@ class SyncService extends ChangeNotifier with WidgetsBindingObserver {
   /// 저장했지만 아직 동기화(커밋)하지 않은 파일 수.
   int get pending => _pending;
 
+  /// 커밋은 했지만 아직 push하지 못한 것이 있다 (오프라인 등으로 동기화가 중간에 실패).
+  bool get unpushed => _unpushed;
+
+  /// 동기화할 것이 남았는가 — 상태 표시와 자동 재시도의 기준.
+  bool get hasPendingWork => _pending > 0 || _unpushed;
+
   /// 마지막 동기화에서 만든 충돌 사본 수 (알림용).
   int get lastConflictCopies => _lastConflictCopies;
 
@@ -117,6 +131,10 @@ class SyncService extends ChangeNotifier with WidgetsBindingObserver {
       await refreshPending();
       unawaited(autoPull());
     }
+    // "3분 전" 같은 표시가 멈춰 있지 않게 주기적으로 다시 그린다.
+    _tick = Timer.periodic(const Duration(seconds: 30), (_) {
+      if (_lastSync != null) notifyListeners();
+    });
     notifyListeners();
   }
 
@@ -144,6 +162,8 @@ class SyncService extends ChangeNotifier with WidgetsBindingObserver {
     _autoTimer?.cancel();
     _pullTimer?.cancel();
     _pendingTimer?.cancel();
+    _retryTimer?.cancel();
+    _tick?.cancel();
     _notes.onLocalChange = null;
     _events.close();
     super.dispose();
@@ -169,6 +189,7 @@ class SyncService extends ChangeNotifier with WidgetsBindingObserver {
   Future<void> logout() async {
     _autoTimer?.cancel();
     _pullTimer?.cancel();
+    _retryTimer?.cancel();
     await _tokens.delete();
     _token = null;
     for (final k in [_kLogin, _kUserId, _kName, _kRepoName, _kRepoUrl]) {
@@ -202,16 +223,22 @@ class SyncService extends ChangeNotifier with WidgetsBindingObserver {
   Future<void> disconnectRepo() async {
     _autoTimer?.cancel();
     _pullTimer?.cancel();
+    _retryTimer?.cancel();
     await _prefs.remove(_kRepoName);
     await _prefs.remove(_kRepoUrl);
     _remoteAhead = false;
+    _pending = 0;
+    _unpushed = false;
     notifyListeners();
   }
 
   Future<void> setAutoSync(bool value) async {
     await _prefs.setBool(_kAutoSync, value);
-    if (!value) _autoTimer?.cancel();
-    if (value && _pending > 0) _scheduleAutoSync();
+    if (!value) {
+      _autoTimer?.cancel();
+      _retryTimer?.cancel();
+    }
+    if (value && connected && hasPendingWork) _scheduleAutoSync();
     notifyListeners();
   }
 
@@ -229,12 +256,20 @@ class SyncService extends ChangeNotifier with WidgetsBindingObserver {
     _autoTimer = Timer(autoSyncDelay, () => unawaited(sync()));
   }
 
+  /// git 작업끼리 겹치면 index 잠금 충돌이 나므로 하나씩 차례로 실행한다.
+  Future<T> _serial<T>(Future<T> Function() job) {
+    final run = _tail.then((_) => job());
+    _tail = run.then((_) {}, onError: (_) {});
+    return run;
+  }
+
   Future<void> refreshPending() async {
     if (!connected) return;
     try {
-      final n = await _engine.pendingCount();
-      if (n != _pending) {
-        _pending = n;
+      final st = await _serial(_engine.status);
+      if (st.changed != _pending || st.unpushed != _unpushed) {
+        _pending = st.changed;
+        _unpushed = st.unpushed;
         notifyListeners();
       }
     } catch (_) {
@@ -247,37 +282,61 @@ class SyncService extends ChangeNotifier with WidgetsBindingObserver {
     final identity = _identity;
     if (!connected || _syncing || identity == null) return;
     _autoTimer?.cancel();
+    _retryTimer?.cancel();
     _syncing = true;
     _lastConflictCopies = 0;
     notifyListeners();
     try {
-      final r = await _engine.sync(token: _token!, identity: identity, deviceLabel: deviceLabel);
+      final r = await _serial(() => _engine.sync(token: _token!, identity: identity, deviceLabel: deviceLabel));
       _applyResult(r);
       if (r.ok) {
         _lastSync = DateTime.now();
         _remoteAhead = false;
         _lastConflictCopies = r.conflictCopies;
+        _retryStep = 0;
       }
       if (r.integrated || r.conflictCopies > 0) await _notes.reload(label: deviceLabel);
       if (!r.ok && !r.offline) _emit(SyncEvent.failed(r.error!));
       if (r.ok && r.conflictCopies > 0) _emit(SyncEvent.conflictCopies(r.conflictCopies));
-    } finally {
       _syncing = false;
       await refreshPending();
+      _planFollowUp(r);
+    } finally {
+      _syncing = false;
       notifyListeners();
+    }
+  }
+
+  /// 자동 모드의 뒷정리: 실패하면 간격을 늘려 가며 다시 시도하고(오프라인 → 복귀 시 자동으로 올라감),
+  /// 동기화하는 사이에 또 저장했다면 한 번 더 예약한다. 로그인이 거절된 경우는 사용자가 해결해야 한다.
+  void _planFollowUp(SyncResult r) {
+    if (!autoSync || _disposed) return;
+    if (!r.ok) {
+      if (r.authFailed) return;
+      final delay = retryDelays[_retryStep.clamp(0, retryDelays.length - 1)];
+      _retryStep++;
+      _retryTimer?.cancel();
+      _retryTimer = Timer(delay, () => unawaited(sync()));
+    } else if (hasPendingWork) {
+      _scheduleAutoSync();
     }
   }
 
   /// 앱 시작·창 복귀·주기: 저장된 변경이 없을 때만 원격 변경을 가져온다.
   Future<void> autoPull() async {
     if (!connected || _syncing) return;
-    final r = await _engine.pull(token: _token!);
+    final r = await _serial(() => _engine.pull(token: _token!));
     _applyResult(r);
     if (r.ok) {
       _remoteAhead = r.needsSync;
       if (r.integrated) await _notes.reload(label: deviceLabel);
     }
     notifyListeners();
+    // 네트워크가 되는 것을 확인했으니, 못 올린 변경이 남아 있으면 자동 모드에서 바로 올린다.
+    if (r.ok && autoSync && !_syncing) {
+      await refreshPending();
+      if (hasPendingWork) unawaited(sync());
+    }
   }
 
   void _applyResult(SyncResult r) {

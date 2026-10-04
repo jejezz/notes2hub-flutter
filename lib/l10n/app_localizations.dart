@@ -667,6 +667,12 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'저장하지 않은 메모 {count}개는 동기화에 포함되지 않았습니다'**
   String syncUnsavedSkipped(int count);
+
+  /// No description provided for @syncUnpushed.
+  ///
+  /// In ko, this message translates to:
+  /// **'올리지 못한 변경'**
+  String get syncUnpushed;
 }
 
 class _AppLocalizationsDelegate

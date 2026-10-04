@@ -42,6 +42,7 @@ class SyncButton extends StatelessWidget {
       if (sync.offline) return (Icons.cloud_off_rounded, AppColors.warning, l10n.syncOffline, null);
       if (sync.error != null) return (Icons.error_outline_rounded, theme.colorScheme.error, l10n.syncError, sync.error);
       if (sync.pending > 0) return (Icons.cloud_upload_outlined, AppColors.warning, l10n.syncPending(sync.pending), null);
+      if (sync.unpushed) return (Icons.cloud_upload_outlined, AppColors.warning, l10n.syncUnpushed, null);
       if (sync.remoteAhead) return (Icons.cloud_download_outlined, AppColors.warning, l10n.syncRemoteAhead, null);
       final t = sync.lastSync;
       return (Icons.cloud_done_outlined, muted, t == null ? l10n.syncDone : l10n.syncDoneAgo(ago(l10n, t)), null);

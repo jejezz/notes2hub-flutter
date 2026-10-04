@@ -333,4 +333,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String syncUnsavedSkipped(int count) {
     return '$count unsaved note(s) were not included in the sync';
   }
+
+  @override
+  String get syncUnpushed => 'Changes not uploaded yet';
 }

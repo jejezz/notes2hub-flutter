@@ -330,4 +330,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String syncUnsavedSkipped(int count) {
     return '저장하지 않은 메모 $count개는 동기화에 포함되지 않았습니다';
   }
+
+  @override
+  String get syncUnpushed => '올리지 못한 변경';
 }

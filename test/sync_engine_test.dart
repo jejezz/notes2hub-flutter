@@ -41,12 +41,12 @@ void main() {
   test('first sync to an empty remote pushes; another PC connects and receives the note', () async {
     expect((await a.connect(remoteUrl: origin, token: '')).ok, isTrue);
     write(da, 'n1', '# one');
-    expect(await a.pendingCount(), 1);
+    expect((await a.status()).changed, 1);
     final r = await sync(a);
     expect(r.ok, isTrue, reason: r.error);
     expect(r.pushed, isTrue);
     expect(r.committed, 1);
-    expect(await a.pendingCount(), 0);
+    expect((await a.status()).changed, 0);
 
     final c = await b.connect(remoteUrl: origin, token: '');
     expect(c.ok, isTrue, reason: c.error);
@@ -136,7 +136,7 @@ void main() {
     await b.connect(remoteUrl: origin, token: '');
 
     noteFile(da, 'gone').deleteSync();
-    expect(await a.pendingCount(), 1);
+    expect((await a.status()).changed, 1);
     await sync(a);
     final r = await sync(b);
     expect(r.ok, isTrue, reason: r.error);
@@ -189,9 +189,50 @@ void main() {
     Directory(origin).renameSync('${origin}_gone');
     final r = await sync(a);
     expect(r.ok, isFalse);
-    expect(await a.pendingCount(), 0);
+    expect((await a.status()).changed, 0);
     Directory('${origin}_gone').renameSync(origin);
     final r2 = await sync(a);
     expect(r2.pushed, isTrue, reason: r2.error);
+  });
+
+  test('status: clean after sync, unpushed after a failed push, not unpushed when only behind', () async {
+    await a.connect(remoteUrl: origin, token: '');
+    write(da, 's1', '# s1');
+    expect((await a.status()).changed, 1);
+    await sync(a);
+    expect((await a.status()).isClean, isTrue);
+
+    // commit succeeds locally but the remote is unreachable → "unpushed"
+    write(da, 's2', '# s2');
+    Directory(origin).renameSync('${origin}_gone');
+    expect((await sync(a)).ok, isFalse);
+    var st = await a.status();
+    expect(st.changed, 0);
+    expect(st.unpushed, isTrue);
+    Directory('${origin}_gone').renameSync(origin);
+    await sync(a);
+    expect((await a.status()).isClean, isTrue);
+
+    // another PC pushes; A has fetched nothing new yet → still clean; after a pull it is behind-free
+    await b.connect(remoteUrl: origin, token: '');
+    write(db, 's3', '# s3');
+    await sync(b);
+    expect((await a.pull(token: '')).integrated, isTrue);
+    st = await a.status();
+    expect(st.isClean, isTrue);
+
+    // behind only (fetched but not merged) is not "unpushed"
+    write(db, 's4', '# s4');
+    await sync(b);
+    write(da, 's5', '# s5'); // saved on A → needsSync, nothing merged
+    final r = await a.pull(token: '');
+    expect(r.needsSync, isTrue);
+    await sync(a);
+    expect((await a.status()).isClean, isTrue);
+  });
+
+  test('status on a folder that was never connected is clean', () async {
+    write(da, 'solo', '# not a repo yet');
+    expect((await a.status()).isClean, isTrue);
   });
 }

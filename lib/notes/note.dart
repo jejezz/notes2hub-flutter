@@ -25,6 +25,9 @@ class Note {
     return '';
   }
 
+  /// 동기화 충돌로 만들어진 사본인가 — 제목 끝의 "(충돌 …)" 표시로 알아본다 ([conflictCopyOf]).
+  bool get isConflictCopy => RegExp(r'\(충돌 [^)]*\)$').hasMatch(title);
+
   /// 목록 미리보기용: 제목 줄 다음의 첫 비어 있지 않은 줄.
   String get snippet {
     var seenTitle = false;

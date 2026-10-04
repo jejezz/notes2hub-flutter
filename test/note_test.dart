@@ -33,4 +33,14 @@ void main() {
     expect(n.matches('  '), isTrue);
     expect(n.matches('nope'), isFalse);
   });
+
+  test('conflict copies are recognisable from the title', () {
+    final ours = Note(id: 'a', created: t, updated: t, body: '# Plan\nmine');
+    final copy = conflictCopyOf(ours, newId: 'b', label: 'PC 2026-10-04', now: t);
+    expect(copy.title, 'Plan (충돌 PC 2026-10-04)');
+    expect(copy.isConflictCopy, isTrue);
+    expect(ours.isConflictCopy, isFalse);
+    expect(copy.body, contains('mine'));
+    expect(conflictCopyOf(Note(id: 'c', created: t, updated: t, body: ''), newId: 'd', label: 'x', now: t).title, '(충돌 x)');
+  });
 }
