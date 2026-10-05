@@ -1,6 +1,10 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
+import '../github/github_api.dart';
 import '../l10n/app_localizations.dart';
+import '../platform_kind.dart';
 import '../sync/sync_service.dart';
 import '../theme/app_theme.dart';
 import '../window/window_layout.dart';
@@ -48,7 +52,7 @@ class _SettingsDialog extends StatelessWidget {
                           final ok = await showLoginDialog(context, sync);
                           // 새 PC에서 로그인한 직후라면 저장소 연결로 바로 이어간다 (Notes2Hub 저장소를 맨 위에 제안).
                           if (ok == true && sync.repoUrl == null && context.mounted) {
-                            await showRepoDialog(context, sync);
+                            await _connectAfterLogin(context, sync);
                           }
                         },
                         child: Text(l10n.settingsLoginBrowser),
@@ -78,7 +82,7 @@ class _SettingsDialog extends StatelessWidget {
                   onSelectionChanged: (s) => sync.setAutoSync(s.first),
                 ),
                 const SizedBox(height: AppSpacing.sm),
-                Text(l10n.settingsSyncHint, style: theme.textTheme.bodySmall),
+                Text(isMobilePlatform ? l10n.settingsSyncHintMobile : l10n.settingsSyncHint, style: theme.textTheme.bodySmall),
                 if (layout != null) ...[
                   const SizedBox(height: AppSpacing.xl),
                   _Section(l10n.settingsWindow),
@@ -124,4 +128,37 @@ class _Section extends StatelessWidget {
     padding: const EdgeInsets.only(bottom: AppSpacing.sm),
     child: Text(text, style: Theme.of(context).textTheme.titleSmall),
   );
+}
+
+/// 로그인 직후 저장소 연결. 표식이 붙은 비공개 저장소가 하나뿐이면 고르게 하지 않고 바로 연결한다.
+/// 후보가 없거나 여럿이거나, 자동 연결이 실패하면 고르는 화면을 연다.
+Future<void> _connectAfterLogin(BuildContext context, SyncService sync) async {
+  final l10n = AppLocalizations.of(context);
+  final messenger = ScaffoldMessenger.of(context);
+  final navigator = Navigator.of(context, rootNavigator: true);
+  unawaited(showDialog<void>(
+    context: context,
+    barrierDismissible: false,
+    builder: (_) => AlertDialog(
+      content: Row(
+        children: [
+          const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)),
+          const SizedBox(width: AppSpacing.md),
+          Text(l10n.repoConnecting),
+        ],
+      ),
+    ),
+  ));
+  GitHubRepo? repo;
+  try {
+    repo = await sync.connectSuggestedRepo();
+  } catch (_) {
+    repo = null; // 연결 실패 — 고르는 화면에서 다시 시도하게 한다.
+  }
+  navigator.pop(); // 진행 표시
+  if (repo != null) {
+    messenger.showSnackBar(SnackBar(content: Text(l10n.repoAutoConnected(repo.fullName))));
+  } else if (context.mounted) {
+    await showRepoDialog(context, sync);
+  }
 }

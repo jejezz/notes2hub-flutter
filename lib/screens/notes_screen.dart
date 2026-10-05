@@ -7,6 +7,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:pasteboard/pasteboard.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -15,9 +16,12 @@ import '../images/asset_store.dart';
 import '../images/image_processor.dart';
 import '../l10n/app_localizations.dart';
 import '../notes/notes_controller.dart';
+import '../platform_kind.dart';
 import '../settings/settings_menus.dart';
 import '../sync/sync_service.dart';
 import '../theme/app_theme.dart';
+import 'md_toolbar.dart';
+import 'share_sheet.dart';
 import '../theme/user_content.dart';
 import '../window/window_layout.dart';
 import 'board_view.dart';
@@ -67,6 +71,9 @@ class _NotesScreenState extends State<NotesScreen> with WidgetsBindingObserver {
   bool _preview = false;
   String? _editorId;
   bool _dragging = false;
+
+  /// 이미지를 줄여 넣는 중이면 (끝낸 장 수, 전체 장 수). 큰 사진은 몇 초 걸려서, 표시가 없으면 먹통처럼 보인다.
+  ({int done, int total})? _adding;
 
   NotesController get c => widget.controller;
   SyncService get sync => widget.sync;
@@ -146,7 +153,14 @@ class _NotesScreenState extends State<NotesScreen> with WidgetsBindingObserver {
   void _previewNote(String id) {
     final note = c.noteById(id);
     if (note == null) return;
-    showNotePreview(context, body: note.body, assets: widget.assets, onEdit: () => _open(id));
+    showNotePreview(
+      context,
+      body: note.body,
+      assets: widget.assets,
+      onEdit: () => _open(id),
+      // 저장하지 않은 메모(새로 쓰거나 고친 것)는 시트에서 바로 저장할 수 있다.
+      onSave: c.isDirty(id) ? () => _saveNote(id) : null,
+    );
   }
 
   /// 편집 화면에서 보드로. 저장하지 않은 편집은 초안으로 남고 카드에 "저장 안 됨"으로 보인다.
@@ -173,7 +187,11 @@ class _NotesScreenState extends State<NotesScreen> with WidgetsBindingObserver {
 
   Future<void> _save() async {
     final id = c.selectedId;
-    if (id == null || !c.isDirty(id)) return;
+    if (id != null) await _saveNote(id);
+  }
+
+  Future<void> _saveNote(String id) async {
+    if (!c.isDirty(id)) return;
     try {
       await c.save(id);
     } catch (e) {
@@ -215,10 +233,37 @@ class _NotesScreenState extends State<NotesScreen> with WidgetsBindingObserver {
   bool _isImageName(String name) => _imageExts.contains(name.split('.').last.toLowerCase());
 
   Future<void> _pickImages() async {
+    if (isMobilePlatform) {
+      // 사진 보관함(iOS의 HEIC는 시스템이 JPEG로 바꿔 준다). 카메라는 M3에서 별도 버튼으로.
+      final picked = await ImagePicker().pickMultiImage();
+      await _addImages([for (final f in picked) (name: f.name, read: f.readAsBytes)]);
+      return;
+    }
     final files = await openFiles(
       acceptedTypeGroups: [XTypeGroup(label: 'images', extensions: _imageExts)],
     );
     await _addImages([for (final f in files) (name: f.name, read: f.readAsBytes)]);
+  }
+
+  /// 폰 카메라로 찍어 바로 첨부한다.
+  Future<void> _takePhoto() async {
+    try {
+      final shot = await ImagePicker().pickImage(source: ImageSource.camera);
+      if (shot == null) return;
+      await _addImages([(name: shot.name, read: shot.readAsBytes)]);
+    } catch (e) {
+      if (mounted) _showError(AppLocalizations.of(context).imageFailed('camera', '$e'));
+    }
+  }
+
+  /// 서식 도구줄: 편집기 값을 바꾸고 본문에 반영한다. 입력 중이던 한글 조합은 확정하고 시작한다.
+  void _format(TextEditingValue Function(TextEditingValue) apply) {
+    final id = c.selectedId;
+    if (id == null) return;
+    final next = apply(_editor.value.copyWith(composing: TextRange.empty));
+    _editor.value = next;
+    c.edit(id, next.text);
+    _editorFocus.requestFocus();
   }
 
   Future<void> _dropImages(List<XFile> files) async {
@@ -258,8 +303,31 @@ class _NotesScreenState extends State<NotesScreen> with WidgetsBindingObserver {
     if (items.isEmpty || !mounted) return;
     final l10n = AppLocalizations.of(context);
     final id = c.selectedId ?? c.create();
-    setState(() => _preview = false);
+    setState(() {
+      _preview = false;
+      _adding = (done: 0, total: items.length);
+    });
     final notices = <String>[];
+    try {
+      await _processImages(id, items, l10n, notices);
+    } finally {
+      if (mounted) setState(() => _adding = null);
+    }
+    if (notices.isNotEmpty && mounted) {
+      ScaffoldMessenger.of(context)
+        ..clearSnackBars()
+        ..showSnackBar(SnackBar(content: Text(notices.join('\n')), duration: const Duration(seconds: 8)));
+    }
+    WidgetsBinding.instance.addPostFrameCallback((_) => _editorFocus.requestFocus());
+  }
+
+  Future<void> _processImages(
+    String id,
+    List<({String name, Future<Uint8List> Function() read})> items,
+    AppLocalizations l10n,
+    List<String> notices,
+  ) async {
+    var done = 0;
     for (final item in items) {
       final base = item.name.contains('.') ? item.name.substring(0, item.name.lastIndexOf('.')) : item.name;
       try {
@@ -282,13 +350,9 @@ class _NotesScreenState extends State<NotesScreen> with WidgetsBindingObserver {
       } catch (e) {
         notices.add(l10n.imageFailed(item.name, '$e'));
       }
+      done++;
+      if (mounted) setState(() => _adding = (done: done, total: items.length));
     }
-    if (notices.isNotEmpty && mounted) {
-      ScaffoldMessenger.of(context)
-        ..clearSnackBars()
-        ..showSnackBar(SnackBar(content: Text(notices.join('\n')), duration: const Duration(seconds: 8)));
-    }
-    WidgetsBinding.instance.addPostFrameCallback((_) => _editorFocus.requestFocus());
   }
 
   /// 편집기에 보이는 메모면 커서 자리에, 아니면 본문 끝에 한 줄로 넣는다.
@@ -416,7 +480,7 @@ class _NotesScreenState extends State<NotesScreen> with WidgetsBindingObserver {
         title: const Text(AppIdentity.displayName, maxLines: 1, overflow: TextOverflow.ellipsis),
         actions: [
           tight(syncButton),
-          tight(newNote),
+          if (!isMobilePlatform) tight(newNote), // 폰에서는 보드의 + 버튼을 쓴다
           tight(const ThemeMenuButton()),
           tight(const LanguageMenuButton()),
           tight(
@@ -479,10 +543,32 @@ class _NotesScreenState extends State<NotesScreen> with WidgetsBindingObserver {
             layout?.undock(),
         _primary(LogicalKeyboardKey.keyE): () => setState(() => _preview = !_preview),
       },
-      child: Focus(
+      // Android 뒤로가기/제스처: 편집 화면이면 앱을 닫지 않고 보드로 돌아간다 (편집 화면은 라우트가 아니라 상태).
+      child: ListenableBuilder(
+        listenable: c,
+        builder: (context, child) => PopScope(
+          canPop: c.selectedId == null,
+          onPopInvokedWithResult: (didPop, _) {
+            if (!didPop) _back();
+          },
+          child: child!,
+        ),
+        child: Focus(
         autofocus: true,
         child: Scaffold(
           appBar: _buildAppBar(context, l10n),
+          floatingActionButton: isMobilePlatform
+              ? ListenableBuilder(
+                  listenable: c,
+                  builder: (context, _) => c.loaded && c.selected == null
+                      ? FloatingActionButton(
+                          tooltip: l10n.noteNew,
+                          onPressed: _create,
+                          child: const Icon(Icons.edit_outlined),
+                        )
+                      : const SizedBox.shrink(),
+                )
+              : null,
           body: DropTarget(
             onDragEntered: (_) => setState(() => _dragging = true),
             onDragExited: (_) => setState(() => _dragging = false),
@@ -513,6 +599,8 @@ class _NotesScreenState extends State<NotesScreen> with WidgetsBindingObserver {
                                 onBack: _back,
                                 assets: widget.assets,
                                 onAddImage: _pickImages,
+                                onTakePhoto: _takePhoto,
+                                onFormat: _format,
                                 onPasteImages: _pasteImages,
                               )
                             : NotesBoard(
@@ -530,13 +618,78 @@ class _NotesScreenState extends State<NotesScreen> with WidgetsBindingObserver {
                                 onDelete: _deleteNote,
                                 onBookmark: c.toggleBookmark,
                                 onCreate: _create,
+                                onRefresh: _syncNow,
                               ),
                       );
                     },
                   ),
                 ),
                 if (_dragging) Positioned.fill(child: _DropOverlay(text: l10n.imageDropHere)),
+                if (_adding != null)
+                  Positioned.fill(
+                    child: ImageBusyOverlay(
+                      text: _adding!.total > 1
+                          ? l10n.imageProcessingCount(_adding!.done, _adding!.total)
+                          : l10n.imageProcessing,
+                      hint: l10n.imageProcessingHint,
+                      progress: _adding!.total > 1 ? _adding!.done / _adding!.total : null,
+                    ),
+                  ),
               ],
+            ),
+          ),
+        ),
+        ),
+      ),
+    );
+  }
+}
+
+/// 이미지를 줄여 넣는 동안 화면을 덮는 진행 표시. 큰 사진은 JPEG로 줄이는 데 몇 초 걸리므로, 먹통이 아니라
+/// 처리 중임을 알리고(스피너 + 안내) 그동안의 조작을 막는다. [progress]가 null이면 끝을 모르는 진행 표시.
+class ImageBusyOverlay extends StatelessWidget {
+  const ImageBusyOverlay({super.key, required this.text, required this.hint, this.progress});
+
+  final String text;
+  final String hint;
+  final double? progress;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return AbsorbPointer(
+      child: ColoredBox(
+        color: Colors.black.withValues(alpha: 0.32),
+        child: Center(
+          child: Semantics(
+            liveRegion: true,
+            label: text,
+            child: Card(
+              margin: const EdgeInsets.all(AppSpacing.xl),
+              child: Padding(
+                padding: const EdgeInsets.all(AppSpacing.xl),
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 280),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const SizedBox(width: 36, height: 36, child: CircularProgressIndicator(strokeWidth: 3)),
+                      const SizedBox(height: AppSpacing.lg),
+                      Text(text, style: theme.textTheme.titleSmall, textAlign: TextAlign.center),
+                      if (progress != null) ...[
+                        const SizedBox(height: AppSpacing.md),
+                        LinearProgressIndicator(value: progress),
+                      ],
+                      const SizedBox(height: AppSpacing.sm),
+                      Text(
+                        hint,
+                        style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
             ),
           ),
         ),
@@ -582,6 +735,8 @@ class _EditorPane extends StatelessWidget {
     required this.onBack,
     required this.assets,
     required this.onAddImage,
+    required this.onTakePhoto,
+    required this.onFormat,
     required this.onPasteImages,
   });
 
@@ -595,6 +750,8 @@ class _EditorPane extends StatelessWidget {
   final VoidCallback onBack;
   final AssetStore assets;
   final VoidCallback onAddImage;
+  final VoidCallback onTakePhoto;
+  final void Function(TextEditingValue Function(TextEditingValue)) onFormat;
 
   /// 이미지를 붙여넣었으면 true (그러면 글자 붙여넣기는 하지 않는다).
   final Future<bool> Function() onPasteImages;
@@ -607,6 +764,7 @@ class _EditorPane extends StatelessWidget {
     final dirty = controller.isDirty(note.id);
     // 창을 화면 가장자리에 세로로 붙인 좁은 모양: 글자 라벨 대신 아이콘으로 줄인다.
     final compact = MediaQuery.sizeOf(context).width < 840;
+    final tiny = MediaQuery.sizeOf(context).width < 400;
     final pad = compact ? AppSpacing.md : AppSpacing.xl;
     const dense = VisualDensity.compact;
     return Column(
@@ -671,6 +829,21 @@ class _EditorPane extends StatelessWidget {
                         onPressed: () => controller.revert(note.id),
                       )
                     : TextButton(onPressed: () => controller.revert(note.id), child: Text(l10n.noteRevert)),
+              if (!tiny)
+                Builder(
+                  builder: (shareContext) => IconButton(
+                    tooltip: l10n.shareTooltip,
+                    visualDensity: compact ? dense : null,
+                    icon: const Icon(Icons.ios_share_rounded, size: 18),
+                    onPressed: () => showShareSheet(
+                      context,
+                      body: note.body,
+                      assets: assets,
+                      origin: shareOrigin(shareContext),
+                    ),
+                  ),
+                ),
+              if (!isMobilePlatform && !tiny) // 폰에서는 키보드 위 도구줄에 있다
               IconButton(
                 tooltip: '${l10n.imageAdd} ($_mod⇧I)',
                 visualDensity: compact ? dense : null,
@@ -693,12 +866,37 @@ class _EditorPane extends StatelessWidget {
                     label: Text(l10n.noteSave),
                   ),
                 ),
-              IconButton(
-                tooltip: l10n.noteDelete,
-                visualDensity: compact ? dense : null,
-                icon: const Icon(Icons.delete_outline_rounded, size: 18),
-                onPressed: onDelete,
-              ),
+              if (!tiny)
+                IconButton(
+                  tooltip: l10n.noteDelete,
+                  visualDensity: compact ? dense : null,
+                  icon: const Icon(Icons.delete_outline_rounded, size: 18),
+                  onPressed: onDelete,
+                )
+              else
+                // 아주 좁으면(폰 세로, 최소 폭 창) 덜 쓰는 단추를 ⋮ 메뉴로 묶는다.
+                Builder(
+                  builder: (menuContext) => PopupMenuButton<String>(
+                    tooltip: l10n.moreTooltip,
+                    icon: const Icon(Icons.more_vert_rounded, size: 18),
+                    padding: EdgeInsets.zero,
+                    onSelected: (v) {
+                      switch (v) {
+                        case 'share':
+                          showShareSheet(context, body: note.body, assets: assets, origin: shareOrigin(menuContext));
+                        case 'image':
+                          onAddImage();
+                        case 'delete':
+                          onDelete();
+                      }
+                    },
+                    itemBuilder: (_) => [
+                      PopupMenuItem(value: 'share', child: Text(l10n.shareTooltip)),
+                      if (!isMobilePlatform) PopupMenuItem(value: 'image', child: Text(l10n.imageAdd)),
+                      PopupMenuItem(value: 'delete', child: Text(l10n.noteDelete)),
+                    ],
+                  ),
+                ),
             ],
           ),
         ),
@@ -754,6 +952,8 @@ class _EditorPane extends StatelessWidget {
             ),
           ),
         ),
+        if (isMobilePlatform && !preview)
+          MarkdownToolbar(onFormat: onFormat, onGallery: onAddImage, onCamera: onTakePhoto),
       ],
     );
   }

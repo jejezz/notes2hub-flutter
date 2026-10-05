@@ -145,4 +145,26 @@ void main() {
     expect(sync.repoFullName, 'octo/my-notes');
     sync.dispose();
   });
+
+  // 최소 폭 창/폰에서 추천 저장소 이름이 한 글자 폭으로 눌리던 문제(버튼이 이름 자리를 차지)
+  for (final size in const [Size(320, 420), Size(360, 640)]) {
+    testWidgets('repo dialog stays readable at ${size.width.toInt()}x${size.height.toInt()}', (tester) async {
+      tester.view.physicalSize = size;
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      final sync = await makeSync(tester, loggedIn: true);
+      await host(tester, (c) => FilledButton(onPressed: () => showRepoDialog(c, sync), child: const Text('open')));
+      await tester.tap(find.text('open'));
+      for (var i = 0; i < 10; i++) {
+        await tester.pump(const Duration(milliseconds: 50));
+      }
+      await tester.pumpAndSettle();
+
+      expect(tester.takeException(), isNull); // 넘침(overflow) 없음
+      final name = find.text('octo/my-notes').first;
+      // 이름이 한 줄에 읽힐 만큼의 폭을 가진다 (세로로 한 글자씩 쪼개지면 폭이 ~10, 높이가 수백)
+      expect(tester.getSize(name).width, greaterThan(80));
+      expect(tester.getSize(name).height, lessThan(40));
+    });
+  }
 }

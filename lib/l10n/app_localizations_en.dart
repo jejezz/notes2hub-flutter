@@ -232,6 +232,10 @@ class AppLocalizationsEn extends AppLocalizations {
       'Pulling happens automatically at launch, when the window regains focus, and every 5 minutes. Pushing follows the setting above.';
 
   @override
+  String get settingsSyncHintMobile =>
+      'Pulling happens automatically at launch, when you return to the app, and every 5 minutes while it is open. Pushing follows the setting above.';
+
+  @override
   String get loginTitle => 'Sign in to GitHub';
 
   @override
@@ -243,6 +247,13 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get loginDeviceStep =>
       'Enter the code below in your browser and approve';
+
+  @override
+  String get loginDeviceStepMobile =>
+      'The code is copied. Tap Open browser, paste it there (long-press the field) and approve. Then come back to this app.';
+
+  @override
+  String get loginCodeCopied => 'Code copied';
 
   @override
   String get loginOpenBrowser => 'Open browser';
@@ -311,6 +322,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get repoConnect => 'Connect';
 
   @override
+  String repoAutoConnected(String name) {
+    return 'Connected to $name';
+  }
+
+  @override
   String get repoConnecting => 'Connecting…';
 
   @override
@@ -339,6 +355,63 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get imageAdd => 'Add image';
+
+  @override
+  String get imageProcessing => 'Adding image…';
+
+  @override
+  String imageProcessingCount(int done, int total) {
+    return 'Adding images… $done / $total';
+  }
+
+  @override
+  String get imageProcessingHint =>
+      'Large photos are reduced to under 1 MB — this can take a moment.';
+
+  @override
+  String get shareTooltip => 'Share';
+
+  @override
+  String get shareTitle => 'Share this note';
+
+  @override
+  String get shareFull => 'Share in full';
+
+  @override
+  String get shareFullHint =>
+      'Email and most apps — all the text and every image. Some messengers (KakaoTalk) keep only the images';
+
+  @override
+  String get shareTextOnly => 'Text only';
+
+  @override
+  String get shareTextOnlyHint =>
+      'KakaoTalk and other messengers — all the text, no images';
+
+  @override
+  String get shareSms => 'For text messages';
+
+  @override
+  String shareSmsHint(int max) {
+    return 'First $max characters and the first image only';
+  }
+
+  @override
+  String get shareCopy => 'Copy text';
+
+  @override
+  String get shareCopyHint => 'Copy the text to the clipboard (without images)';
+
+  @override
+  String get shareCopied => 'Copied to the clipboard';
+
+  @override
+  String shareFailed(String error) {
+    return 'Could not share: $error';
+  }
+
+  @override
+  String get shareNothing => 'There is nothing to share yet';
 
   @override
   String get imageDropHere => 'Drop to add images';
@@ -370,6 +443,36 @@ class AppLocalizationsEn extends AppLocalizations {
   String imageFailed(String name, String error) {
     return '$name: could not add the image: $error';
   }
+
+  @override
+  String get boardCaptureSend => 'Save quick note';
+
+  @override
+  String get formatBold => 'Bold';
+
+  @override
+  String get formatItalic => 'Italic';
+
+  @override
+  String get formatHeading => 'Heading';
+
+  @override
+  String get formatList => 'List';
+
+  @override
+  String get formatChecklist => 'Checklist';
+
+  @override
+  String get formatQuote => 'Quote';
+
+  @override
+  String get formatLink => 'Link';
+
+  @override
+  String get imageTakePhoto => 'Take photo';
+
+  @override
+  String get imageFromGallery => 'Photo library';
 
   @override
   String get boardCaptureHint => 'Write something and press Enter';

@@ -6,8 +6,10 @@ import '../images/asset_store.dart';
 import '../l10n/app_localizations.dart';
 import '../notes/note.dart';
 import '../notes/notes_controller.dart';
+import '../platform_kind.dart';
 import '../sync/sync_service.dart';
 import '../theme/app_theme.dart';
+import 'share_sheet.dart';
 
 /// 메모 보드: 맨 위에 빠른 메모 입력창과 검색, 아래에 날짜별로 묶인 카드. 카드를 누르면 편집 화면이 열린다.
 /// 카드는 첨부 이미지를 표지로 쓰고, 동기화 상태를 칩으로 보여준다.
@@ -27,6 +29,7 @@ class NotesBoard extends StatelessWidget {
     required this.onDelete,
     required this.onBookmark,
     required this.onCreate,
+    this.onRefresh,
   });
 
   final NotesController controller;
@@ -48,6 +51,9 @@ class NotesBoard extends StatelessWidget {
   /// 카드의 북마크 버튼.
   final ValueChanged<String> onBookmark;
   final VoidCallback onCreate;
+
+  /// 아래로 당겨 새로고침 (폰) — 동기화. 없으면 당겨서 새로고침을 쓰지 않는다.
+  final Future<void> Function()? onRefresh;
 
   /// 보드의 날짜 묶음 이름. [now]를 받는 것은 테스트를 위해서다.
   static String groupOf(AppLocalizations l10n, DateTime t, DateTime now) {
@@ -79,6 +85,7 @@ class NotesBoard extends StatelessWidget {
 
     // 창을 화면 가장자리에 세로로 붙이면(좁은 창) 입력창과 검색창을 위아래로 쌓고 여백을 줄인다.
     final narrow = MediaQuery.sizeOf(context).width < 600;
+    final mobile = isMobilePlatform;
     final pad = narrow ? AppSpacing.md : AppSpacing.xl;
     // 첫 화면(보드)은 입력창·안내문·카드 모두 앱 글꼴(서울남산체)로 통일한다 (사용자 요청).
     // 편집기와 미리보기 시트는 사용자 글이라 시스템 글꼴을 그대로 쓴다 (fonts.md §3).
@@ -94,6 +101,17 @@ class NotesBoard extends StatelessWidget {
         hintText: l10n.boardCaptureHint,
         hintStyle: hintStyle,
         prefixIcon: const Icon(Icons.add_rounded, size: 18),
+        // 폰에는 Enter 키가 없다 — 보내기 버튼을 둔다.
+        suffixIcon: mobile
+            ? IconButton(
+                tooltip: l10n.boardCaptureSend,
+                icon: const Icon(Icons.send_rounded, size: 20),
+                onPressed: () {
+                  if (capture.text.trim().isEmpty) return;
+                  onCapture(capture.text);
+                },
+              )
+            : null,
       ),
       onSubmitted: (v) {
         if (v.trim().isEmpty) return;
@@ -127,7 +145,9 @@ class NotesBoard extends StatelessWidget {
       alignment: Alignment.topCenter,
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 1180),
-        child: CustomScrollView(
+        child: _maybeRefresh(
+          CustomScrollView(
+          physics: mobile && onRefresh != null ? const AlwaysScrollableScrollPhysics() : null,
           slivers: [
             SliverPadding(
               padding: EdgeInsets.fromLTRB(pad, narrow ? AppSpacing.md : AppSpacing.xl, pad, AppSpacing.md),
@@ -208,16 +228,25 @@ class NotesBoard extends StatelessWidget {
                         onEdit: () => onEdit(n.id),
                         onDelete: () => onDelete(n.id),
                         onBookmark: () => onBookmark(n.id),
+                        touch: mobile,
                       );
                     },
                   ),
                 ),
               ],
-            const SliverToBoxAdapter(child: SizedBox(height: AppSpacing.xxl)),
+            // 폰: 새 메모 버튼(FAB)에 마지막 카드가 가리지 않게 여유를 둔다.
+            SliverToBoxAdapter(child: SizedBox(height: mobile ? 96 : AppSpacing.xxl)),
           ],
+        ),
         ),
       ),
     );
+  }
+
+  Widget _maybeRefresh(Widget child) {
+    final refresh = onRefresh;
+    if (!isMobilePlatform || refresh == null) return child;
+    return RefreshIndicator(onRefresh: refresh, child: child);
   }
 
   CardSync _stateOf(String id) {
@@ -239,7 +268,11 @@ class NoteCard extends StatelessWidget {
     required this.onEdit,
     required this.onDelete,
     required this.onBookmark,
+    this.touch = false,
   });
+
+  /// 터치 기기: 작은 편집·삭제 버튼 대신 길게 눌러 메뉴를 연다 (버튼은 터치 영역이 작다).
+  final bool touch;
 
   final Note note;
   final AssetStore assets;
@@ -248,6 +281,54 @@ class NoteCard extends StatelessWidget {
   final VoidCallback onEdit;
   final VoidCallback onDelete;
   final VoidCallback onBookmark;
+
+  /// 길게 누르기 메뉴: 편집 · 북마크 · 삭제.
+  void _showMenu(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.edit_outlined),
+              title: Text(l10n.noteEditTab),
+              onTap: () {
+                Navigator.pop(ctx);
+                onEdit();
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.ios_share_rounded),
+              title: Text(l10n.shareTooltip),
+              onTap: () {
+                Navigator.pop(ctx);
+                showShareSheet(context, body: note.body, assets: assets, origin: shareOrigin(context));
+              },
+            ),
+            ListTile(
+              leading: Icon(note.bookmarked ? Icons.bookmark_remove_outlined : Icons.bookmark_border_rounded),
+              title: Text(note.bookmarked ? l10n.noteBookmarkRemove : l10n.noteBookmarkAdd),
+              onTap: () {
+                Navigator.pop(ctx);
+                onBookmark();
+              },
+            ),
+            ListTile(
+              leading: Icon(Icons.delete_outline_rounded, color: Theme.of(ctx).colorScheme.error),
+              title: Text(l10n.noteDelete, style: TextStyle(color: Theme.of(ctx).colorScheme.error)),
+              onTap: () {
+                Navigator.pop(ctx);
+                onDelete();
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -278,6 +359,7 @@ class NoteCard extends StatelessWidget {
       ),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
+        onLongPress: touch ? () => _showMenu(context) : null,
         onTap: onTap, // 더블클릭 처리를 두면 한 번 클릭이 300ms 늦게 반응한다 — 편집은 버튼으로
         splashFactory: NoSplash.splashFactory,
         hoverColor: scheme.primary.withValues(alpha: 0.05),
@@ -343,13 +425,16 @@ class NoteCard extends StatelessWidget {
                       ),
                       const SizedBox(width: AppSpacing.xs),
                       _CardButton(
+                        touch: touch,
                         icon: note.bookmarked ? Icons.bookmark_rounded : Icons.bookmark_border_rounded,
                         tooltip: note.bookmarked ? l10n.noteBookmarkRemove : l10n.noteBookmarkAdd,
                         onPressed: onBookmark,
                         color: note.bookmarked ? scheme.primary : null,
                       ),
-                      _CardButton(icon: Icons.edit_outlined, tooltip: l10n.noteEditTab, onPressed: onEdit),
-                      _CardButton(icon: Icons.delete_outline_rounded, tooltip: l10n.noteDelete, onPressed: onDelete),
+                      if (!touch) ...[
+                        _CardButton(icon: Icons.edit_outlined, tooltip: l10n.noteEditTab, onPressed: onEdit),
+                        _CardButton(icon: Icons.delete_outline_rounded, tooltip: l10n.noteDelete, onPressed: onDelete),
+                      ],
                     ],
                   ),
                 ],
@@ -384,8 +469,9 @@ class _Chip extends StatelessWidget {
 
 /// 카드 아래의 작은 아이콘 버튼 (편집, 삭제).
 class _CardButton extends StatelessWidget {
-  const _CardButton({required this.icon, required this.tooltip, required this.onPressed, this.color});
+  const _CardButton({required this.icon, required this.tooltip, required this.onPressed, this.color, this.touch = false});
 
+  final bool touch;
   final Color? color;
   final IconData icon;
   final String tooltip;
@@ -398,7 +484,7 @@ class _CardButton extends StatelessWidget {
     icon: Icon(icon, size: 18),
     visualDensity: VisualDensity.compact,
     padding: EdgeInsets.zero,
-    constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+    constraints: touch ? const BoxConstraints(minWidth: 44, minHeight: 44) : const BoxConstraints(minWidth: 32, minHeight: 32),
     color: color ?? Theme.of(context).colorScheme.onSurfaceVariant,
   );
 }

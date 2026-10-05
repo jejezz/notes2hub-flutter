@@ -488,6 +488,12 @@ abstract class AppLocalizations {
   /// **'가져오기는 시작할 때, 창으로 돌아올 때, 5분마다 자동으로 합니다. 보내기는 위 설정을 따릅니다.'**
   String get settingsSyncHint;
 
+  /// No description provided for @settingsSyncHintMobile.
+  ///
+  /// In ko, this message translates to:
+  /// **'가져오기는 시작할 때, 앱으로 돌아올 때, 앱을 열어 둔 동안 5분마다 자동으로 합니다. 보내기는 위 설정을 따릅니다.'**
+  String get settingsSyncHintMobile;
+
   /// No description provided for @loginTitle.
   ///
   /// In ko, this message translates to:
@@ -511,6 +517,18 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'브라우저에서 아래 코드를 입력하고 승인하세요'**
   String get loginDeviceStep;
+
+  /// No description provided for @loginDeviceStepMobile.
+  ///
+  /// In ko, this message translates to:
+  /// **'코드를 복사했어요. 브라우저 열기를 누르고 입력칸을 길게 눌러 붙여넣은 뒤 승인하세요. 끝나면 이 앱으로 돌아오세요.'**
+  String get loginDeviceStepMobile;
+
+  /// No description provided for @loginCodeCopied.
+  ///
+  /// In ko, this message translates to:
+  /// **'코드 복사됨'**
+  String get loginCodeCopied;
 
   /// No description provided for @loginOpenBrowser.
   ///
@@ -632,6 +650,12 @@ abstract class AppLocalizations {
   /// **'연결'**
   String get repoConnect;
 
+  /// No description provided for @repoAutoConnected.
+  ///
+  /// In ko, this message translates to:
+  /// **'{name}에 연결했어요'**
+  String repoAutoConnected(String name);
+
   /// No description provided for @repoConnecting.
   ///
   /// In ko, this message translates to:
@@ -680,6 +704,102 @@ abstract class AppLocalizations {
   /// **'이미지 추가'**
   String get imageAdd;
 
+  /// No description provided for @imageProcessing.
+  ///
+  /// In ko, this message translates to:
+  /// **'이미지를 넣는 중…'**
+  String get imageProcessing;
+
+  /// No description provided for @imageProcessingCount.
+  ///
+  /// In ko, this message translates to:
+  /// **'이미지를 넣는 중… {done} / {total}'**
+  String imageProcessingCount(int done, int total);
+
+  /// No description provided for @imageProcessingHint.
+  ///
+  /// In ko, this message translates to:
+  /// **'큰 사진은 1MB 미만으로 줄이느라 시간이 조금 걸립니다.'**
+  String get imageProcessingHint;
+
+  /// No description provided for @shareTooltip.
+  ///
+  /// In ko, this message translates to:
+  /// **'공유'**
+  String get shareTooltip;
+
+  /// No description provided for @shareTitle.
+  ///
+  /// In ko, this message translates to:
+  /// **'메모 공유'**
+  String get shareTitle;
+
+  /// No description provided for @shareFull.
+  ///
+  /// In ko, this message translates to:
+  /// **'전체 공유'**
+  String get shareFull;
+
+  /// No description provided for @shareFullHint.
+  ///
+  /// In ko, this message translates to:
+  /// **'메일 등 — 글 전체와 이미지를 모두. 카카오톡 같은 일부 메신저는 이미지만 전달해요'**
+  String get shareFullHint;
+
+  /// No description provided for @shareTextOnly.
+  ///
+  /// In ko, this message translates to:
+  /// **'글만 공유'**
+  String get shareTextOnly;
+
+  /// No description provided for @shareTextOnlyHint.
+  ///
+  /// In ko, this message translates to:
+  /// **'카카오톡 등 메신저 — 이미지 없이 글 전체'**
+  String get shareTextOnlyHint;
+
+  /// No description provided for @shareSms.
+  ///
+  /// In ko, this message translates to:
+  /// **'문자용'**
+  String get shareSms;
+
+  /// No description provided for @shareSmsHint.
+  ///
+  /// In ko, this message translates to:
+  /// **'앞 {max}자까지, 이미지는 첫 번째 1장만'**
+  String shareSmsHint(int max);
+
+  /// No description provided for @shareCopy.
+  ///
+  /// In ko, this message translates to:
+  /// **'텍스트 복사'**
+  String get shareCopy;
+
+  /// No description provided for @shareCopyHint.
+  ///
+  /// In ko, this message translates to:
+  /// **'글만 클립보드에 복사 (이미지 제외)'**
+  String get shareCopyHint;
+
+  /// No description provided for @shareCopied.
+  ///
+  /// In ko, this message translates to:
+  /// **'클립보드에 복사했어요'**
+  String get shareCopied;
+
+  /// No description provided for @shareFailed.
+  ///
+  /// In ko, this message translates to:
+  /// **'공유하지 못했습니다: {error}'**
+  String shareFailed(String error);
+
+  /// No description provided for @shareNothing.
+  ///
+  /// In ko, this message translates to:
+  /// **'아직 공유할 내용이 없어요'**
+  String get shareNothing;
+
   /// No description provided for @imageDropHere.
   ///
   /// In ko, this message translates to:
@@ -721,6 +841,66 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'{name}: 이미지를 추가하지 못했습니다: {error}'**
   String imageFailed(String name, String error);
+
+  /// No description provided for @boardCaptureSend.
+  ///
+  /// In ko, this message translates to:
+  /// **'빠른 메모 저장'**
+  String get boardCaptureSend;
+
+  /// No description provided for @formatBold.
+  ///
+  /// In ko, this message translates to:
+  /// **'굵게'**
+  String get formatBold;
+
+  /// No description provided for @formatItalic.
+  ///
+  /// In ko, this message translates to:
+  /// **'기울임'**
+  String get formatItalic;
+
+  /// No description provided for @formatHeading.
+  ///
+  /// In ko, this message translates to:
+  /// **'제목'**
+  String get formatHeading;
+
+  /// No description provided for @formatList.
+  ///
+  /// In ko, this message translates to:
+  /// **'목록'**
+  String get formatList;
+
+  /// No description provided for @formatChecklist.
+  ///
+  /// In ko, this message translates to:
+  /// **'체크리스트'**
+  String get formatChecklist;
+
+  /// No description provided for @formatQuote.
+  ///
+  /// In ko, this message translates to:
+  /// **'인용'**
+  String get formatQuote;
+
+  /// No description provided for @formatLink.
+  ///
+  /// In ko, this message translates to:
+  /// **'링크'**
+  String get formatLink;
+
+  /// No description provided for @imageTakePhoto.
+  ///
+  /// In ko, this message translates to:
+  /// **'사진 찍기'**
+  String get imageTakePhoto;
+
+  /// No description provided for @imageFromGallery.
+  ///
+  /// In ko, this message translates to:
+  /// **'사진 보관함'**
+  String get imageFromGallery;
 
   /// No description provided for @boardCaptureHint.
   ///

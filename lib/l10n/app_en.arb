@@ -135,10 +135,13 @@
   "settingsSyncManual": "Manual",
   "settingsSyncAuto": "Automatic (30 s after saving)",
   "settingsSyncHint": "Pulling happens automatically at launch, when the window regains focus, and every 5 minutes. Pushing follows the setting above.",
+  "settingsSyncHintMobile": "Pulling happens automatically at launch, when you return to the app, and every 5 minutes while it is open. Pushing follows the setting above.",
   "loginTitle": "Sign in to GitHub",
   "loginTabBrowser": "Browser",
   "loginTabToken": "Token",
   "loginDeviceStep": "Enter the code below in your browser and approve",
+  "loginDeviceStepMobile": "The code is copied. Tap Open browser, paste it there (long-press the field) and approve. Then come back to this app.",
+  "loginCodeCopied": "Code copied",
   "loginOpenBrowser": "Open browser",
   "loginCopyCode": "Copy code",
   "loginWaiting": "Waiting for approval…",
@@ -174,6 +177,14 @@
   },
   "repoConnect": "Connect",
   "repoConnecting": "Connecting…",
+  "repoAutoConnected": "Connected to {name}",
+  "@repoAutoConnected": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "repoNoMatch": "No matching repositories",
   "repoLoadFailed": "Could not load repositories: {error}",
   "@repoLoadFailed": {
@@ -202,6 +213,46 @@
   },
   "syncUnpushed": "Changes not uploaded yet",
   "imageAdd": "Add image",
+  "imageProcessing": "Adding image…",
+  "imageProcessingCount": "Adding images… {done} / {total}",
+  "@imageProcessingCount": {
+    "placeholders": {
+      "done": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "imageProcessingHint": "Large photos are reduced to under 1 MB — this can take a moment.",
+  "shareTooltip": "Share",
+  "shareTitle": "Share this note",
+  "shareFull": "Share in full",
+  "shareFullHint": "Email and most apps — all the text and every image. Some messengers (KakaoTalk) keep only the images",
+  "shareTextOnly": "Text only",
+  "shareTextOnlyHint": "KakaoTalk and other messengers — all the text, no images",
+  "shareSms": "For text messages",
+  "shareSmsHint": "First {max} characters and the first image only",
+  "@shareSmsHint": {
+    "placeholders": {
+      "max": {
+        "type": "int"
+      }
+    }
+  },
+  "shareCopy": "Copy text",
+  "shareCopyHint": "Copy the text to the clipboard (without images)",
+  "shareCopied": "Copied to the clipboard",
+  "shareFailed": "Could not share: {error}",
+  "@shareFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "shareNothing": "There is nothing to share yet",
   "imageDropHere": "Drop to add images",
   "imageBroken": "Image not found",
   "imageConverted": "{name}: over 1 MB, reduced to JPEG ({before} → {after})",
@@ -256,6 +307,16 @@
       }
     }
   },
+  "boardCaptureSend": "Save quick note",
+  "formatBold": "Bold",
+  "formatItalic": "Italic",
+  "formatHeading": "Heading",
+  "formatList": "List",
+  "formatChecklist": "Checklist",
+  "formatQuote": "Quote",
+  "formatLink": "Link",
+  "imageTakePhoto": "Take photo",
+  "imageFromGallery": "Photo library",
   "boardCaptureHint": "Write something and press Enter",
   "boardToday": "Today",
   "boardYesterday": "Yesterday",

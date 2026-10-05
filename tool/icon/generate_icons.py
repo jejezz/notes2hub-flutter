@@ -66,11 +66,13 @@ DESKTOP_RADIUS_FRACTION = 0.12
 DESKTOP_GLYPH_FRACTION = 0.80
 
 # iOS / Android legacy: the OS applies its own mask to a square plate.
-MOBILE_GLYPH_FRACTION = 0.76
+# 메모(세로로 긴 글리프)의 위아래 여백이 각각 약 17.5%가 되도록 줄였다 (템플릿 기본 0.76은 꽉 차 보였다).
+MOBILE_GLYPH_FRACTION = 0.65
 # Android adaptive: only the inner 66dp of 108dp is guaranteed visible.
 # 0.54 keeps a round-ish glyph whole inside that circle; lower it for
 # artwork whose corners stick out further.
-ADAPTIVE_GLYPH_FRACTION = 0.54
+# 보이는 영역(66/108)에서 메모 높이가 약 65% → 캔버스의 약 43%.
+ADAPTIVE_GLYPH_FRACTION = 0.43
 
 ANDROID_LEGACY = {'mdpi': 48, 'hdpi': 72, 'xhdpi': 96, 'xxhdpi': 144, 'xxxhdpi': 192}
 ANDROID_ADAPTIVE = {'mdpi': 108, 'hdpi': 162, 'xhdpi': 216, 'xxhdpi': 324, 'xxxhdpi': 432}

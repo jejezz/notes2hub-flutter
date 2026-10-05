@@ -231,6 +231,10 @@ class AppLocalizationsKo extends AppLocalizations {
       '가져오기는 시작할 때, 창으로 돌아올 때, 5분마다 자동으로 합니다. 보내기는 위 설정을 따릅니다.';
 
   @override
+  String get settingsSyncHintMobile =>
+      '가져오기는 시작할 때, 앱으로 돌아올 때, 앱을 열어 둔 동안 5분마다 자동으로 합니다. 보내기는 위 설정을 따릅니다.';
+
+  @override
   String get loginTitle => 'GitHub 로그인';
 
   @override
@@ -241,6 +245,13 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get loginDeviceStep => '브라우저에서 아래 코드를 입력하고 승인하세요';
+
+  @override
+  String get loginDeviceStepMobile =>
+      '코드를 복사했어요. 브라우저 열기를 누르고 입력칸을 길게 눌러 붙여넣은 뒤 승인하세요. 끝나면 이 앱으로 돌아오세요.';
+
+  @override
+  String get loginCodeCopied => '코드 복사됨';
 
   @override
   String get loginOpenBrowser => '브라우저 열기';
@@ -308,6 +319,11 @@ class AppLocalizationsKo extends AppLocalizations {
   String get repoConnect => '연결';
 
   @override
+  String repoAutoConnected(String name) {
+    return '$name에 연결했어요';
+  }
+
+  @override
   String get repoConnecting => '연결 중…';
 
   @override
@@ -336,6 +352,60 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get imageAdd => '이미지 추가';
+
+  @override
+  String get imageProcessing => '이미지를 넣는 중…';
+
+  @override
+  String imageProcessingCount(int done, int total) {
+    return '이미지를 넣는 중… $done / $total';
+  }
+
+  @override
+  String get imageProcessingHint => '큰 사진은 1MB 미만으로 줄이느라 시간이 조금 걸립니다.';
+
+  @override
+  String get shareTooltip => '공유';
+
+  @override
+  String get shareTitle => '메모 공유';
+
+  @override
+  String get shareFull => '전체 공유';
+
+  @override
+  String get shareFullHint => '메일 등 — 글 전체와 이미지를 모두. 카카오톡 같은 일부 메신저는 이미지만 전달해요';
+
+  @override
+  String get shareTextOnly => '글만 공유';
+
+  @override
+  String get shareTextOnlyHint => '카카오톡 등 메신저 — 이미지 없이 글 전체';
+
+  @override
+  String get shareSms => '문자용';
+
+  @override
+  String shareSmsHint(int max) {
+    return '앞 $max자까지, 이미지는 첫 번째 1장만';
+  }
+
+  @override
+  String get shareCopy => '텍스트 복사';
+
+  @override
+  String get shareCopyHint => '글만 클립보드에 복사 (이미지 제외)';
+
+  @override
+  String get shareCopied => '클립보드에 복사했어요';
+
+  @override
+  String shareFailed(String error) {
+    return '공유하지 못했습니다: $error';
+  }
+
+  @override
+  String get shareNothing => '아직 공유할 내용이 없어요';
 
   @override
   String get imageDropHere => '이미지를 놓아서 추가';
@@ -367,6 +437,36 @@ class AppLocalizationsKo extends AppLocalizations {
   String imageFailed(String name, String error) {
     return '$name: 이미지를 추가하지 못했습니다: $error';
   }
+
+  @override
+  String get boardCaptureSend => '빠른 메모 저장';
+
+  @override
+  String get formatBold => '굵게';
+
+  @override
+  String get formatItalic => '기울임';
+
+  @override
+  String get formatHeading => '제목';
+
+  @override
+  String get formatList => '목록';
+
+  @override
+  String get formatChecklist => '체크리스트';
+
+  @override
+  String get formatQuote => '인용';
+
+  @override
+  String get formatLink => '링크';
+
+  @override
+  String get imageTakePhoto => '사진 찍기';
+
+  @override
+  String get imageFromGallery => '사진 보관함';
 
   @override
   String get boardCaptureHint => '생각나는 대로 쓰고 Enter를 누르세요';

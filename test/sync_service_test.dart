@@ -79,6 +79,38 @@ void main() {
     tmp.deleteSync(recursive: true);
   });
 
+  test('connectSuggestedRepo connects the only private notes2hub repo without asking', () async {
+    await svc.loginWithToken('good');
+    final picked = await svc.connectSuggestedRepo();
+    expect(picked?.fullName, 'octo/notes');
+    expect(svc.repoFullName, 'octo/notes');
+  });
+
+  test('connectSuggestedRepo does nothing when there is no single private candidate', () async {
+    await svc.loginWithToken('good');
+    SharedPreferences.setMockInitialValues({});
+    final none = SyncService(
+      prefs: await SharedPreferences.getInstance(),
+      tokens: tokens,
+      engine: engine,
+      notes: notes,
+      apiFactory: (token) => GitHubApi(token, client: MockClient((req) async {
+        if (req.url.path == '/user') return http.Response('{"login":"o","id":1}', 200);
+        return http.Response(
+          '[{"full_name":"o/a","clone_url":"https://github.com/o/a.git","private":true,"topics":["notes2hub"]},'
+          '{"full_name":"o/b","clone_url":"https://github.com/o/b.git","private":true,"topics":["notes2hub"]}]',
+          200,
+        );
+      })),
+      pullInterval: const Duration(hours: 1),
+      deviceLabel: 'x',
+    );
+    await none.init();
+    expect(await none.connectSuggestedRepo(), isNull); // 후보가 둘 → 사용자가 고른다
+    expect(none.repoFullName, isNull);
+    none.dispose();
+  });
+
   test('a bad token is rejected and nothing is stored', () async {
     await expectLater(svc.loginWithToken('nope'), throwsA(isA<GitHubApiException>()));
     expect(svc.loggedIn, isFalse);

@@ -152,10 +152,13 @@
   "settingsSyncManual": "수동",
   "settingsSyncAuto": "자동 (저장 30초 후)",
   "settingsSyncHint": "가져오기는 시작할 때, 창으로 돌아올 때, 5분마다 자동으로 합니다. 보내기는 위 설정을 따릅니다.",
+  "settingsSyncHintMobile": "가져오기는 시작할 때, 앱으로 돌아올 때, 앱을 열어 둔 동안 5분마다 자동으로 합니다. 보내기는 위 설정을 따릅니다.",
   "loginTitle": "GitHub 로그인",
   "loginTabBrowser": "브라우저",
   "loginTabToken": "토큰",
   "loginDeviceStep": "브라우저에서 아래 코드를 입력하고 승인하세요",
+  "loginDeviceStepMobile": "코드를 복사했어요. 브라우저 열기를 누르고 입력칸을 길게 눌러 붙여넣은 뒤 승인하세요. 끝나면 이 앱으로 돌아오세요.",
+  "loginCodeCopied": "코드 복사됨",
   "loginOpenBrowser": "브라우저 열기",
   "loginCopyCode": "코드 복사",
   "loginWaiting": "승인을 기다리는 중…",
@@ -190,6 +193,14 @@
     }
   },
   "repoConnect": "연결",
+  "repoAutoConnected": "{name}에 연결했어요",
+  "@repoAutoConnected": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "repoConnecting": "연결 중…",
   "repoNoMatch": "일치하는 저장소가 없습니다",
   "repoLoadFailed": "저장소 목록을 불러오지 못했습니다: {error}",
@@ -219,6 +230,46 @@
   },
   "syncUnpushed": "올리지 못한 변경",
   "imageAdd": "이미지 추가",
+  "imageProcessing": "이미지를 넣는 중…",
+  "imageProcessingCount": "이미지를 넣는 중… {done} / {total}",
+  "@imageProcessingCount": {
+    "placeholders": {
+      "done": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "imageProcessingHint": "큰 사진은 1MB 미만으로 줄이느라 시간이 조금 걸립니다.",
+  "shareTooltip": "공유",
+  "shareTitle": "메모 공유",
+  "shareFull": "전체 공유",
+  "shareFullHint": "메일 등 — 글 전체와 이미지를 모두. 카카오톡 같은 일부 메신저는 이미지만 전달해요",
+  "shareTextOnly": "글만 공유",
+  "shareTextOnlyHint": "카카오톡 등 메신저 — 이미지 없이 글 전체",
+  "shareSms": "문자용",
+  "shareSmsHint": "앞 {max}자까지, 이미지는 첫 번째 1장만",
+  "@shareSmsHint": {
+    "placeholders": {
+      "max": {
+        "type": "int"
+      }
+    }
+  },
+  "shareCopy": "텍스트 복사",
+  "shareCopyHint": "글만 클립보드에 복사 (이미지 제외)",
+  "shareCopied": "클립보드에 복사했어요",
+  "shareFailed": "공유하지 못했습니다: {error}",
+  "@shareFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "shareNothing": "아직 공유할 내용이 없어요",
   "imageDropHere": "이미지를 놓아서 추가",
   "imageBroken": "이미지를 찾을 수 없습니다",
   "imageConverted": "{name}: 1MB를 넘어 JPEG로 줄였습니다 ({before} → {after})",
@@ -273,6 +324,16 @@
       }
     }
   },
+  "boardCaptureSend": "빠른 메모 저장",
+  "formatBold": "굵게",
+  "formatItalic": "기울임",
+  "formatHeading": "제목",
+  "formatList": "목록",
+  "formatChecklist": "체크리스트",
+  "formatQuote": "인용",
+  "formatLink": "링크",
+  "imageTakePhoto": "사진 찍기",
+  "imageFromGallery": "사진 보관함",
   "boardCaptureHint": "생각나는 대로 쓰고 Enter를 누르세요",
   "boardToday": "오늘",
   "boardYesterday": "어제",

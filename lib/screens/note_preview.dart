@@ -7,6 +7,7 @@ import '../l10n/app_localizations.dart';
 import '../theme/app_theme.dart';
 import '../theme/user_content.dart';
 import 'ctrl_edit_shortcuts.dart';
+import 'share_sheet.dart';
 
 /// 미리보기의 이미지: `../assets/<이름>`은 첨부 폴더에서, http(s)는 네트워크에서.
 class NoteImage extends StatelessWidget {
@@ -48,13 +49,14 @@ class NoteImage extends StatelessWidget {
 }
 
 /// 보드에서 카드를 눌렀을 때 아래에서 올라오는 미리보기 시트: Markdown을 렌더링해서 보여주고, 길면 본문이
-/// 스크롤된다 ([닫기] [편집] 버튼은 고정). 제목 줄은 따로 두지 않는다 — 본문 첫 줄이 곧 제목이라 중복으로 보인다. 시트의 틀은 branch-dock-flutter의 시트와 같다
+/// 스크롤된다 (버튼은 고정). 버튼 순서는 [편집] [저장] [공유] [닫기] — 저장하지 않은(새로 쓰거나 고친) 메모만 [onSave]를 주어 [저장]이 보인다. 제목 줄은 따로 두지 않는다 — 본문 첫 줄이 곧 제목이라 중복으로 보인다. 시트의 틀은 branch-dock-flutter의 시트와 같다
 /// (드래그 핸들, 위쪽 모서리 AppRadius.sheet, 화면 높이의 85% 이내).
 Future<void> showNotePreview(
   BuildContext context, {
   required String body,
   required AssetStore assets,
   required VoidCallback onEdit,
+  VoidCallback? onSave,
 }) {
   final height = MediaQuery.sizeOf(context).height;
   return showModalBottomSheet<void>(
@@ -71,13 +73,27 @@ Future<void> showNotePreview(
         Navigator.pop(sheetContext);
         onEdit();
       },
+      onSave: onSave == null
+          ? null
+          : () {
+              Navigator.pop(sheetContext);
+              onSave();
+            },
     ),
   );
 }
 
 class NotePreviewSheet extends StatelessWidget {
-  const NotePreviewSheet({super.key, required this.body, required this.assets, required this.onEdit});
+  const NotePreviewSheet({
+    super.key,
+    required this.body,
+    required this.assets,
+    required this.onEdit,
+    this.onSave,
+  });
 
+  /// 있으면 [저장] 버튼을 맨 앞에 보인다 (저장하지 않은 메모).
+  final VoidCallback? onSave;
   final String body;
   final AssetStore assets;
   final VoidCallback onEdit;
@@ -139,12 +155,29 @@ class NotePreviewSheet extends StatelessWidget {
               ),
             ),
             const SizedBox(height: AppSpacing.lg),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
+            // 가장 좁은 창에서도 세 버튼이 넘치지 않게 줄을 바꾼다.
+            Wrap(
+              alignment: WrapAlignment.end,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              spacing: AppSpacing.sm,
+              runSpacing: AppSpacing.xs,
               children: [
-                TextButton(onPressed: () => Navigator.pop(context), child: Text(l10n.commonClose)),
-                const SizedBox(width: AppSpacing.sm),
                 FilledButton(onPressed: onEdit, child: Text(l10n.noteEditTab)),
+                if (onSave != null)
+                  OutlinedButton.icon(
+                    onPressed: onSave,
+                    icon: const Icon(Icons.save_rounded, size: 18),
+                    label: Text(l10n.noteSave),
+                  ),
+                // 다른 버튼과 같이 글자 버튼으로.
+                Builder(
+                  builder: (shareContext) => TextButton(
+                    onPressed: () =>
+                        showShareSheet(context, body: body, assets: assets, origin: shareOrigin(shareContext)),
+                    child: Text(l10n.shareTooltip),
+                  ),
+                ),
+                TextButton(onPressed: () => Navigator.pop(context), child: Text(l10n.commonClose)),
               ],
             ),
           ],

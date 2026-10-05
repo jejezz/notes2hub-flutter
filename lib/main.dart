@@ -9,6 +9,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:git2dart/git2dart.dart' show PlatformSpecific;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:window_manager/window_manager.dart';
 
@@ -24,6 +25,7 @@ import 'notes/note_store.dart';
 import 'notes/notes_controller.dart';
 import 'screens/notes_screen.dart';
 import 'sync/ca_bundle.dart';
+import 'sync/device_label.dart';
 import 'sync/libgit2_engine.dart';
 import 'sync/sync_service.dart';
 import 'window/window_layout.dart';
@@ -33,8 +35,39 @@ import 'theme/app_theme.dart';
 final bool _isDesktop = Platform.isMacOS || Platform.isWindows || Platform.isLinux;
 
 Future<void> main() async {
+  try {
+    await _main();
+  } catch (e, st) {
+    // 시작 중 예외로 main이 끝나면 화면이 아무것도 그려지지 않는다 (iOS 릴리스에서 libgit2 심볼이 지워졌을 때 흰 화면이었다).
+    // 원인을 볼 수 있게 오류 화면을 띄운다.
+    runApp(_StartupError(error: '$e\n\n$st'));
+  }
+}
+
+class _StartupError extends StatelessWidget {
+  const _StartupError({required this.error});
+
+  final String error;
+
+  @override
+  Widget build(BuildContext context) => MaterialApp(
+    debugShowCheckedModeBanner: false,
+    home: Scaffold(
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(16),
+          child: SelectableText('${AppIdentity.displayName} could not start.\n\n$error'),
+        ),
+      ),
+    ),
+  );
+}
+
+Future<void> _main() async {
   WidgetsFlutterBinding.ensureInitialized();
   registerExtraLicenses();
+  // 모바일은 libgit2 로딩·Android CA 설정이 먼저 필요하다 (데스크톱에서는 아무 일도 하지 않는다).
+  await PlatformSpecific.initialize();
 
   final prefs = await SharedPreferences.getInstance();
   WindowLayout? windowLayout;
@@ -67,6 +100,7 @@ Future<void> main() async {
     tokens: SecureTokenStore(),
     engine: engine,
     notes: notes,
+    deviceLabel: await readDeviceLabel(),
   );
   runApp(App(settings: settings, notes: notes, sync: sync, assets: assets, windowLayout: windowLayout));
 }

@@ -99,107 +99,158 @@ class _RepoDialogState extends State<_RepoDialog> {
     final repos = all.where((r) => q.isEmpty || r.fullName.toLowerCase().contains(q)).toList()
       ..sort((a, b) => (b.isNotesRepo ? 1 : 0) - (a.isNotesRepo ? 1 : 0));
     final suggested = all.where((r) => r.isNotesRepo).toList();
+    // 좁은 창(폰, 최소 폭 데스크톱)에서는 가로 배치를 세로로 쌓는다 — 버튼이 이름 자리를 빼앗지 않게.
+    final size = MediaQuery.sizeOf(context);
+    final narrow = size.width < 520;
+    final createButton = FilledButton(onPressed: _busy ? null : _create, child: Text(l10n.repoCreate));
+    final nameField = TextField(
+      controller: _name,
+      enabled: !_busy,
+      decoration: InputDecoration(labelText: l10n.repoNameLabel, isDense: true),
+    );
     return AlertDialog(
       title: Text(l10n.repoTitle),
+      insetPadding: EdgeInsets.symmetric(horizontal: narrow ? 16 : 40, vertical: 24),
+      contentPadding: EdgeInsets.fromLTRB(narrow ? 16 : 24, 16, narrow ? 16 : 24, 8),
       content: SizedBox(
         width: 480,
-        height: 460,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            if (suggested.isNotEmpty) ...[
-              Text(l10n.repoSuggested, style: theme.textTheme.titleSmall),
-              const SizedBox(height: AppSpacing.xs),
-              Text(l10n.repoSuggestedHint, style: theme.textTheme.bodySmall),
-              const SizedBox(height: AppSpacing.sm),
-              for (final r in suggested)
-                Card(
-                  margin: const EdgeInsets.only(bottom: AppSpacing.sm),
-                  child: ListTile(
+        // 창 높이에 맞춰 줄이고, 넘치는 건 전체가 스크롤된다 (고정 높이 + Expanded 목록은 낮은 창에서 넘쳤다).
+        height: (size.height - 220).clamp(240.0, 560.0),
+        child: CustomScrollView(
+          slivers: [
+            SliverToBoxAdapter(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (suggested.isNotEmpty) ...[
+                    Text(l10n.repoSuggested, style: theme.textTheme.titleSmall),
+                    const SizedBox(height: AppSpacing.xs),
+                    Text(l10n.repoSuggestedHint, style: theme.textTheme.bodySmall),
+                    const SizedBox(height: AppSpacing.sm),
+                    for (final r in suggested)
+                      Card(
+                        margin: const EdgeInsets.only(bottom: AppSpacing.sm),
+                        child: Padding(
+                          padding: const EdgeInsets.all(AppSpacing.md),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Icon(r.isPrivate ? Icons.lock_outline_rounded : Icons.public_rounded, size: 18),
+                                  const SizedBox(width: AppSpacing.sm),
+                                  Expanded(child: Text(r.fullName, style: theme.textTheme.bodyMedium)),
+                                ],
+                              ),
+                              const SizedBox(height: AppSpacing.sm),
+                              Align(
+                                alignment: Alignment.centerRight,
+                                child: FilledButton(
+                                  onPressed: _busy ? null : () => _pick(r),
+                                  child: Text(l10n.repoUseThis),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    const SizedBox(height: AppSpacing.md),
+                  ],
+                  Text(l10n.repoCreateTitle, style: theme.textTheme.titleSmall),
+                  const SizedBox(height: AppSpacing.sm),
+                  if (narrow) ...[
+                    nameField,
+                    const SizedBox(height: AppSpacing.sm),
+                    Align(alignment: Alignment.centerRight, child: createButton),
+                  ] else
+                    Row(
+                      children: [
+                        Expanded(child: nameField),
+                        const SizedBox(width: AppSpacing.sm),
+                        createButton,
+                      ],
+                    ),
+                  const SizedBox(height: AppSpacing.lg),
+                  Text(l10n.repoExisting, style: theme.textTheme.titleSmall),
+                  const SizedBox(height: AppSpacing.sm),
+                  TextField(
+                    controller: _filter,
+                    enabled: !_busy,
+                    onChanged: (_) => setState(() {}),
+                    decoration: InputDecoration(
+                      hintText: l10n.repoSearch,
+                      prefixIcon: const Icon(Icons.search_rounded, size: 18),
+                      isDense: true,
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.sm),
+                ],
+              ),
+            ),
+            if (_repos == null)
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.all(AppSpacing.lg),
+                  child: Center(child: _error == null ? const CircularProgressIndicator() : const SizedBox.shrink()),
+                ),
+              )
+            else if (repos.isEmpty)
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.all(AppSpacing.lg),
+                  child: Center(child: Text(l10n.repoNoMatch, style: theme.textTheme.bodySmall)),
+                ),
+              )
+            else
+              SliverList.builder(
+                itemCount: repos.length,
+                itemBuilder: (context, i) {
+                  final r = repos[i];
+                  return ListTile(
                     dense: true,
+                    enabled: !_busy,
+                    contentPadding: EdgeInsets.zero,
                     leading: Icon(r.isPrivate ? Icons.lock_outline_rounded : Icons.public_rounded, size: 18),
                     title: Text(r.fullName),
-                    trailing: FilledButton(onPressed: _busy ? null : () => _pick(r), child: Text(l10n.repoUseThis)),
-                  ),
-                ),
-              const SizedBox(height: AppSpacing.md),
-            ],
-            Text(l10n.repoCreateTitle, style: theme.textTheme.titleSmall),
-            const SizedBox(height: AppSpacing.sm),
-            Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: _name,
-                    enabled: !_busy,
-                    decoration: InputDecoration(labelText: l10n.repoNameLabel, isDense: true),
-                  ),
-                ),
-                const SizedBox(width: AppSpacing.sm),
-                FilledButton(onPressed: _busy ? null : _create, child: Text(l10n.repoCreate)),
-              ],
-            ),
-            const SizedBox(height: AppSpacing.lg),
-            Text(l10n.repoExisting, style: theme.textTheme.titleSmall),
-            const SizedBox(height: AppSpacing.sm),
-            TextField(
-              controller: _filter,
-              enabled: !_busy,
-              onChanged: (_) => setState(() {}),
-              decoration: InputDecoration(
-                hintText: l10n.repoSearch,
-                prefixIcon: const Icon(Icons.search_rounded, size: 18),
-                isDense: true,
-              ),
-            ),
-            const SizedBox(height: AppSpacing.sm),
-            Expanded(
-              child: _repos == null
-                  ? Center(child: _error == null ? const CircularProgressIndicator() : const SizedBox.shrink())
-                  : repos.isEmpty
-                  ? Center(child: Text(l10n.repoNoMatch, style: theme.textTheme.bodySmall))
-                  : ListView.builder(
-                      itemCount: repos.length,
-                      itemBuilder: (context, i) {
-                        final r = repos[i];
-                        return ListTile(
-                          dense: true,
-                          enabled: !_busy,
-                          leading: Icon(r.isPrivate ? Icons.lock_outline_rounded : Icons.public_rounded, size: 18),
-                          title: Text(r.fullName),
-                          subtitle: r.description == null
-                              ? null
-                              : Text(r.description!, maxLines: 1, overflow: TextOverflow.ellipsis),
-                          trailing: Text(
-                            r.isPrivate ? l10n.repoPrivate : l10n.repoPublic,
-                            style: theme.textTheme.labelSmall?.copyWith(
-                              color: r.isPrivate ? theme.colorScheme.onSurfaceVariant : AppColors.warningTextLight,
-                            ),
-                          ),
-                          onTap: () => _pick(r),
-                        );
-                      },
+                    subtitle: r.description == null
+                        ? null
+                        : Text(r.description!, maxLines: 1, overflow: TextOverflow.ellipsis),
+                    trailing: Text(
+                      r.isPrivate ? l10n.repoPrivate : l10n.repoPublic,
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        color: r.isPrivate ? theme.colorScheme.onSurfaceVariant : AppColors.warningTextLight,
+                      ),
                     ),
+                    onTap: () => _pick(r),
+                  );
+                },
+              ),
+            SliverToBoxAdapter(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (_busy)
+                    Padding(
+                      padding: const EdgeInsets.only(top: AppSpacing.sm),
+                      child: Row(
+                        children: [
+                          const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2)),
+                          const SizedBox(width: AppSpacing.sm),
+                          Text(l10n.repoConnecting, style: theme.textTheme.bodySmall),
+                        ],
+                      ),
+                    ),
+                  if (_error != null)
+                    Padding(
+                      padding: const EdgeInsets.only(top: AppSpacing.sm),
+                      child: SelectableText(
+                        _error!,
+                        style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.error),
+                      ),
+                    ),
+                ],
+              ),
             ),
-            if (_busy)
-              Padding(
-                padding: const EdgeInsets.only(top: AppSpacing.sm),
-                child: Row(
-                  children: [
-                    const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2)),
-                    const SizedBox(width: AppSpacing.sm),
-                    Text(l10n.repoConnecting, style: theme.textTheme.bodySmall),
-                  ],
-                ),
-              ),
-            if (_error != null)
-              Padding(
-                padding: const EdgeInsets.only(top: AppSpacing.sm),
-                child: SelectableText(
-                  _error!,
-                  style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.error),
-                ),
-              ),
           ],
         ),
       ),
