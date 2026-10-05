@@ -162,12 +162,12 @@ class NotePreviewSheet extends StatelessWidget {
               spacing: AppSpacing.sm,
               runSpacing: AppSpacing.xs,
               children: [
+                // 다른 버튼(저장·닫기·편집)과 같이 글자 버튼으로.
                 Builder(
-                  builder: (shareContext) => IconButton(
-                    tooltip: l10n.shareTooltip,
-                    icon: const Icon(Icons.ios_share_rounded, size: 20),
+                  builder: (shareContext) => TextButton(
                     onPressed: () =>
                         showShareSheet(context, body: body, assets: assets, origin: shareOrigin(shareContext)),
+                    child: Text(l10n.shareTooltip),
                   ),
                 ),
                 if (onSave != null)

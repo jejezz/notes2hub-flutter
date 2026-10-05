@@ -233,6 +233,7 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.byType(NotePreviewSheet), findsOneWidget);
       expect(button('Save'), findsNothing);
+      expect(button('Share'), findsOneWidget); // 글자 버튼 (아이콘이 아니라)
       expect(button('Close'), findsOneWidget);
       expect(button('Edit'), findsOneWidget);
       await tester.tap(button('Close'));
@@ -244,9 +245,12 @@ void main() {
       expect(c.isDirty(id), isTrue);
       await tester.tap(find.text('Phone note edited'));
       await tester.pumpAndSettle();
+      expect(button('Share'), findsOneWidget);
+      final share = tester.getTopLeft(button('Share')).dx;
       final save = tester.getTopLeft(button('Save')).dx;
       final close = tester.getTopLeft(button('Close')).dx;
       final edit = tester.getTopLeft(button('Edit')).dx;
+      expect(share, lessThan(save));
       expect(save, lessThan(close));
       expect(close, lessThan(edit));
       expect(tester.takeException(), isNull);
