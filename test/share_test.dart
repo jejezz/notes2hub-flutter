@@ -90,9 +90,26 @@ void main() {
       expect(c.images.single.uri.pathSegments.last, 'my photo.jpg'); // %20 in the reference → the real file name
     });
 
-    test('blank lines left by removed images are collapsed', () {
-      final c = buildShareContent('A\n\n![](../assets/a.jpg)\n\n\n\nB', ShareMode.full, assetFile: assetFile);
+    test('an image-only line between blank lines leaves a single blank line', () {
+      final c = buildShareContent('A\n\n![](../assets/a.jpg)\n\nB', ShareMode.full, assetFile: assetFile);
       expect(c.text, 'A\n\nB');
+    });
+
+    test(
+      'line breaks and blank lines the user typed are kept exactly (LF, CRLF, several blank lines, trailing spaces)',
+      () {
+        const typed = '첫 줄\n둘째 줄\n\n\n\n세 번 띄움\r\nCRLF 줄  \n끝';
+        for (final mode in ShareMode.values) {
+          expect(buildShareContent(typed, mode, assetFile: assetFile).text, typed, reason: '$mode');
+        }
+      },
+    );
+
+    test('the title is only a subject for the full share — messengers and texts would show it twice', () {
+      expect(buildShareContent(body, ShareMode.full, assetFile: assetFile).subject, 'Trip plan');
+      for (final mode in [ShareMode.textOnly, ShareMode.sms, ShareMode.copy]) {
+        expect(buildShareContent(body, mode, assetFile: assetFile).subject, isEmpty, reason: '$mode');
+      }
     });
   });
 
