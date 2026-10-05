@@ -107,7 +107,7 @@ assets/
 - 동기화는 저장된 파일만 다룬다. 저장하지 않은 메모가 있으면 알림만 띄운다.
 - 처음 연결할 때 로컬에 있던 메모는 보존된다: 작업 폴더에 `git init` + fetch + 원격 브랜치 checkout(safe)이라 추적되지 않는 로컬 메모가 그대로 남고, 다음 동기화에서 커밋된다.
 
-**로그인**: 브라우저 로그인(GitHub Device Flow)은 OAuth App의 Client ID가 필요하다. GitHub → Settings → Developer settings → OAuth Apps → New OAuth App에서 만들고 **Enable Device Flow**를 켠 뒤, 빌드할 때 `--dart-define=NOTES2HUB_GITHUB_CLIENT_ID=<Client ID>`로 넣는다(`lib/github/github_config.dart`). Client ID가 없으면 로그인 대화상자는 **토큰 입력**(repo 권한 PAT)만 보여준다. 토큰은 항상 보안 저장소에만 저장한다(macOS는 키체인 — 데이터 보호 키체인을 쓰지 않아 별도 프로비저닝 불필요).
+**로그인**: 브라우저 로그인(GitHub Device Flow)은 OAuth App의 Client ID가 필요하다. GitHub → Settings → Developer settings → OAuth Apps → New OAuth App에서 만들고 **Enable Device Flow**를 켠 뒤, 앱 설정의 **Optional features → Token expiration을 Opt-out**하고(새 OAuth App은 기본으로 켜져 있어 액세스 토큰이 8시간 뒤 만료되는데, 앱은 갱신 토큰을 쓰지 않으므로 모든 기기가 반나절 만에 "다시 로그인 필요"가 된다. 이미 발급된 토큰에는 적용되지 않으니 끈 뒤 다시 로그인한다), 빌드할 때 `--dart-define=NOTES2HUB_GITHUB_CLIENT_ID=<Client ID>`로 넣는다(`lib/github/github_config.dart`). Client ID가 없으면 로그인 대화상자는 **토큰 입력**(repo 권한 PAT)만 보여준다. 토큰은 항상 보안 저장소에만 저장한다(macOS는 키체인 — 데이터 보호 키체인을 쓰지 않아 별도 프로비저닝 불필요).
 
 **CA 번들**: `assets/certs/cacert.pem`(Mozilla, git2dart_binaries 동봉본)을 시작 시 앱 데이터 폴더로 풀어 `Libgit2.setSSLCertLocations`에 지정한다. 라이선스 안내는 `assets/licenses/mozilla-ca-bundle.txt`(원문 확인 필요).
 
