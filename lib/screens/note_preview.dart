@@ -49,7 +49,7 @@ class NoteImage extends StatelessWidget {
 }
 
 /// 보드에서 카드를 눌렀을 때 아래에서 올라오는 미리보기 시트: Markdown을 렌더링해서 보여주고, 길면 본문이
-/// 스크롤된다 ([닫기] [편집] 버튼은 고정). 저장하지 않은(새로 쓰거나 고친) 메모는 [onSave]를 주어 [저장] [닫기] [편집]으로 보인다. 제목 줄은 따로 두지 않는다 — 본문 첫 줄이 곧 제목이라 중복으로 보인다. 시트의 틀은 branch-dock-flutter의 시트와 같다
+/// 스크롤된다 (버튼은 고정). 버튼 순서는 [편집] [저장] [공유] [닫기] — 저장하지 않은(새로 쓰거나 고친) 메모만 [onSave]를 주어 [저장]이 보인다. 제목 줄은 따로 두지 않는다 — 본문 첫 줄이 곧 제목이라 중복으로 보인다. 시트의 틀은 branch-dock-flutter의 시트와 같다
 /// (드래그 핸들, 위쪽 모서리 AppRadius.sheet, 화면 높이의 85% 이내).
 Future<void> showNotePreview(
   BuildContext context, {
@@ -162,7 +162,14 @@ class NotePreviewSheet extends StatelessWidget {
               spacing: AppSpacing.sm,
               runSpacing: AppSpacing.xs,
               children: [
-                // 다른 버튼(저장·닫기·편집)과 같이 글자 버튼으로.
+                FilledButton(onPressed: onEdit, child: Text(l10n.noteEditTab)),
+                if (onSave != null)
+                  OutlinedButton.icon(
+                    onPressed: onSave,
+                    icon: const Icon(Icons.save_rounded, size: 18),
+                    label: Text(l10n.noteSave),
+                  ),
+                // 다른 버튼과 같이 글자 버튼으로.
                 Builder(
                   builder: (shareContext) => TextButton(
                     onPressed: () =>
@@ -170,14 +177,7 @@ class NotePreviewSheet extends StatelessWidget {
                     child: Text(l10n.shareTooltip),
                   ),
                 ),
-                if (onSave != null)
-                  OutlinedButton.icon(
-                    onPressed: onSave,
-                    icon: const Icon(Icons.save_rounded, size: 18),
-                    label: Text(l10n.noteSave),
-                  ),
                 TextButton(onPressed: () => Navigator.pop(context), child: Text(l10n.commonClose)),
-                FilledButton(onPressed: onEdit, child: Text(l10n.noteEditTab)),
               ],
             ),
           ],

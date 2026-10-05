@@ -223,12 +223,12 @@ void main() {
       await tester.pump(const Duration(seconds: 10)); // 안내 스낵바·초안 타이머를 비운다
     });
 
-    testWidgets('preview sheet: [Close][Edit] for a saved note, [Save][Close][Edit] for an unsaved one', (tester) async {
+    testWidgets('preview sheet: [Edit][Share][Close] for a saved note, [Edit][Save][Share][Close] for an unsaved one', (tester) async {
       await pump(tester);
       final id = c.notes.first.id;
       Finder button(String label) => find.descendant(of: find.byType(NotePreviewSheet), matching: find.text(label));
 
-      // 저장된 메모: 지금까지처럼 [닫기] [편집]
+      // 저장된 메모: [편집] [공유] [닫기]
       await tester.tap(find.text('Phone note'));
       await tester.pumpAndSettle();
       expect(find.byType(NotePreviewSheet), findsOneWidget);
@@ -236,23 +236,27 @@ void main() {
       expect(button('Share'), findsOneWidget); // 글자 버튼 (아이콘이 아니라)
       expect(button('Close'), findsOneWidget);
       expect(button('Edit'), findsOneWidget);
+      // 읽는 순서(줄 → 가로)로 비교한다: 좁은 폭에서는 버튼이 다음 줄로 넘어갈 수 있다.
+      bool before(String a, String b) {
+        final pa = tester.getTopLeft(button(a)), pb = tester.getTopLeft(button(b));
+        return pa.dy < pb.dy || (pa.dy == pb.dy && pa.dx < pb.dx);
+      }
+
+      expect(before('Edit', 'Share'), isTrue);
+      expect(before('Share', 'Close'), isTrue);
       await tester.tap(button('Close'));
       await tester.pumpAndSettle();
 
-      // 고쳐서 저장하지 않은 메모: [저장] [닫기] [편집] 순서
+      // 고쳐서 저장하지 않은 메모: [편집] [저장] [공유] [닫기] 순서
       c.edit(id, 'Phone note edited');
       await tester.pumpAndSettle();
       expect(c.isDirty(id), isTrue);
       await tester.tap(find.text('Phone note edited'));
       await tester.pumpAndSettle();
       expect(button('Share'), findsOneWidget);
-      final share = tester.getTopLeft(button('Share')).dx;
-      final save = tester.getTopLeft(button('Save')).dx;
-      final close = tester.getTopLeft(button('Close')).dx;
-      final edit = tester.getTopLeft(button('Edit')).dx;
-      expect(share, lessThan(save));
-      expect(save, lessThan(close));
-      expect(close, lessThan(edit));
+      expect(before('Edit', 'Save'), isTrue);
+      expect(before('Save', 'Share'), isTrue);
+      expect(before('Share', 'Close'), isTrue);
       expect(tester.takeException(), isNull);
 
       // [저장]: 시트가 닫히고 저장된다
