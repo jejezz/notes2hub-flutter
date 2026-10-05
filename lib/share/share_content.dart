@@ -12,6 +12,9 @@ enum ShareMode {
   /// 메일·메신저: 글 전체 + 첨부 이미지 모두.
   full,
 
+  /// 글만: 이미지 없이 글 전체. 카카오톡처럼 글과 이미지를 함께 받으면 글을 버리고 이미지만 보내는 앱용.
+  textOnly,
+
   /// 문자(SMS/MMS): 글을 [kSmsMaxChars]자까지만, 이미지는 첫 번째 1장만.
   sms,
 
@@ -41,7 +44,7 @@ final _localAsset = RegExp(r'^\.\./assets/(.+)$');
 /// - 첨부 이미지 참조(`![..](../assets/x.jpg)`)는 받는 사람에게 의미가 없어서 글에서 빼고, 파일로 붙인다.
 ///   웹 이미지(http/https)는 주소를 글로 남긴다.
 /// - [ShareMode.sms]: 글자 수를 [smsMax]자(유니코드 글자 단위)로 줄이고(잘리면 …), 이미지는 첫 번째 1장.
-/// - [ShareMode.copy]: 이미지 없이 글만.
+/// - [ShareMode.textOnly], [ShareMode.copy]: 이미지 없이 글 전체.
 ShareContent buildShareContent(
   String body,
   ShareMode mode, {
@@ -71,7 +74,7 @@ ShareContent buildShareContent(
   final images = switch (mode) {
     ShareMode.full => [for (final n in names) assetFile(n)],
     ShareMode.sms => [for (final n in names.take(1)) assetFile(n)],
-    ShareMode.copy => <File>[],
+    ShareMode.textOnly || ShareMode.copy => <File>[],
   }.where((f) => f.existsSync()).toList();
   // 첫 이미지 파일이 없으면 문자용도 다음 이미지로 넘어가지 않고 글만 보낸다 (순서가 바뀌면 오해를 부른다).
 

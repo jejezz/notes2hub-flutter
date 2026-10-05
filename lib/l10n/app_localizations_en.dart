@@ -379,7 +379,14 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get shareFullHint =>
-      'Email, messengers — all the text and every image';
+      'Email and most apps — all the text and every image. Some messengers (KakaoTalk) keep only the images';
+
+  @override
+  String get shareTextOnly => 'Text only';
+
+  @override
+  String get shareTextOnlyHint =>
+      'KakaoTalk and other messengers — all the text, no images';
 
   @override
   String get shareSms => 'For text messages';

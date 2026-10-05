@@ -374,7 +374,13 @@ class AppLocalizationsKo extends AppLocalizations {
   String get shareFull => '전체 공유';
 
   @override
-  String get shareFullHint => '메일·메신저 — 글 전체와 이미지를 모두';
+  String get shareFullHint => '메일 등 — 글 전체와 이미지를 모두. 카카오톡 같은 일부 메신저는 이미지만 전달해요';
+
+  @override
+  String get shareTextOnly => '글만 공유';
+
+  @override
+  String get shareTextOnlyHint => '카카오톡 등 메신저 — 이미지 없이 글 전체';
 
   @override
   String get shareSms => '문자용';

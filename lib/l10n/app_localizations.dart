@@ -743,8 +743,20 @@ abstract class AppLocalizations {
   /// No description provided for @shareFullHint.
   ///
   /// In ko, this message translates to:
-  /// **'메일·메신저 — 글 전체와 이미지를 모두'**
+  /// **'메일 등 — 글 전체와 이미지를 모두. 카카오톡 같은 일부 메신저는 이미지만 전달해요'**
   String get shareFullHint;
+
+  /// No description provided for @shareTextOnly.
+  ///
+  /// In ko, this message translates to:
+  /// **'글만 공유'**
+  String get shareTextOnly;
+
+  /// No description provided for @shareTextOnlyHint.
+  ///
+  /// In ko, this message translates to:
+  /// **'카카오톡 등 메신저 — 이미지 없이 글 전체'**
+  String get shareTextOnlyHint;
 
   /// No description provided for @shareSms.
   ///

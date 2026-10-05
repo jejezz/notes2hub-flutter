@@ -229,7 +229,9 @@
   "shareTooltip": "Share",
   "shareTitle": "Share this note",
   "shareFull": "Share in full",
-  "shareFullHint": "Email, messengers — all the text and every image",
+  "shareFullHint": "Email and most apps — all the text and every image. Some messengers (KakaoTalk) keep only the images",
+  "shareTextOnly": "Text only",
+  "shareTextOnlyHint": "KakaoTalk and other messengers — all the text, no images",
   "shareSms": "For text messages",
   "shareSmsHint": "First {max} characters and the first image only",
   "@shareSmsHint": {

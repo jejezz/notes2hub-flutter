@@ -246,7 +246,9 @@
   "shareTooltip": "공유",
   "shareTitle": "메모 공유",
   "shareFull": "전체 공유",
-  "shareFullHint": "메일·메신저 — 글 전체와 이미지를 모두",
+  "shareFullHint": "메일 등 — 글 전체와 이미지를 모두. 카카오톡 같은 일부 메신저는 이미지만 전달해요",
+  "shareTextOnly": "글만 공유",
+  "shareTextOnlyHint": "카카오톡 등 메신저 — 이미지 없이 글 전체",
   "shareSms": "문자용",
   "shareSmsHint": "앞 {max}자까지, 이미지는 첫 번째 1장만",
   "@shareSmsHint": {

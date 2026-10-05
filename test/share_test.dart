@@ -55,6 +55,18 @@ void main() {
       expect(e.codeUnits.where((u) => u >= 0xD800 && u <= 0xDFFF).length % 2, 0);
     });
 
+    test(
+      'text only: the whole text without any image (for messengers that drop the text when an image is attached)',
+      () {
+        final c = buildShareContent(body, ShareMode.textOnly, assetFile: assetFile);
+        expect(c.images, isEmpty);
+        expect(c.text, contains('First day'));
+        expect(c.text, contains('End'));
+        expect(c.text, isNot(contains('![')));
+        expect(c.text, buildShareContent(body, ShareMode.full, assetFile: assetFile).text);
+      },
+    );
+
     test('copy: text only, no images', () {
       final c = buildShareContent(body, ShareMode.copy, assetFile: assetFile);
       expect(c.images, isEmpty);
@@ -124,6 +136,7 @@ void main() {
     testWidgets('offers full / for text messages / copy text', (tester) async {
       await open(tester, body);
       expect(find.text('Share in full'), findsOneWidget);
+      expect(find.text('Text only'), findsOneWidget);
       expect(find.text('For text messages'), findsOneWidget);
       expect(find.text('First 1000 characters and the first image only'), findsOneWidget);
       expect(find.text('Copy text'), findsOneWidget);
@@ -147,6 +160,24 @@ void main() {
       expect(clipboard, isNotNull);
       expect(clipboard, isNot(contains('![')));
       expect(find.text('Copied to the clipboard'), findsOneWidget);
+    });
+
+    testWidgets('on a short screen (phone in landscape) the options scroll instead of overflowing', (tester) async {
+      tester.view.physicalSize = const Size(640, 300);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      await open(tester, body);
+      expect(tester.takeException(), isNull);
+      await tester.scrollUntilVisible(find.text('Copy text'), 80, scrollable: find.byType(Scrollable).last);
+      expect(find.text('Copy text'), findsOneWidget);
+    });
+
+    testWidgets('text only shares the whole text and no image', (tester) async {
+      await open(tester, body);
+      await tester.tap(find.text('Text only'));
+      await tester.pumpAndSettle();
+      expect(shared!.images, isEmpty);
+      expect(shared!.text, contains('End'));
     });
 
     testWidgets('an empty note says there is nothing to share instead of opening the sheet', (tester) async {
