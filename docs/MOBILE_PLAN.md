@@ -95,7 +95,9 @@
 - ⚠ **릴리스 빌드가 흰 화면**이었다 (디버그는 정상). 원인: 릴리스·프로파일(AOT)에서 링커가 정적 링크된 libgit2의 심볼을 지워 `dlsym ... git_libgit2_shutdown: symbol not found`로 `main()`이 중단됨(`PlatformSpecific.initialize()`). 해결: `ios/Flutter/Release.xcconfig`에 `DEAD_CODE_STRIPPING = NO`, `STRIP_STYLE = non-global`. 앱은 41.3MB(전 34.9MB). 같은 일이 다시 생겨도 흰 화면 대신 오류가 보이도록 `main()`에 시작 오류 화면을 추가했다.
 - **교훈**: iOS는 디버그만 보고 통과시키지 말고 **릴리스 빌드를 실제로 실행해** 확인한다. CI의 `flutter build ios --no-codesign`은 컴파일만 해서 이런 런타임 문제를 잡지 못한다 (TestFlight 올리기 전에 릴리스 빌드를 한 번 실행해 볼 것).
 
-**아직 확인하지 못한 것**: iPhone 로그인·동기화·공유·사진 첨부(릴리스), 큰 사진 첨부(`image_picker`), 앱 강제 종료 후 `index.lock`(§6-3), 모바일 한글 입력 중 서식 삽입, 장시간 백그라운드 뒤 복귀.
+- 클린 빌드(`flutter clean`)한 릴리스 빌드로 다시 확인: 보드 정상. **브라우저 로그인 → 저장소 연결 → 동기화**도 정상(사용자 확인).
+
+**아직 확인하지 못한 것**: iPhone의 공유·사진 첨부(HEIC)·카메라·서식 도구줄·뒤로가기 제스처, 큰 사진 첨부(`image_picker`), 앱 강제 종료 후 `index.lock`(§6-3), 모바일 한글 입력 중 서식 삽입, 장시간 백그라운드 뒤 복귀.
 
 ### 3-1. 대안: `RestApiEngine` (PoC 실패 시만)
 PLAN.md §3의 대안 B. GitHub Git Data API(blob → tree → commit → ref)로 `notes/*.md`, `assets/*`를 올리고 내려받는다.
@@ -171,7 +173,7 @@ PLAN.md §3의 대안 B. GitHub Git Data API(blob → tree → commit → ref)�
 |---|---|---|
 | M0 | 모바일 폴더 생성 + git2dart PoC(§3) + 판정 | PoC 결과를 이 문서 §3에 기록. **실패 시 여기서 멈추고 `RestApiEngine` 여부 재결정** |
 | M1 ✅ | 모바일 앱 뼈대: 데스크톱 전용 코드 분리, 경로·기기 이름·토큰 저장, 로컬 메모 CRUD가 폰에서 동작 | 에뮬레이터에서 보드·편집·검색·북마크 |
-| M2 (Android ✅ / iOS 대기) | 동기화: 로그인(Device Flow, 앱 전환 대응), 저장소 연결, 수동/자동 동기화, 충돌 사본, stale lock 정리 | 실기기 2대(폰+PC)로 왕복 동기화 확인 |
+| M2 (Android ✅ / iOS ✅) | 동기화: 로그인(Device Flow, 앱 전환 대응), 저장소 연결, 수동/자동 동기화, 충돌 사본, stale lock 정리 | 실기기 2대(폰+PC)로 왕복 동기화 확인 |
 | M3 | 모바일 UI 다듬기: FAB, 길게 누르기 메뉴, 당겨서 새로고침, 서식 도구줄, 키보드·안전 영역·가로 모드 | 주요 화면 폰/태블릿 스크린샷 |
 | M4 | 이미지: 카메라/보관함 → 1MiB 변환 → `assets/` 동기화, 미리보기 | 실기기에서 사진 첨부 → PC에서 보임 |
 | M5 (코드·CI·문서 완료, 시크릿·스토어 등록 대기) | 릴리스: 아이콘, 서명, CI 모바일 잡, README(설치 방법·32비트 미지원 등), 스토어/설치 배포(§9) | `v0.2.0-rc.1` 모바일 산출물 포함 프리릴리스 |
