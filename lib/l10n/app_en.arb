@@ -226,6 +226,31 @@
     }
   },
   "imageProcessingHint": "Large photos are reduced to under 1 MB — this can take a moment.",
+  "shareTooltip": "Share",
+  "shareTitle": "Share this note",
+  "shareFull": "Share in full",
+  "shareFullHint": "Email, messengers — all the text and every image",
+  "shareSms": "For text messages",
+  "shareSmsHint": "First {max} characters and the first image only",
+  "@shareSmsHint": {
+    "placeholders": {
+      "max": {
+        "type": "int"
+      }
+    }
+  },
+  "shareCopy": "Copy text",
+  "shareCopyHint": "Copy the text to the clipboard (without images)",
+  "shareCopied": "Copied to the clipboard",
+  "shareFailed": "Could not share: {error}",
+  "@shareFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "shareNothing": "There is nothing to share yet",
   "imageDropHere": "Drop to add images",
   "imageBroken": "Image not found",
   "imageConverted": "{name}: over 1 MB, reduced to JPEG ({before} → {after})",

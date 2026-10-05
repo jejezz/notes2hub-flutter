@@ -7,6 +7,7 @@ import '../l10n/app_localizations.dart';
 import '../theme/app_theme.dart';
 import '../theme/user_content.dart';
 import 'ctrl_edit_shortcuts.dart';
+import 'share_sheet.dart';
 
 /// 미리보기의 이미지: `../assets/<이름>`은 첨부 폴더에서, http(s)는 네트워크에서.
 class NoteImage extends StatelessWidget {
@@ -161,6 +162,14 @@ class NotePreviewSheet extends StatelessWidget {
               spacing: AppSpacing.sm,
               runSpacing: AppSpacing.xs,
               children: [
+                Builder(
+                  builder: (shareContext) => IconButton(
+                    tooltip: l10n.shareTooltip,
+                    icon: const Icon(Icons.ios_share_rounded, size: 20),
+                    onPressed: () =>
+                        showShareSheet(context, body: body, assets: assets, origin: shareOrigin(shareContext)),
+                  ),
+                ),
                 if (onSave != null)
                   OutlinedButton.icon(
                     onPressed: onSave,

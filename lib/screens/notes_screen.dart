@@ -21,6 +21,7 @@ import '../settings/settings_menus.dart';
 import '../sync/sync_service.dart';
 import '../theme/app_theme.dart';
 import 'md_toolbar.dart';
+import 'share_sheet.dart';
 import '../theme/user_content.dart';
 import '../window/window_layout.dart';
 import 'board_view.dart';
@@ -763,6 +764,7 @@ class _EditorPane extends StatelessWidget {
     final dirty = controller.isDirty(note.id);
     // 창을 화면 가장자리에 세로로 붙인 좁은 모양: 글자 라벨 대신 아이콘으로 줄인다.
     final compact = MediaQuery.sizeOf(context).width < 840;
+    final tiny = MediaQuery.sizeOf(context).width < 400;
     final pad = compact ? AppSpacing.md : AppSpacing.xl;
     const dense = VisualDensity.compact;
     return Column(
@@ -827,7 +829,21 @@ class _EditorPane extends StatelessWidget {
                         onPressed: () => controller.revert(note.id),
                       )
                     : TextButton(onPressed: () => controller.revert(note.id), child: Text(l10n.noteRevert)),
-              if (!isMobilePlatform) // 폰에서는 키보드 위 도구줄에 있다
+              if (!tiny)
+                Builder(
+                  builder: (shareContext) => IconButton(
+                    tooltip: l10n.shareTooltip,
+                    visualDensity: compact ? dense : null,
+                    icon: const Icon(Icons.ios_share_rounded, size: 18),
+                    onPressed: () => showShareSheet(
+                      context,
+                      body: note.body,
+                      assets: assets,
+                      origin: shareOrigin(shareContext),
+                    ),
+                  ),
+                ),
+              if (!isMobilePlatform && !tiny) // 폰에서는 키보드 위 도구줄에 있다
               IconButton(
                 tooltip: '${l10n.imageAdd} ($_mod⇧I)',
                 visualDensity: compact ? dense : null,
@@ -850,12 +866,37 @@ class _EditorPane extends StatelessWidget {
                     label: Text(l10n.noteSave),
                   ),
                 ),
-              IconButton(
-                tooltip: l10n.noteDelete,
-                visualDensity: compact ? dense : null,
-                icon: const Icon(Icons.delete_outline_rounded, size: 18),
-                onPressed: onDelete,
-              ),
+              if (!tiny)
+                IconButton(
+                  tooltip: l10n.noteDelete,
+                  visualDensity: compact ? dense : null,
+                  icon: const Icon(Icons.delete_outline_rounded, size: 18),
+                  onPressed: onDelete,
+                )
+              else
+                // 아주 좁으면(폰 세로, 최소 폭 창) 덜 쓰는 단추를 ⋮ 메뉴로 묶는다.
+                Builder(
+                  builder: (menuContext) => PopupMenuButton<String>(
+                    tooltip: l10n.moreTooltip,
+                    icon: const Icon(Icons.more_vert_rounded, size: 18),
+                    padding: EdgeInsets.zero,
+                    onSelected: (v) {
+                      switch (v) {
+                        case 'share':
+                          showShareSheet(context, body: note.body, assets: assets, origin: shareOrigin(menuContext));
+                        case 'image':
+                          onAddImage();
+                        case 'delete':
+                          onDelete();
+                      }
+                    },
+                    itemBuilder: (_) => [
+                      PopupMenuItem(value: 'share', child: Text(l10n.shareTooltip)),
+                      if (!isMobilePlatform) PopupMenuItem(value: 'image', child: Text(l10n.imageAdd)),
+                      PopupMenuItem(value: 'delete', child: Text(l10n.noteDelete)),
+                    ],
+                  ),
+                ),
             ],
           ),
         ),

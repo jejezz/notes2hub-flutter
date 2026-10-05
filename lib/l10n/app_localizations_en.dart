@@ -369,6 +369,44 @@ class AppLocalizationsEn extends AppLocalizations {
       'Large photos are reduced to under 1 MB — this can take a moment.';
 
   @override
+  String get shareTooltip => 'Share';
+
+  @override
+  String get shareTitle => 'Share this note';
+
+  @override
+  String get shareFull => 'Share in full';
+
+  @override
+  String get shareFullHint =>
+      'Email, messengers — all the text and every image';
+
+  @override
+  String get shareSms => 'For text messages';
+
+  @override
+  String shareSmsHint(int max) {
+    return 'First $max characters and the first image only';
+  }
+
+  @override
+  String get shareCopy => 'Copy text';
+
+  @override
+  String get shareCopyHint => 'Copy the text to the clipboard (without images)';
+
+  @override
+  String get shareCopied => 'Copied to the clipboard';
+
+  @override
+  String shareFailed(String error) {
+    return 'Could not share: $error';
+  }
+
+  @override
+  String get shareNothing => 'There is nothing to share yet';
+
+  @override
   String get imageDropHere => 'Drop to add images';
 
   @override

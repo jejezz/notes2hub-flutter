@@ -9,6 +9,7 @@ import '../notes/notes_controller.dart';
 import '../platform_kind.dart';
 import '../sync/sync_service.dart';
 import '../theme/app_theme.dart';
+import 'share_sheet.dart';
 
 /// 메모 보드: 맨 위에 빠른 메모 입력창과 검색, 아래에 날짜별로 묶인 카드. 카드를 누르면 편집 화면이 열린다.
 /// 카드는 첨부 이미지를 표지로 쓰고, 동기화 상태를 칩으로 보여준다.
@@ -297,6 +298,14 @@ class NoteCard extends StatelessWidget {
               onTap: () {
                 Navigator.pop(ctx);
                 onEdit();
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.ios_share_rounded),
+              title: Text(l10n.shareTooltip),
+              onTap: () {
+                Navigator.pop(ctx);
+                showShareSheet(context, body: note.body, assets: assets, origin: shareOrigin(context));
               },
             ),
             ListTile(

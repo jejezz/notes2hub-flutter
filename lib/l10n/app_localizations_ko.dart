@@ -365,6 +365,43 @@ class AppLocalizationsKo extends AppLocalizations {
   String get imageProcessingHint => '큰 사진은 1MB 미만으로 줄이느라 시간이 조금 걸립니다.';
 
   @override
+  String get shareTooltip => '공유';
+
+  @override
+  String get shareTitle => '메모 공유';
+
+  @override
+  String get shareFull => '전체 공유';
+
+  @override
+  String get shareFullHint => '메일·메신저 — 글 전체와 이미지를 모두';
+
+  @override
+  String get shareSms => '문자용';
+
+  @override
+  String shareSmsHint(int max) {
+    return '앞 $max자까지, 이미지는 첫 번째 1장만';
+  }
+
+  @override
+  String get shareCopy => '텍스트 복사';
+
+  @override
+  String get shareCopyHint => '글만 클립보드에 복사 (이미지 제외)';
+
+  @override
+  String get shareCopied => '클립보드에 복사했어요';
+
+  @override
+  String shareFailed(String error) {
+    return '공유하지 못했습니다: $error';
+  }
+
+  @override
+  String get shareNothing => '아직 공유할 내용이 없어요';
+
+  @override
   String get imageDropHere => '이미지를 놓아서 추가';
 
   @override

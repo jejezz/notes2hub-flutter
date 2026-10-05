@@ -722,6 +722,72 @@ abstract class AppLocalizations {
   /// **'큰 사진은 1MB 미만으로 줄이느라 시간이 조금 걸립니다.'**
   String get imageProcessingHint;
 
+  /// No description provided for @shareTooltip.
+  ///
+  /// In ko, this message translates to:
+  /// **'공유'**
+  String get shareTooltip;
+
+  /// No description provided for @shareTitle.
+  ///
+  /// In ko, this message translates to:
+  /// **'메모 공유'**
+  String get shareTitle;
+
+  /// No description provided for @shareFull.
+  ///
+  /// In ko, this message translates to:
+  /// **'전체 공유'**
+  String get shareFull;
+
+  /// No description provided for @shareFullHint.
+  ///
+  /// In ko, this message translates to:
+  /// **'메일·메신저 — 글 전체와 이미지를 모두'**
+  String get shareFullHint;
+
+  /// No description provided for @shareSms.
+  ///
+  /// In ko, this message translates to:
+  /// **'문자용'**
+  String get shareSms;
+
+  /// No description provided for @shareSmsHint.
+  ///
+  /// In ko, this message translates to:
+  /// **'앞 {max}자까지, 이미지는 첫 번째 1장만'**
+  String shareSmsHint(int max);
+
+  /// No description provided for @shareCopy.
+  ///
+  /// In ko, this message translates to:
+  /// **'텍스트 복사'**
+  String get shareCopy;
+
+  /// No description provided for @shareCopyHint.
+  ///
+  /// In ko, this message translates to:
+  /// **'글만 클립보드에 복사 (이미지 제외)'**
+  String get shareCopyHint;
+
+  /// No description provided for @shareCopied.
+  ///
+  /// In ko, this message translates to:
+  /// **'클립보드에 복사했어요'**
+  String get shareCopied;
+
+  /// No description provided for @shareFailed.
+  ///
+  /// In ko, this message translates to:
+  /// **'공유하지 못했습니다: {error}'**
+  String shareFailed(String error);
+
+  /// No description provided for @shareNothing.
+  ///
+  /// In ko, this message translates to:
+  /// **'아직 공유할 내용이 없어요'**
+  String get shareNothing;
+
   /// No description provided for @imageDropHere.
   ///
   /// In ko, this message translates to:
