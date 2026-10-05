@@ -33,6 +33,7 @@ class SyncService extends ChangeNotifier with WidgetsBindingObserver {
   static const _kLogin = 'gh_login';
   static const _kUserId = 'gh_user_id';
   static const _kName = 'gh_name';
+  static const _kLoginAt = 'gh_login_at';
   static const _kRepoName = 'repo_full_name';
   static const _kRepoUrl = 'repo_url';
   static const _kAutoSync = 'auto_sync';
@@ -185,6 +186,7 @@ class SyncService extends ChangeNotifier with WidgetsBindingObserver {
     await _prefs.setString(_kLogin, user.login);
     await _prefs.setInt(_kUserId, user.id);
     await _prefs.setString(_kName, user.displayName);
+    await _prefs.setString(_kLoginAt, DateTime.now().toIso8601String());
     _needsReauth = false;
     _error = null;
     notifyListeners();
@@ -197,7 +199,7 @@ class SyncService extends ChangeNotifier with WidgetsBindingObserver {
     _retryTimer?.cancel();
     await _tokens.delete();
     _token = null;
-    for (final k in [_kLogin, _kUserId, _kName, _kRepoName, _kRepoUrl]) {
+    for (final k in [_kLogin, _kUserId, _kName, _kLoginAt, _kRepoName, _kRepoUrl]) {
       await _prefs.remove(k);
     }
     _error = null;
@@ -374,6 +376,36 @@ class SyncService extends ChangeNotifier with WidgetsBindingObserver {
     _offline = r.offline;
     _needsReauth = r.authFailed;
     _error = r.ok ? null : r.error;
+    if (r.authFailed) unawaited(_diagnoseAuth());
+  }
+
+  bool _diagnosing = false;
+
+  /// 인증 실패 원인을 가른다: GET /user가 401이면 GitHub가 토큰을 폐기한 것(다른 기기 로그인·10개 한도·승인 철회 등),
+  /// 성공하면 토큰은 유효하고 git 접근만 거절된 것. 토큰 값은 남기지 않고 로그인 후 경과 일수만 덧붙인다.
+  Future<void> _diagnoseAuth() async {
+    final token = _token;
+    if (token == null || _diagnosing) return;
+    _diagnosing = true;
+    try {
+      final at = DateTime.tryParse(_prefs.getString(_kLoginAt) ?? '');
+      final age = at == null ? 'login time unknown' : 'signed in ${DateTime.now().difference(at).inDays} day(s) ago';
+      String verdict;
+      try {
+        await _apiFactory(token).user();
+        verdict = 'Token is still valid (GET /user ok); only git access was refused';
+      } on GitHubApiException catch (e) {
+        verdict = e.unauthorized ? 'GitHub revoked this token (GET /user 401)' : 'Could not verify token: ${e.message}';
+      }
+      final note = '$verdict; $age';
+      debugPrint('[auth] $note');
+      if (_needsReauth && !_disposed) {
+        _error = '${_error ?? ''}\n$note';
+        notifyListeners();
+      }
+    } finally {
+      _diagnosing = false;
+    }
   }
 }
 
