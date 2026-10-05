@@ -35,6 +35,35 @@ import 'theme/app_theme.dart';
 final bool _isDesktop = Platform.isMacOS || Platform.isWindows || Platform.isLinux;
 
 Future<void> main() async {
+  try {
+    await _main();
+  } catch (e, st) {
+    // 시작 중 예외로 main이 끝나면 화면이 아무것도 그려지지 않는다 (iOS 릴리스에서 libgit2 심볼이 지워졌을 때 흰 화면이었다).
+    // 원인을 볼 수 있게 오류 화면을 띄운다.
+    runApp(_StartupError(error: '$e\n\n$st'));
+  }
+}
+
+class _StartupError extends StatelessWidget {
+  const _StartupError({required this.error});
+
+  final String error;
+
+  @override
+  Widget build(BuildContext context) => MaterialApp(
+    debugShowCheckedModeBanner: false,
+    home: Scaffold(
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(16),
+          child: SelectableText('${AppIdentity.displayName} could not start.\n\n$error'),
+        ),
+      ),
+    ),
+  );
+}
+
+Future<void> _main() async {
   WidgetsFlutterBinding.ensureInitialized();
   registerExtraLicenses();
   // 모바일은 libgit2 로딩·Android CA 설정이 먼저 필요하다 (데스크톱에서는 아무 일도 하지 않는다).

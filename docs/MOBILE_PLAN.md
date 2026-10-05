@@ -90,7 +90,12 @@
 3. **추천 저장소인데도 직접 골라야 했다**: 로그인 직후 `notes2hub` 표식의 **비공개 저장소가 정확히 하나**면 선택 없이 자동 연결(`SyncService.connectSuggestedRepo`). 후보 없음/여럿/공개/실패면 기존 선택 화면.
 4. **release 빌드에 `INTERNET` 권한이 없었다**: Flutter 기본 템플릿은 debug/profile에만 넣는다 → 메인 매니페스트에 추가.
 
-**아직 확인하지 못한 것**: iPhone 실기기, 큰 사진 첨부(`image_picker`), 앱 강제 종료 후 `index.lock`(§6-3), 모바일 한글 입력 중 서식 삽입, 장시간 백그라운드 뒤 복귀.
+### 3-4. iPhone 실기기 확인 (2026-10-05) — iPhone 12 mini, iOS 26.6
+- PoC 4개 항목 모두 통과(디버그). 서명은 Xcode 프로젝트의 Team(`DEVELOPMENT_TEAM`)으로 자동.
+- ⚠ **릴리스 빌드가 흰 화면**이었다 (디버그는 정상). 원인: 릴리스·프로파일(AOT)에서 링커가 정적 링크된 libgit2의 심볼을 지워 `dlsym ... git_libgit2_shutdown: symbol not found`로 `main()`이 중단됨(`PlatformSpecific.initialize()`). 해결: `ios/Flutter/Release.xcconfig`에 `DEAD_CODE_STRIPPING = NO`, `STRIP_STYLE = non-global`. 앱은 41.3MB(전 34.9MB). 같은 일이 다시 생겨도 흰 화면 대신 오류가 보이도록 `main()`에 시작 오류 화면을 추가했다.
+- **교훈**: iOS는 디버그만 보고 통과시키지 말고 **릴리스 빌드를 실제로 실행해** 확인한다. CI의 `flutter build ios --no-codesign`은 컴파일만 해서 이런 런타임 문제를 잡지 못한다 (TestFlight 올리기 전에 릴리스 빌드를 한 번 실행해 볼 것).
+
+**아직 확인하지 못한 것**: iPhone 로그인·동기화·공유·사진 첨부(릴리스), 큰 사진 첨부(`image_picker`), 앱 강제 종료 후 `index.lock`(§6-3), 모바일 한글 입력 중 서식 삽입, 장시간 백그라운드 뒤 복귀.
 
 ### 3-1. 대안: `RestApiEngine` (PoC 실패 시만)
 PLAN.md §3의 대안 B. GitHub Git Data API(blob → tree → commit → ref)로 `notes/*.md`, `assets/*`를 올리고 내려받는다.

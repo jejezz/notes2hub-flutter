@@ -1,2 +1,7 @@
 #include? "Pods/Target Support Files/Pods-Runner/Pods-Runner.release.xcconfig"
 #include "Generated.xcconfig"
+
+// git2dart는 정적으로 링크된 libgit2의 심볼을 Dart FFI가 dlsym으로 찾는다. 릴리스·프로파일(AOT) 빌드에서
+// 링커가 쓰이지 않는 심볼을 지우면 "symbol not found"로 앱이 시작 때 멈춘다 (디버그에서는 지우지 않아 보이지 않았다).
+DEAD_CODE_STRIPPING = NO
+STRIP_STYLE = non-global
