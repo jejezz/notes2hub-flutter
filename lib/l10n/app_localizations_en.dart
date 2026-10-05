@@ -225,7 +225,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsSyncManual => 'Manual';
 
   @override
-  String get settingsSyncAuto => 'Automatic (30 s after saving)';
+  String get settingsSyncAuto => 'Automatic (after 30 s)';
 
   @override
   String get settingsSyncHint =>

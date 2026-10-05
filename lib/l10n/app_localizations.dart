@@ -479,7 +479,7 @@ abstract class AppLocalizations {
   /// No description provided for @settingsSyncAuto.
   ///
   /// In ko, this message translates to:
-  /// **'자동 (저장 30초 후)'**
+  /// **'자동 (30초 후)'**
   String get settingsSyncAuto;
 
   /// No description provided for @settingsSyncHint.
