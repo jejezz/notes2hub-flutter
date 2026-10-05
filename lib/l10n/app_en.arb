@@ -133,7 +133,7 @@
   "settingsRepoChange": "Change",
   "settingsSyncMode": "Sync mode",
   "settingsSyncManual": "Manual",
-  "settingsSyncAuto": "Automatic (30 s after saving)",
+  "settingsSyncAuto": "Automatic (after 30 s)",
   "settingsSyncHint": "Pulling happens automatically at launch, when the window regains focus, and every 5 minutes. Pushing follows the setting above.",
   "settingsSyncHintMobile": "Pulling happens automatically at launch, when you return to the app, and every 5 minutes while it is open. Pushing follows the setting above.",
   "loginTitle": "Sign in to GitHub",

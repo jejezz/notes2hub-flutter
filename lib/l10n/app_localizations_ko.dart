@@ -224,7 +224,7 @@ class AppLocalizationsKo extends AppLocalizations {
   String get settingsSyncManual => '수동';
 
   @override
-  String get settingsSyncAuto => '자동 (저장 30초 후)';
+  String get settingsSyncAuto => '자동 (30초 후)';
 
   @override
   String get settingsSyncHint =>
