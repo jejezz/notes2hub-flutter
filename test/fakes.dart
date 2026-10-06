@@ -81,4 +81,7 @@ class FakePort implements WindowPort {
 
   @override
   Future<List<Rect>> visibleAreas() async => areas;
+
+  @override
+  Future<double> referenceScale() async => 1;
 }

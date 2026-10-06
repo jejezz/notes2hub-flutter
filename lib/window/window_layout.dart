@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io' show Platform;
 import 'dart:math' as math;
 import 'dart:ui';
 
@@ -61,22 +62,58 @@ abstract class WindowPort {
 
   /// 각 화면에서 메뉴 막대·Dock·작업 표시줄을 뺀 사용 가능 영역 (창 좌표계).
   Future<List<Rect>> visibleAreas();
+
+  /// 기본 크기(논리 단위)에 곱할 배율. 좌표를 물리 픽셀로 다루는 포트(Windows)만 1이 아니다.
+  Future<double> referenceScale() async => 1;
 }
 
 class DesktopWindowPort implements WindowPort {
-  @override
-  Future<Rect> bounds() => windowManager.getBounds();
+  /// Windows는 모니터마다 배율(DPI)이 달라서 `window_manager`(창이 놓인 모니터의 배율로 나눈 값)와
+  /// `screen_retriever`(각 모니터를 자기 배율로 나눈 값)의 논리 좌표가 서로 맞지 않는다. 그래서
+  /// Windows에서는 모든 좌표·크기를 **물리 픽셀**로 바꿔 다루고, 창을 옮길 때만 현재 배율로 되돌려 준다.
+  static bool get _physical => Platform.isWindows;
+
+  double get _dpr => PlatformDispatcher.instance.views.first.devicePixelRatio;
 
   @override
-  Future<void> setBounds(Rect r) => windowManager.setBounds(r);
+  Future<Rect> bounds() async {
+    final r = await windowManager.getBounds();
+    if (!_physical) return r;
+    final s = _dpr;
+    return Rect.fromLTWH(r.left * s, r.top * s, r.width * s, r.height * s);
+  }
+
+  @override
+  Future<void> setBounds(Rect r) async {
+    if (!_physical) return windowManager.setBounds(r);
+    // 다른 배율의 모니터로 넘어가면 창의 배율이 바뀌고 시스템이 크기를 다시 맞춘다 — 바뀐 배율로 한 번 더 지정한다.
+    for (var i = 0; i < 3; i++) {
+      final s = _dpr;
+      await windowManager.setBounds(Rect.fromLTWH(r.left / s, r.top / s, r.width / s, r.height / s));
+      await Future<void>.delayed(const Duration(milliseconds: 120));
+      if ((_dpr - s).abs() < 0.01) break;
+    }
+  }
 
   @override
   Future<List<Rect>> visibleAreas() async {
     final displays = await screenRetriever.getAllDisplays();
     return [
       for (final d in displays)
-        (d.visiblePosition ?? Offset.zero) & (d.visibleSize ?? d.size),
+        () {
+          final s = _physical ? (d.scaleFactor?.toDouble() ?? 1.0) : 1.0;
+          final pos = d.visiblePosition ?? Offset.zero;
+          final size = d.visibleSize ?? d.size;
+          return Rect.fromLTWH(pos.dx * s, pos.dy * s, size.width * s, size.height * s);
+        }(),
     ];
+  }
+
+  @override
+  Future<double> referenceScale() async {
+    if (!_physical) return 1;
+    final d = await screenRetriever.getPrimaryDisplay();
+    return d.scaleFactor?.toDouble() ?? 1;
   }
 }
 
@@ -90,20 +127,27 @@ class WindowLayout extends ChangeNotifier with WindowListener {
   WindowLayout({
     required this._prefs,
     required this._port,
-    this.defaultSize = const Size(1200, 720),
-    this.defaultDockWidth = 420,
-    this.defaultEditWidth = 900,
+    this.baseSize = const Size(1200, 720),
+    this.baseDockWidth = 420,
+    this.baseEditWidth = 900,
     this.settleDelay = const Duration(milliseconds: 350),
   });
 
   static const _kX = 'win_x', _kY = 'win_y', _kW = 'win_w', _kH = 'win_h';
   static const _kDock = 'win_dock', _kDockW = 'win_dock_w', _kEditW = 'win_edit_w', _kAuto = 'win_auto_expand';
+  // 도킹한 화면을 기억하는 기준점(창 중심). 일반 창 위치(_kX…)는 도킹 전 화면이라 다중 모니터에서 어긋난다.
+  static const _kDockCx = 'win_dock_cx', _kDockCy = 'win_dock_cy';
 
   final SharedPreferences _prefs;
   final WindowPort _port;
-  final Size defaultSize;
-  final double defaultDockWidth;
-  final double defaultEditWidth;
+  final Size baseSize;
+  final double baseDockWidth;
+  final double baseEditWidth;
+  double _scale = 1;
+
+  Size get defaultSize => baseSize * _scale;
+  double get defaultDockWidth => baseDockWidth * _scale;
+  double get defaultEditWidth => baseEditWidth * _scale;
   final Duration settleDelay;
 
   DockSide _dock = DockSide.none;
@@ -137,10 +181,29 @@ class WindowLayout extends ChangeNotifier with WindowListener {
     await _prefs.setDouble(_kH, r.height);
   }
 
+  Future<void> _saveDockAnchor(Rect r) async {
+    await _prefs.setDouble(_kDockCx, r.center.dx);
+    await _prefs.setDouble(_kDockCy, r.center.dy);
+  }
+
+  Rect? get _savedDockAnchor {
+    final x = _prefs.getDouble(_kDockCx), y = _prefs.getDouble(_kDockCy);
+    return x == null || y == null ? null : Rect.fromLTWH(x, y, 1, 1);
+  }
+
+  /// 도킹된 창이 놓였던 화면. 기준점이 지금 어느 화면에도 없으면(모니터를 뺐을 때) 첫 화면.
+  Rect _dockArea(List<Rect> areas) {
+    final anchor = _savedDockAnchor ?? _savedNormal;
+    if (anchor == null) return areas.first;
+    final hit = areas.where((a) => a.overlaps(anchor) || a.contains(anchor.topLeft));
+    return hit.isEmpty ? areas.first : hit.first;
+  }
+
   Future<void> _apply(Rect r) async {
     // 우리가 일으킨 이동·크기 변경 이벤트를 사용자가 옮긴 것으로 오해하지 않게 잠시 무시한다.
     _ignoreEventsUntil = DateTime.now().add(settleDelay + const Duration(milliseconds: 400));
     await _port.setBounds(r);
+    _ignoreEventsUntil = DateTime.now().add(settleDelay + const Duration(milliseconds: 400));
   }
 
   Future<List<Rect>> _areas() async {
@@ -150,6 +213,7 @@ class WindowLayout extends ChangeNotifier with WindowListener {
 
   /// 시작할 때, 창을 보이기 전에 부른다.
   Future<void> restore() async {
+    _scale = await _port.referenceScale();
     final areas = await _areas();
     final saved = _savedNormal;
     _dock = switch (_prefs.getString(_kDock)) {
@@ -158,8 +222,7 @@ class WindowLayout extends ChangeNotifier with WindowListener {
       _ => DockSide.none,
     };
     if (_dock != DockSide.none) {
-      final area = saved == null ? areas.first : displayContaining(saved, areas);
-      await _apply(dockBounds(area, _dock, dockWidth));
+      await _apply(dockBounds(_dockArea(areas), _dock, dockWidth));
     } else if (saved != null && isVisibleEnough(saved, areas)) {
       await _apply(saved);
     } else {
@@ -187,7 +250,9 @@ class WindowLayout extends ChangeNotifier with WindowListener {
     _dock = side;
     _expanded = false;
     await _prefs.setString(_kDock, side.name);
-    await _apply(dockBounds(area, side, dockWidth));
+    final target = dockBounds(area, side, dockWidth);
+    await _saveDockAnchor(target);
+    await _apply(target);
     notifyListeners();
   }
 
@@ -267,6 +332,7 @@ class WindowLayout extends ChangeNotifier with WindowListener {
       if (isAnchored(cur, area, _dock)) {
         // 가장자리에 붙은 채 폭만 바꾼 것 — 폭을 기억한다.
         await _prefs.setDouble(_expanded ? _kEditW : _kDockW, cur.width);
+        await _saveDockAnchor(cur);
       } else {
         // 사용자가 창을 떼어 옮겼다 → 도킹 해제, 지금 위치를 일반 창으로 기억한다.
         _dock = DockSide.none;
