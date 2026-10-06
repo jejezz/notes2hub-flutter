@@ -6,10 +6,11 @@ import '../sync/sync_service.dart';
 import '../theme/app_theme.dart';
 
 /// 메모 저장소를 새로 만들거나 기존 것을 골라 연결한다. 연결되면 true.
-Future<bool?> showRepoDialog(BuildContext context, SyncService sync) => showDialog<bool>(
-  context: context,
-  builder: (_) => _RepoDialog(sync: sync),
-);
+Future<bool?> showRepoDialog(BuildContext context, SyncService sync) =>
+    showDialog<bool>(
+      context: context,
+      builder: (_) => _RepoDialog(sync: sync),
+    );
 
 class _RepoDialog extends StatefulWidget {
   const _RepoDialog({required this.sync});
@@ -45,7 +46,10 @@ class _RepoDialogState extends State<_RepoDialog> {
       final repos = await widget.sync.listRepos();
       if (mounted) setState(() => _repos = repos);
     } catch (e) {
-      if (mounted) setState(() => _error = AppLocalizations.of(context).repoLoadFailed('$e'));
+      if (mounted)
+        setState(
+          () => _error = AppLocalizations.of(context).repoLoadFailed('$e'),
+        );
     }
   }
 
@@ -66,7 +70,10 @@ class _RepoDialogState extends State<_RepoDialog> {
   }
 
   Future<void> _create() => _run(() async {
-    final repo = await widget.sync.createRepo(_name.text.trim(), description: 'Notes2Hub notes');
+    final repo = await widget.sync.createRepo(
+      _name.text.trim(),
+      description: 'Notes2Hub notes',
+    );
     await widget.sync.connectRepo(repo);
   });
 
@@ -79,8 +86,15 @@ class _RepoDialogState extends State<_RepoDialog> {
           title: Text(l10n.repoPublicConfirmTitle),
           content: Text(l10n.repoPublicConfirmBody(repo.fullName)),
           actions: [
-            TextButton(autofocus: true, onPressed: () => Navigator.pop(ctx, false), child: Text(l10n.commonCancel)),
-            FilledButton(onPressed: () => Navigator.pop(ctx, true), child: Text(l10n.repoConnect)),
+            TextButton(
+              autofocus: true,
+              onPressed: () => Navigator.pop(ctx, false),
+              child: Text(l10n.commonCancel),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              child: Text(l10n.repoConnect),
+            ),
           ],
         ),
       );
@@ -96,13 +110,19 @@ class _RepoDialogState extends State<_RepoDialog> {
     final q = _filter.text.trim().toLowerCase();
     final all = _repos ?? [];
     // Notes2Hub 표식이 붙은 저장소를 맨 위로.
-    final repos = all.where((r) => q.isEmpty || r.fullName.toLowerCase().contains(q)).toList()
-      ..sort((a, b) => (b.isNotesRepo ? 1 : 0) - (a.isNotesRepo ? 1 : 0));
+    final repos =
+        all
+            .where((r) => q.isEmpty || r.fullName.toLowerCase().contains(q))
+            .toList()
+          ..sort((a, b) => (b.isNotesRepo ? 1 : 0) - (a.isNotesRepo ? 1 : 0));
     final suggested = all.where((r) => r.isNotesRepo).toList();
     // 좁은 창(폰, 최소 폭 데스크톱)에서는 가로 배치를 세로로 쌓는다 — 버튼이 이름 자리를 빼앗지 않게.
     final size = MediaQuery.sizeOf(context);
     final narrow = size.width < 520;
-    final createButton = FilledButton(onPressed: _busy ? null : _create, child: Text(l10n.repoCreate));
+    final createButton = FilledButton(
+      onPressed: _busy ? null : _create,
+      child: Text(l10n.repoCreate),
+    );
     final nameField = TextField(
       controller: _name,
       enabled: !_busy,
@@ -110,14 +130,58 @@ class _RepoDialogState extends State<_RepoDialog> {
     );
     return AlertDialog(
       title: Text(l10n.repoTitle),
-      insetPadding: EdgeInsets.symmetric(horizontal: narrow ? 16 : 40, vertical: 24),
-      contentPadding: EdgeInsets.fromLTRB(narrow ? 16 : 24, 16, narrow ? 16 : 24, 8),
+      insetPadding: EdgeInsets.symmetric(
+        horizontal: narrow ? 16 : 40,
+        vertical: 24,
+      ),
+      contentPadding: EdgeInsets.fromLTRB(
+        narrow ? 16 : 24,
+        16,
+        narrow ? 16 : 24,
+        8,
+      ),
       content: SizedBox(
         width: 480,
         // 창 높이에 맞춰 줄이고, 넘치는 건 전체가 스크롤된다 (고정 높이 + Expanded 목록은 낮은 창에서 넘쳤다).
         height: (size.height - 220).clamp(240.0, 560.0),
         child: CustomScrollView(
           slivers: [
+            // 연결 진행·오류는 목록이 길어도 보이도록 맨 위에 둔다 (맨 아래면 스크롤 밖이라 아무 반응이 없는 것처럼 보였다).
+            SliverToBoxAdapter(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (_busy)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+                      child: Row(
+                        children: [
+                          const SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          ),
+                          const SizedBox(width: AppSpacing.sm),
+                          Text(
+                            l10n.repoConnecting,
+                            style: theme.textTheme.bodySmall,
+                          ),
+                        ],
+                      ),
+                    ),
+                  if (_error != null)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+                      child: SelectableText(
+                        _error!,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.error,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ),
             SliverToBoxAdapter(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -125,7 +189,10 @@ class _RepoDialogState extends State<_RepoDialog> {
                   if (suggested.isNotEmpty) ...[
                     Text(l10n.repoSuggested, style: theme.textTheme.titleSmall),
                     const SizedBox(height: AppSpacing.xs),
-                    Text(l10n.repoSuggestedHint, style: theme.textTheme.bodySmall),
+                    Text(
+                      l10n.repoSuggestedHint,
+                      style: theme.textTheme.bodySmall,
+                    ),
                     const SizedBox(height: AppSpacing.sm),
                     for (final r in suggested)
                       Card(
@@ -137,9 +204,19 @@ class _RepoDialogState extends State<_RepoDialog> {
                             children: [
                               Row(
                                 children: [
-                                  Icon(r.isPrivate ? Icons.lock_outline_rounded : Icons.public_rounded, size: 18),
+                                  Icon(
+                                    r.isPrivate
+                                        ? Icons.lock_outline_rounded
+                                        : Icons.public_rounded,
+                                    size: 18,
+                                  ),
                                   const SizedBox(width: AppSpacing.sm),
-                                  Expanded(child: Text(r.fullName, style: theme.textTheme.bodyMedium)),
+                                  Expanded(
+                                    child: Text(
+                                      r.fullName,
+                                      style: theme.textTheme.bodyMedium,
+                                    ),
+                                  ),
                                 ],
                               ),
                               const SizedBox(height: AppSpacing.sm),
@@ -161,7 +238,10 @@ class _RepoDialogState extends State<_RepoDialog> {
                   if (narrow) ...[
                     nameField,
                     const SizedBox(height: AppSpacing.sm),
-                    Align(alignment: Alignment.centerRight, child: createButton),
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: createButton,
+                    ),
                   ] else
                     Row(
                       children: [
@@ -191,14 +271,23 @@ class _RepoDialogState extends State<_RepoDialog> {
               SliverToBoxAdapter(
                 child: Padding(
                   padding: const EdgeInsets.all(AppSpacing.lg),
-                  child: Center(child: _error == null ? const CircularProgressIndicator() : const SizedBox.shrink()),
+                  child: Center(
+                    child: _error == null
+                        ? const CircularProgressIndicator()
+                        : const SizedBox.shrink(),
+                  ),
                 ),
               )
             else if (repos.isEmpty)
               SliverToBoxAdapter(
                 child: Padding(
                   padding: const EdgeInsets.all(AppSpacing.lg),
-                  child: Center(child: Text(l10n.repoNoMatch, style: theme.textTheme.bodySmall)),
+                  child: Center(
+                    child: Text(
+                      l10n.repoNoMatch,
+                      style: theme.textTheme.bodySmall,
+                    ),
+                  ),
                 ),
               )
             else
@@ -210,52 +299,40 @@ class _RepoDialogState extends State<_RepoDialog> {
                     dense: true,
                     enabled: !_busy,
                     contentPadding: EdgeInsets.zero,
-                    leading: Icon(r.isPrivate ? Icons.lock_outline_rounded : Icons.public_rounded, size: 18),
+                    leading: Icon(
+                      r.isPrivate
+                          ? Icons.lock_outline_rounded
+                          : Icons.public_rounded,
+                      size: 18,
+                    ),
                     title: Text(r.fullName),
                     subtitle: r.description == null
                         ? null
-                        : Text(r.description!, maxLines: 1, overflow: TextOverflow.ellipsis),
+                        : Text(
+                            r.description!,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
                     trailing: Text(
                       r.isPrivate ? l10n.repoPrivate : l10n.repoPublic,
                       style: theme.textTheme.labelSmall?.copyWith(
-                        color: r.isPrivate ? theme.colorScheme.onSurfaceVariant : AppColors.warningTextLight,
+                        color: r.isPrivate
+                            ? theme.colorScheme.onSurfaceVariant
+                            : AppColors.warningTextLight,
                       ),
                     ),
                     onTap: () => _pick(r),
                   );
                 },
               ),
-            SliverToBoxAdapter(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  if (_busy)
-                    Padding(
-                      padding: const EdgeInsets.only(top: AppSpacing.sm),
-                      child: Row(
-                        children: [
-                          const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2)),
-                          const SizedBox(width: AppSpacing.sm),
-                          Text(l10n.repoConnecting, style: theme.textTheme.bodySmall),
-                        ],
-                      ),
-                    ),
-                  if (_error != null)
-                    Padding(
-                      padding: const EdgeInsets.only(top: AppSpacing.sm),
-                      child: SelectableText(
-                        _error!,
-                        style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.error),
-                      ),
-                    ),
-                ],
-              ),
-            ),
           ],
         ),
       ),
       actions: [
-        TextButton(onPressed: _busy ? null : () => Navigator.pop(context, false), child: Text(l10n.commonClose)),
+        TextButton(
+          onPressed: _busy ? null : () => Navigator.pop(context, false),
+          child: Text(l10n.commonClose),
+        ),
       ],
     );
   }

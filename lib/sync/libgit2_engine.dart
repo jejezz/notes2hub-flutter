@@ -21,9 +21,14 @@ class LibGit2Engine implements SyncEngine {
   final String? caCertPath;
 
   @override
-  Future<SyncResult> connect({required String remoteUrl, required String token}) {
+  Future<SyncResult> connect({
+    required String remoteUrl,
+    required String token,
+  }) {
     final path = dir.path, ca = caCertPath;
-    return Isolate.run(() => _guard(() => _connect(path, ca, remoteUrl, token)));
+    return Isolate.run(
+      () => _guard(() => _connect(path, ca, remoteUrl, token)),
+    );
   }
 
   @override
@@ -35,7 +40,11 @@ class LibGit2Engine implements SyncEngine {
       try {
         final changed = _pending(repo, path);
         final unpushed = _unpushed(repo, path);
-        return SyncStatus(changed: changed, unpushed: unpushed, pendingNotes: _pendingNotes(repo, path, unpushed));
+        return SyncStatus(
+          changed: changed,
+          unpushed: unpushed,
+          pendingNotes: _pendingNotes(repo, path, unpushed),
+        );
       } finally {
         repo.free();
       }
@@ -43,9 +52,18 @@ class LibGit2Engine implements SyncEngine {
   }
 
   @override
-  Future<SyncResult> sync({required String token, required GitIdentity identity, required String deviceLabel}) {
+  Future<SyncResult> sync({
+    required String token,
+    required GitIdentity identity,
+    required String deviceLabel,
+  }) {
     final path = dir.path, ca = caCertPath;
-    return Isolate.run(() => _guard(() => _sync(path, ca, token, identity.name, identity.email, deviceLabel)));
+    return Isolate.run(
+      () => _guard(
+        () =>
+            _sync(path, ca, token, identity.name, identity.email, deviceLabel),
+      ),
+    );
   }
 
   @override
@@ -60,6 +78,17 @@ class LibGit2Engine implements SyncEngine {
 const _notes = 'notes/';
 const _uuid = Uuid();
 
+/// CA 묶음을 지정한다. Windows 빌드는 시스템 인증서 저장소(WinHTTP)를 쓰므로 지정을 지원하지 않아
+/// 던지는데, 그 경우 지정 없이도 HTTPS가 동작하므로 무시한다.
+void _setCa(String? ca) {
+  if (ca == null) return;
+  try {
+    Libgit2.setSSLCertLocations(file: ca);
+  } catch (_) {
+    if (!Platform.isWindows) rethrow;
+  }
+}
+
 SyncResult _guard(SyncResult Function() body) {
   try {
     return body();
@@ -68,12 +97,14 @@ SyncResult _guard(SyncResult Function() body) {
     final low = msg.toLowerCase();
     return SyncResult(
       error: msg,
-      authFailed: low.contains('401') ||
+      authFailed:
+          low.contains('401') ||
           low.contains('403') ||
           low.contains('authentication') ||
           low.contains('credentials') ||
           low.contains('not authorized'),
-      offline: low.contains('resolve') ||
+      offline:
+          low.contains('resolve') ||
           low.contains('failed to connect') ||
           low.contains('timed out') ||
           low.contains('network') ||
@@ -84,21 +115,23 @@ SyncResult _guard(SyncResult Function() body) {
 }
 
 Callbacks _callbacks(String token, List<String> rejects) => Callbacks(
-      // GitHub은 사용자 이름 자리에 아무 값이나 받고 토큰을 비밀번호로 쓴다.
-      credentials: UserPass(username: 'x-access-token', password: token),
-      pushUpdateReference: (ref, msg) {
-        if (msg.isNotEmpty) rejects.add('$ref: $msg');
-      },
-    );
+  // GitHub은 사용자 이름 자리에 아무 값이나 받고 토큰을 비밀번호로 쓴다.
+  credentials: UserPass(username: 'x-access-token', password: token),
+  pushUpdateReference: (ref, msg) {
+    if (msg.isNotEmpty) rejects.add('$ref: $msg');
+  },
+);
 
 /// 아직 커밋이 없는가. `repo.isEmpty`는 HEAD가 `master`일 때만 true라서 `main`에서는 쓸 수 없다.
-bool _unborn(Repository repo, String path) => !Reference.list(repo).contains('refs/heads/${_headBranch(path)}');
+bool _unborn(Repository repo, String path) =>
+    !Reference.list(repo).contains('refs/heads/${_headBranch(path)}');
 
 String _headBranch(String path) {
   final f = File('$path/.git/HEAD');
   if (f.existsSync()) {
     final t = f.readAsStringSync().trim();
-    if (t.startsWith('ref: refs/heads/')) return t.substring('ref: refs/heads/'.length);
+    if (t.startsWith('ref: refs/heads/'))
+      return t.substring('ref: refs/heads/'.length);
   }
   return 'main';
 }
@@ -118,9 +151,10 @@ String? _remoteBranch(Repository repo) {
 }
 
 SyncResult _connect(String path, String? ca, String url, String token) {
-  if (ca != null) Libgit2.setSSLCertLocations(file: ca);
+  _setCa(ca);
   Directory(path).createSync(recursive: true);
-  final repo = File('$path/.git').existsSync() || Directory('$path/.git').existsSync()
+  final repo =
+      File('$path/.git').existsSync() || Directory('$path/.git').existsSync()
       ? Repository.open(path)
       : Repository.init(path: path, initialHead: 'main');
   try {
@@ -129,14 +163,23 @@ SyncResult _connect(String path, String? ca, String url, String token) {
     } else {
       Remote.create(repo: repo, name: 'origin', url: url);
     }
-    Remote.lookup(repo: repo, name: 'origin').fetch(callbacks: _callbacks(token, []));
+    Remote.lookup(
+      repo: repo,
+      name: 'origin',
+    ).fetch(callbacks: _callbacks(token, []));
     final branch = _remoteBranch(repo);
     if (branch != null && _unborn(repo, path)) {
-      final target = Reference.lookup(repo: repo, name: 'refs/remotes/origin/$branch').target;
+      final target = Reference.lookup(
+        repo: repo,
+        name: 'refs/remotes/origin/$branch',
+      ).target;
       Reference.create(repo: repo, name: 'refs/heads/$branch', target: target);
       repo.setHead('refs/heads/$branch');
       // safe: 로컬에만 있는 메모 파일(추적되지 않음)은 건드리지 않는다.
-      Checkout.head(repo: repo, strategy: {GitCheckout.safe, GitCheckout.recreateMissing});
+      Checkout.head(
+        repo: repo,
+        strategy: {GitCheckout.safe, GitCheckout.recreateMissing},
+      );
       return const SyncResult(integrated: true);
     }
     return const SyncResult();
@@ -149,7 +192,8 @@ SyncResult _connect(String path, String? ca, String url, String token) {
 const _assets = 'assets/';
 
 bool _tracked(String rel) =>
-    (rel.startsWith(_notes) && rel.endsWith('.md')) || (rel.startsWith(_assets) && !rel.endsWith('.tmp'));
+    (rel.startsWith(_notes) && rel.endsWith('.md')) ||
+    (rel.startsWith(_assets) && !rel.endsWith('.tmp'));
 
 /// 대상 파일을 인덱스에 맞춘다: 새·바뀐 파일은 추가, 사라진 파일은 제거.
 /// (status 목록은 새 폴더를 폴더 하나로만 보고하고, 충돌 후 새 파일을 빠뜨린다 — PoC.)
@@ -168,14 +212,17 @@ void _stage(Repository repo, String path) {
     }
   }
   for (final entry in index.toList()) {
-    if (_tracked(entry.path) && !onDisk.contains(entry.path)) index.remove(entry.path);
+    if (_tracked(entry.path) && !onDisk.contains(entry.path))
+      index.remove(entry.path);
   }
   index.write();
 }
 
 int _pending(Repository repo, String path) {
   _stage(repo, path);
-  final tree = _unborn(repo, path) ? null : Commit.lookup(repo: repo, oid: repo.head.target).tree;
+  final tree = _unborn(repo, path)
+      ? null
+      : Commit.lookup(repo: repo, oid: repo.head.target).tree;
   final diff = Diff.treeToIndex(repo: repo, tree: tree, index: repo.index);
   final n = diff.length;
   diff.free();
@@ -193,7 +240,9 @@ int _commit(Repository repo, String path, Signature sig, String label) {
     committer: sig,
     message: 'sync: $n files @ $label',
     tree: tree,
-    parents: _unborn(repo, path) ? [] : [Commit.lookup(repo: repo, oid: repo.head.target)],
+    parents: _unborn(repo, path)
+        ? []
+        : [Commit.lookup(repo: repo, oid: repo.head.target)],
   );
   return n;
 }
@@ -217,21 +266,31 @@ Set<String> _pendingNotes(Repository repo, String path, bool unpushed) {
   final ids = <String>{};
   void collect(Diff d) {
     for (final delta in d.deltas) {
-      final p = delta.newFile.path.isNotEmpty ? delta.newFile.path : delta.oldFile.path;
-      if (p.startsWith(_notes) && p.endsWith('.md')) ids.add(p.substring(_notes.length, p.length - 3));
+      final p = delta.newFile.path.isNotEmpty
+          ? delta.newFile.path
+          : delta.oldFile.path;
+      if (p.startsWith(_notes) && p.endsWith('.md'))
+        ids.add(p.substring(_notes.length, p.length - 3));
     }
     d.free();
   }
 
-  final headTree = _unborn(repo, path) ? null : Commit.lookup(repo: repo, oid: repo.head.target).tree;
+  final headTree = _unborn(repo, path)
+      ? null
+      : Commit.lookup(repo: repo, oid: repo.head.target).tree;
   collect(Diff.treeToIndex(repo: repo, tree: headTree, index: repo.index));
   if (unpushed && headTree != null) {
     final theirsName = 'refs/remotes/origin/${_headBranch(path)}';
     final theirsTree = Reference.list(repo).contains(theirsName)
-        ? Commit.lookup(repo: repo, oid: Reference.lookup(repo: repo, name: theirsName).target).tree
+        ? Commit.lookup(
+            repo: repo,
+            oid: Reference.lookup(repo: repo, name: theirsName).target,
+          ).tree
         : null;
     if (theirsTree != null) {
-      collect(Diff.treeToTree(repo: repo, oldTree: theirsTree, newTree: headTree));
+      collect(
+        Diff.treeToTree(repo: repo, oldTree: theirsTree, newTree: headTree),
+      );
     } else {
       // 원격에 브랜치가 아직 없으면 커밋한 메모 전부가 올릴 대상이다.
       collect(Diff.treeToTree(repo: repo, oldTree: null, newTree: headTree));
@@ -241,7 +300,11 @@ Set<String> _pendingNotes(Repository repo, String path, bool unpushed) {
 }
 
 class _Integration {
-  const _Integration({this.integrated = false, this.copies = 0, this.needsMerge = false});
+  const _Integration({
+    this.integrated = false,
+    this.copies = 0,
+    this.needsMerge = false,
+  });
   final bool integrated;
   final int copies;
   final bool needsMerge;
@@ -261,7 +324,10 @@ _Integration _integrate(
   final theirs = Reference.lookup(repo: repo, name: theirsName).target;
   if (_unborn(repo, path)) {
     Reference.create(repo: repo, name: 'refs/heads/$branch', target: theirs);
-    Checkout.head(repo: repo, strategy: {GitCheckout.safe, GitCheckout.recreateMissing});
+    Checkout.head(
+      repo: repo,
+      strategy: {GitCheckout.safe, GitCheckout.recreateMissing},
+    );
     return const _Integration(integrated: true);
   }
 
@@ -275,13 +341,18 @@ _Integration _integrate(
   }
   if (fastForwardOnly) return const _Integration(needsMerge: true);
 
-  Merge.commit(repo: repo, commit: AnnotatedCommit.lookup(repo: repo, oid: theirs));
+  Merge.commit(
+    repo: repo,
+    commit: AnnotatedCommit.lookup(repo: repo, oid: theirs),
+  );
   var copies = 0;
   final index = repo.index;
   if (index.hasConflicts) {
     final now = DateTime.now();
-    final stamp = '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
-    String? text(IndexEntry? e) => e == null ? null : Blob.lookup(repo: repo, oid: e.oid).content;
+    final stamp =
+        '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
+    String? text(IndexEntry? e) =>
+        e == null ? null : Blob.lookup(repo: repo, oid: e.oid).content;
     for (final MapEntry(key: p, value: c) in index.conflicts.entries) {
       final ours = text(c.our), theirsText = text(c.their);
       final isNote = p.startsWith(_notes) && p.endsWith('.md');
@@ -301,7 +372,9 @@ _Integration _integrate(
       } else if (theirsText == null) {
         file.writeAsStringSync(ours ?? ''); // 원격이 지웠지만 로컬이 고쳤다: 살린다.
       } else {
-        file.writeAsStringSync(theirsText); // 로컬이 지웠지만 원격이 고쳤다 / 메모가 아닌 파일: 원격 우선.
+        file.writeAsStringSync(
+          theirsText,
+        ); // 로컬이 지웠지만 원격이 고쳤다 / 메모가 아닌 파일: 원격 우선.
       }
       index.add(p);
     }
@@ -324,8 +397,15 @@ _Integration _integrate(
   return _Integration(integrated: true, copies: copies);
 }
 
-SyncResult _sync(String path, String? ca, String token, String name, String email, String label) {
-  if (ca != null) Libgit2.setSSLCertLocations(file: ca);
+SyncResult _sync(
+  String path,
+  String? ca,
+  String token,
+  String name,
+  String email,
+  String label,
+) {
+  _setCa(ca);
   final repo = Repository.open(path);
   try {
     final sig = Signature.create(name: name, email: email);
@@ -339,7 +419,10 @@ SyncResult _sync(String path, String? ca, String token, String name, String emai
     var copies = 0;
     final rejects = <String>[];
     for (var attempt = 0; attempt < 3; attempt++) {
-      Remote.lookup(repo: repo, name: 'origin').fetch(callbacks: _callbacks(token, rejects));
+      Remote.lookup(
+        repo: repo,
+        name: 'origin',
+      ).fetch(callbacks: _callbacks(token, rejects));
       final r = _integrate(repo, path, branch, sig, label);
       integrated = integrated || r.integrated;
       copies += r.copies;
@@ -350,7 +433,12 @@ SyncResult _sync(String path, String? ca, String token, String name, String emai
       );
       // 그 사이 다른 PC가 먼저 올렸으면 거절된다 → 다시 가져와 합친 뒤 재시도.
       if (rejects.isEmpty) {
-        return SyncResult(committed: committed, pushed: true, integrated: integrated, conflictCopies: copies);
+        return SyncResult(
+          committed: committed,
+          pushed: true,
+          integrated: integrated,
+          conflictCopies: copies,
+        );
       }
     }
     return SyncResult(
@@ -365,21 +453,28 @@ SyncResult _sync(String path, String? ca, String token, String name, String emai
 }
 
 SyncResult _pull(String path, String? ca, String token) {
-  if (ca != null) Libgit2.setSSLCertLocations(file: ca);
+  _setCa(ca);
   final repo = Repository.open(path);
   try {
     final branch = _headBranch(path);
     final pending = _pending(repo, path);
-    Remote.lookup(repo: repo, name: 'origin').fetch(callbacks: _callbacks(token, []));
+    Remote.lookup(
+      repo: repo,
+      name: 'origin',
+    ).fetch(callbacks: _callbacks(token, []));
     if (pending > 0) {
       // 저장된 변경이 있으면 작업 폴더를 건드리지 않는다. 원격이 앞서 있는지만 알린다.
       final theirsName = 'refs/remotes/origin/$branch';
-      if (_unborn(repo, path) || !Reference.list(repo).contains(theirsName)) return const SyncResult();
+      if (_unborn(repo, path) || !Reference.list(repo).contains(theirsName))
+        return const SyncResult();
       final theirs = Reference.lookup(repo: repo, name: theirsName).target;
       final a = Merge.analysis(repo: repo, theirHead: theirs).result;
       return SyncResult(needsSync: !a.contains(GitMergeAnalysis.upToDate));
     }
-    final sig = Signature.create(name: 'Notes2Hub', email: 'noreply@notes2hub.invalid');
+    final sig = Signature.create(
+      name: 'Notes2Hub',
+      email: 'noreply@notes2hub.invalid',
+    );
     final r = _integrate(repo, path, branch, sig, '', fastForwardOnly: true);
     return SyncResult(integrated: r.integrated, needsSync: r.needsMerge);
   } finally {
