@@ -412,5 +412,13 @@
   "noteLinkPickerTitle": "Note to link",
   "noteLinkSearchHint": "Search titles",
   "noteLinkNone": "No notes to link",
-  "backlinksLabel": "Linked from"
+  "backlinksLabel": "Linked from",
+  "linksFixed": "Title changed — updated links in {count} notes",
+  "@linksFixed": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  }
 }

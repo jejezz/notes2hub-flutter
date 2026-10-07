@@ -1267,6 +1267,12 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'이 메모를 가리키는 메모'**
   String get backlinksLabel;
+
+  /// No description provided for @linksFixed.
+  ///
+  /// In ko, this message translates to:
+  /// **'제목이 바뀌어 {count}개 메모의 링크를 고쳤습니다'**
+  String linksFixed(int count);
 }
 
 class _AppLocalizationsDelegate

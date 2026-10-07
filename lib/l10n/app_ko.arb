@@ -429,5 +429,13 @@
   "noteLinkPickerTitle": "링크할 메모",
   "noteLinkSearchHint": "제목 검색",
   "noteLinkNone": "링크할 메모가 없습니다",
-  "backlinksLabel": "이 메모를 가리키는 메모"
+  "backlinksLabel": "이 메모를 가리키는 메모",
+  "linksFixed": "제목이 바뀌어 {count}개 메모의 링크를 고쳤습니다",
+  "@linksFixed": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  }
 }

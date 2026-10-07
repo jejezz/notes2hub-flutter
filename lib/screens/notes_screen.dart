@@ -208,11 +208,26 @@ class _NotesScreenState extends State<NotesScreen> with WidgetsBindingObserver {
   Future<void> _saveNote(String id) async {
     if (!c.isDirty(id)) return;
     try {
-      await c.save(id);
+      final fix = await c.save(id);
+      if (fix != null && mounted) _showLinkFix(fix);
     } catch (e) {
       if (!mounted) return;
       _showError(AppLocalizations.of(context).noteSaveFailed('$e'));
     }
+  }
+
+  /// 제목을 바꿔서 다른 메모의 `[[링크]]`를 고쳤음을 알리고, 되돌릴 수 있게 한다
+  /// (첫 줄에 뭔가를 끼워 넣었을 뿐인데 제목이 바뀐 경우를 위해).
+  void _showLinkFix(LinkFix fix) {
+    final l10n = AppLocalizations.of(context);
+    ScaffoldMessenger.of(context)
+      ..clearSnackBars()
+      ..showSnackBar(
+        SnackBar(
+          content: Text(l10n.linksFixed(fix.count)),
+          action: SnackBarAction(label: l10n.commonUndo, onPressed: () => c.undoLinkFix(fix)),
+        ),
+      );
   }
 
   void _onSyncEvent(SyncEvent e) {
