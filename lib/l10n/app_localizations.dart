@@ -1273,6 +1273,36 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'제목이 바뀌어 {count}개 메모의 링크를 고쳤습니다'**
   String linksFixed(int count);
+
+  /// No description provided for @quickCaptureTitle.
+  ///
+  /// In ko, this message translates to:
+  /// **'빠른 메모'**
+  String get quickCaptureTitle;
+
+  /// No description provided for @quickCaptureHint.
+  ///
+  /// In ko, this message translates to:
+  /// **'Enter로 저장, Shift+Enter로 줄바꿈'**
+  String get quickCaptureHint;
+
+  /// No description provided for @settingsQuickCapture.
+  ///
+  /// In ko, this message translates to:
+  /// **'빠른 메모 단축키 ({keys})'**
+  String settingsQuickCapture(String keys);
+
+  /// No description provided for @settingsQuickCaptureHint.
+  ///
+  /// In ko, this message translates to:
+  /// **'다른 앱을 쓰는 중에도 눌러서 메모를 바로 적습니다. 앱이 실행 중일 때만 동작합니다 (창을 닫으면 종료됩니다).'**
+  String get settingsQuickCaptureHint;
+
+  /// No description provided for @settingsQuickCaptureTaken.
+  ///
+  /// In ko, this message translates to:
+  /// **'다른 앱이 이미 이 단축키를 쓰고 있어 등록하지 못했습니다.'**
+  String get settingsQuickCaptureTaken;
 }
 
 class _AppLocalizationsDelegate

@@ -420,5 +420,17 @@
         "type": "int"
       }
     }
-  }
+  },
+  "quickCaptureTitle": "Quick note",
+  "quickCaptureHint": "Enter to save, Shift+Enter for a new line",
+  "settingsQuickCapture": "Quick note shortcut ({keys})",
+  "@settingsQuickCapture": {
+    "placeholders": {
+      "keys": {
+        "type": "String"
+      }
+    }
+  },
+  "settingsQuickCaptureHint": "Press it from any app to jot a note right away. Works only while the app is running (closing the window quits it).",
+  "settingsQuickCaptureTaken": "Another app already uses this shortcut, so it couldn't be registered."
 }

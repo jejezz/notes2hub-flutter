@@ -437,5 +437,17 @@
         "type": "int"
       }
     }
-  }
+  },
+  "quickCaptureTitle": "빠른 메모",
+  "quickCaptureHint": "Enter로 저장, Shift+Enter로 줄바꿈",
+  "settingsQuickCapture": "빠른 메모 단축키 ({keys})",
+  "@settingsQuickCapture": {
+    "placeholders": {
+      "keys": {
+        "type": "String"
+      }
+    }
+  },
+  "settingsQuickCaptureHint": "다른 앱을 쓰는 중에도 눌러서 메모를 바로 적습니다. 앱이 실행 중일 때만 동작합니다 (창을 닫으면 종료됩니다).",
+  "settingsQuickCaptureTaken": "다른 앱이 이미 이 단축키를 쓰고 있어 등록하지 못했습니다."
 }

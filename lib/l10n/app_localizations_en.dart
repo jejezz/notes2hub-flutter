@@ -678,4 +678,23 @@ class AppLocalizationsEn extends AppLocalizations {
   String linksFixed(int count) {
     return 'Title changed — updated links in $count notes';
   }
+
+  @override
+  String get quickCaptureTitle => 'Quick note';
+
+  @override
+  String get quickCaptureHint => 'Enter to save, Shift+Enter for a new line';
+
+  @override
+  String settingsQuickCapture(String keys) {
+    return 'Quick note shortcut ($keys)';
+  }
+
+  @override
+  String get settingsQuickCaptureHint =>
+      'Press it from any app to jot a note right away. Works only while the app is running (closing the window quits it).';
+
+  @override
+  String get settingsQuickCaptureTaken =>
+      'Another app already uses this shortcut, so it couldn\'t be registered.';
 }

@@ -26,8 +26,10 @@ import '../theme/app_theme.dart';
 import 'md_format.dart';
 import 'md_toolbar.dart';
 import 'note_link_picker.dart';
+import 'quick_capture_dialog.dart';
 import 'share_sheet.dart';
 import '../theme/user_content.dart';
+import '../window/quick_capture.dart';
 import '../window/window_layout.dart';
 import 'board_view.dart';
 import 'ctrl_edit_shortcuts.dart';
@@ -54,6 +56,7 @@ class NotesScreen extends StatefulWidget {
     required this.assets,
     required this.onAbout,
     this.windowLayout,
+    this.quickCapture,
   });
 
   final NotesController controller;
@@ -63,6 +66,9 @@ class NotesScreen extends StatefulWidget {
 
   /// 데스크톱에서만 있다 — 창 크기 기억, 좌/우 도킹, 편집 중 확장.
   final WindowLayout? windowLayout;
+
+  /// 데스크톱(macOS)의 전역 빠른 메모 단축키. 눌리면 입력창을 띄운다.
+  final QuickCaptureHotkey? quickCapture;
 
   @override
   State<NotesScreen> createState() => _NotesScreenState();
@@ -85,6 +91,8 @@ class _NotesScreenState extends State<NotesScreen> with WidgetsBindingObserver {
   NotesController get c => widget.controller;
   SyncService get sync => widget.sync;
   StreamSubscription<SyncEvent>? _syncEvents;
+  StreamSubscription<void>? _quickEvents;
+  bool _quickOpen = false;
   bool _wasEditing = false;
   WindowLayout? get layout => widget.windowLayout;
 
@@ -96,11 +104,13 @@ class _NotesScreenState extends State<NotesScreen> with WidgetsBindingObserver {
     c.addListener(_onSelectionChanged);
     _syncEditor();
     _syncEvents = sync.events.listen(_onSyncEvent);
+    _quickEvents = widget.quickCapture?.triggers.listen((_) => _quickCapturePopup());
   }
 
   @override
   void dispose() {
     _syncEvents?.cancel();
+    _quickEvents?.cancel();
     c.removeListener(_syncEditor);
     c.removeListener(_onSelectionChanged);
     WidgetsBinding.instance.removeObserver(this);
@@ -185,13 +195,37 @@ class _NotesScreenState extends State<NotesScreen> with WidgetsBindingObserver {
     setState(() {});
   }
 
+  /// 전역 단축키: 창을 앞으로 가져와 입력창을 띄우고, 쓴 글을 새 메모로 저장한다. 다른 앱을 쓰다가 불렀다면
+  /// 끝난 뒤 창을 다시 치워 쓰던 앱으로 돌아가게 한다.
+  Future<void> _quickCapturePopup() async {
+    final q = widget.quickCapture;
+    if (q == null || _quickOpen) return;
+    _quickOpen = true;
+    final wasActive = await q.window.isActive();
+    try {
+      await q.window.raise();
+      if (!mounted) return;
+      final text = await showQuickCaptureDialog(context);
+      // 보드 입력창에 쓰던 글은 건드리지 않는다.
+      if (text != null) await _saveCaptured(text);
+    } finally {
+      _quickOpen = false;
+      if (!wasActive) await q.window.putAway();
+    }
+  }
+
   /// 보드의 빠른 메모: 입력한 글로 메모를 만들어 바로 저장한다.
   Future<void> _quickCapture(String text) async {
+    if (await _saveCaptured(text)) _capture.clear();
+  }
+
+  Future<bool> _saveCaptured(String text) async {
     try {
       await c.capture(text);
-      _capture.clear();
+      return true;
     } catch (e) {
       if (mounted) _showError(AppLocalizations.of(context).noteSaveFailed('$e'));
+      return false;
     }
   }
 
@@ -254,7 +288,7 @@ class _NotesScreenState extends State<NotesScreen> with WidgetsBindingObserver {
     }
   }
 
-  void _openSettings() => showSettingsDialog(context, sync, layout);
+  void _openSettings() => showSettingsDialog(context, sync, layout, widget.quickCapture);
 
   // ---- 이미지 첨부 -----------------------------------------------------------
 

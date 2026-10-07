@@ -7,17 +7,26 @@ import '../l10n/app_localizations.dart';
 import '../platform_kind.dart';
 import '../sync/sync_service.dart';
 import '../theme/app_theme.dart';
+import '../window/quick_capture.dart';
 import '../window/window_layout.dart';
 import 'login_dialog.dart';
 import 'repo_dialog.dart';
 
-Future<void> showSettingsDialog(BuildContext context, SyncService sync, [WindowLayout? layout]) =>
-    showDialog<void>(context: context, builder: (_) => _SettingsDialog(sync: sync, layout: layout));
+Future<void> showSettingsDialog(
+  BuildContext context,
+  SyncService sync, [
+  WindowLayout? layout,
+  QuickCaptureHotkey? quickCapture,
+]) => showDialog<void>(
+  context: context,
+  builder: (_) => _SettingsDialog(sync: sync, layout: layout, quickCapture: quickCapture),
+);
 
 class _SettingsDialog extends StatelessWidget {
-  const _SettingsDialog({required this.sync, this.layout});
+  const _SettingsDialog({required this.sync, this.layout, this.quickCapture});
 
   final SyncService sync;
+  final QuickCaptureHotkey? quickCapture;
   final WindowLayout? layout;
 
   @override
@@ -25,7 +34,7 @@ class _SettingsDialog extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
     return ListenableBuilder(
-      listenable: Listenable.merge([sync, ?layout]),
+      listenable: Listenable.merge([sync, ?layout, ?quickCapture]),
       builder: (context, _) => AlertDialog(
         title: Text(l10n.settingsTitle),
         content: SizedBox(
@@ -99,6 +108,22 @@ class _SettingsDialog extends StatelessWidget {
                     subtitle: Text(l10n.settingsAutoExpandHint, style: theme.textTheme.bodySmall),
                     value: layout!.autoExpand,
                     onChanged: (v) => layout!.setAutoExpand(v),
+                  ),
+                ],
+                if (quickCapture?.supported ?? false) ...[
+                  const SizedBox(height: AppSpacing.sm),
+                  SwitchListTile(
+                    contentPadding: EdgeInsets.zero,
+                    dense: true,
+                    title: Text(l10n.settingsQuickCapture(QuickCaptureHotkey.label)),
+                    subtitle: Text(
+                      quickCapture!.enabled && !quickCapture!.registered
+                          ? l10n.settingsQuickCaptureTaken
+                          : l10n.settingsQuickCaptureHint,
+                      style: theme.textTheme.bodySmall,
+                    ),
+                    value: quickCapture!.enabled,
+                    onChanged: quickCapture!.setEnabled,
                   ),
                 ],
               ],

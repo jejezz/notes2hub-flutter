@@ -668,4 +668,22 @@ class AppLocalizationsKo extends AppLocalizations {
   String linksFixed(int count) {
     return '제목이 바뀌어 $count개 메모의 링크를 고쳤습니다';
   }
+
+  @override
+  String get quickCaptureTitle => '빠른 메모';
+
+  @override
+  String get quickCaptureHint => 'Enter로 저장, Shift+Enter로 줄바꿈';
+
+  @override
+  String settingsQuickCapture(String keys) {
+    return '빠른 메모 단축키 ($keys)';
+  }
+
+  @override
+  String get settingsQuickCaptureHint =>
+      '다른 앱을 쓰는 중에도 눌러서 메모를 바로 적습니다. 앱이 실행 중일 때만 동작합니다 (창을 닫으면 종료됩니다).';
+
+  @override
+  String get settingsQuickCaptureTaken => '다른 앱이 이미 이 단축키를 쓰고 있어 등록하지 못했습니다.';
 }
