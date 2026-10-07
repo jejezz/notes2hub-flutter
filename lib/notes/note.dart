@@ -42,6 +42,7 @@ class Note {
   static String _plain(String line) => line
       .replaceFirst(RegExp(r'^#{1,6}\s*'), '')
       .replaceFirstMapped(RegExp(r'^[-*+]\s+\[([ xX])\]\s+'), (m) => m[1] == ' ' ? '☐ ' : '☑ ')
+      .replaceAllMapped(RegExp(r'\[\[([^\[\]]+)\]\]'), (m) => m[1]!)
       .replaceAllMapped(RegExp(r'\[([^\]]*)\]\([^)]*\)'), (m) => m[1]!)
       .replaceAll(RegExp(r'[*_`~]'), '')
       .trim();

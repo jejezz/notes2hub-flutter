@@ -1237,6 +1237,36 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'구분선'**
   String get formatRule;
+
+  /// No description provided for @formatNoteLink.
+  ///
+  /// In ko, this message translates to:
+  /// **'메모 링크'**
+  String get formatNoteLink;
+
+  /// No description provided for @noteLinkPickerTitle.
+  ///
+  /// In ko, this message translates to:
+  /// **'링크할 메모'**
+  String get noteLinkPickerTitle;
+
+  /// No description provided for @noteLinkSearchHint.
+  ///
+  /// In ko, this message translates to:
+  /// **'제목 검색'**
+  String get noteLinkSearchHint;
+
+  /// No description provided for @noteLinkNone.
+  ///
+  /// In ko, this message translates to:
+  /// **'링크할 메모가 없습니다'**
+  String get noteLinkNone;
+
+  /// No description provided for @backlinksLabel.
+  ///
+  /// In ko, this message translates to:
+  /// **'이 메모를 가리키는 메모'**
+  String get backlinksLabel;
 }
 
 class _AppLocalizationsDelegate

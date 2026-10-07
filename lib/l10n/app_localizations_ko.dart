@@ -648,4 +648,19 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get formatRule => '구분선';
+
+  @override
+  String get formatNoteLink => '메모 링크';
+
+  @override
+  String get noteLinkPickerTitle => '링크할 메모';
+
+  @override
+  String get noteLinkSearchHint => '제목 검색';
+
+  @override
+  String get noteLinkNone => '링크할 메모가 없습니다';
+
+  @override
+  String get backlinksLabel => '이 메모를 가리키는 메모';
 }

@@ -11,6 +11,7 @@ class MarkdownToolbar extends StatelessWidget {
     required this.onFormat,
     required this.onGallery,
     this.onCamera,
+    this.onNoteLink,
     this.atTop = false,
     this.modifier = '',
   });
@@ -22,6 +23,9 @@ class MarkdownToolbar extends StatelessWidget {
   final void Function(TextEditingValue Function(TextEditingValue)) onFormat;
   final VoidCallback onGallery;
   final VoidCallback? onCamera;
+
+  /// 있으면 "메모 링크" 버튼을 보인다 — 메모를 골라 `[[제목]]`을 넣는다.
+  final VoidCallback? onNoteLink;
 
   @override
   Widget build(BuildContext context) {
