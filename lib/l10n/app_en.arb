@@ -413,6 +413,14 @@
   "noteLinkSearchHint": "Search titles",
   "noteLinkNone": "No notes to link",
   "backlinksLabel": "Linked from",
+  "linksFixed": "Title changed — updated links in {count} notes",
+  "@linksFixed": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "quickCaptureTitle": "Quick note",
   "quickCaptureHint": "Enter to save, Shift+Enter for a new line",
   "settingsQuickCapture": "Quick note shortcut ({keys})",

@@ -665,6 +665,11 @@ class AppLocalizationsKo extends AppLocalizations {
   String get backlinksLabel => '이 메모를 가리키는 메모';
 
   @override
+  String linksFixed(int count) {
+    return '제목이 바뀌어 $count개 메모의 링크를 고쳤습니다';
+  }
+
+  @override
   String get quickCaptureTitle => '빠른 메모';
 
   @override

@@ -675,6 +675,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get backlinksLabel => 'Linked from';
 
   @override
+  String linksFixed(int count) {
+    return 'Title changed — updated links in $count notes';
+  }
+
+  @override
   String get quickCaptureTitle => 'Quick note';
 
   @override

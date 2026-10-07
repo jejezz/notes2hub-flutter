@@ -15,7 +15,7 @@
 <p align="center">
   <a href="https://github.com/jejezz/notes2hub-flutter/releases/latest"><img src="https://img.shields.io/github/v/release/jejezz/notes2hub-flutter?style=flat-square&color=4c9dff" alt="Latest release"></a>
   <a href="https://github.com/jejezz/notes2hub-flutter/releases"><img src="https://img.shields.io/github/downloads/jejezz/notes2hub-flutter/total?style=flat-square&color=7c5cff" alt="Downloads"></a>
-  <img src="https://img.shields.io/badge/platform-macOS%20%C2%B7%20Windows%20%C2%B7%20Linux%20%C2%B7%20Android-34d399?style=flat-square" alt="macOS · Windows · Linux · Android">
+  <img src="https://img.shields.io/badge/platform-macOS%20%C2%B7%20Windows%20%C2%B7%20Linux-34d399?style=flat-square" alt="macOS · Windows · Linux">
   <img src="https://img.shields.io/badge/built%20with-Flutter-02569b?style=flat-square" alt="Flutter">
   <a href="LICENSE"><img src="https://img.shields.io/github/license/jejezz/notes2hub-flutter?style=flat-square" alt="MIT license"></a>
 </p>
@@ -52,11 +52,10 @@ Download from [**Releases**](https://github.com/jejezz/notes2hub-flutter/release
 | macOS 26.0+ (Apple Silicon) | `Notes2Hub-<version>-macos-arm64.dmg` — open it and drag Notes2Hub to Applications |
 | Windows 10/11 (x64) | `Notes2Hub-<version>-windows-x64-setup.exe` |
 | Linux (x64) | `Notes2Hub-<version>-linux-x64.tar.gz` — extract and run `./install.sh` (`--remove` to uninstall) |
-| Android 7.0+ (64-bit) | `Notes2Hub-<version>-android-arm64.apk` — open it on the phone (allow installing from this source) |
 
 **Windows:** the installer isn't code-signed yet, so SmartScreen says "Windows protected your PC" — choose **More info → Run anyway**.
 
-**Phones:** the Android app is a normal APK (32-bit phones aren't supported). Google Play and iOS (TestFlight / App Store) are on the way — see [docs/MOBILE_RELEASE.md](docs/MOBILE_RELEASE.md). Sign-in works the same way: approve in the phone's browser, then come back to the app.
+**Phones:** Android and iOS builds are not part of the releases for now. The mobile code is in the repository — see [docs/MOBILE_PLAN.md](docs/MOBILE_PLAN.md) and [docs/MOBILE_RELEASE.md](docs/MOBILE_RELEASE.md).
 
 ## How it works
 
