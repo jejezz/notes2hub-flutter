@@ -31,6 +31,17 @@ void main() {
     expect(WikiLinks.render('[[a*b]]', (_) => 'x'), '[a\\*b](note:x)');
   });
 
+  test('rename rewrites matching links outside code and reports no change otherwise', () {
+    const body = '[[Plan]] and [[ plan ]] and [[Other]]\n`[[Plan]]`\n```\n[[Plan]]\n```';
+    expect(
+      WikiLinks.rename(body, 'PLAN', 'Roadmap'),
+      '[[Roadmap]] and [[Roadmap]] and [[Other]]\n`[[Plan]]`\n```\n[[Plan]]\n```',
+    );
+    expect(WikiLinks.rename('no links', 'Plan', 'Roadmap'), isNull);
+    expect(WikiLinks.rename(body, 'Plan', 'bad [title]'), isNull); // 링크가 될 수 없는 제목
+    expect(WikiLinks.rename(body, '', 'x'), isNull);
+  });
+
   test('MdFormat.insert replaces the selection and puts the cursor after it', () {
     final v = MdFormat.insert(
       const TextEditingValue(text: 'see x now', selection: TextSelection(baseOffset: 4, extentOffset: 5)),
@@ -82,6 +93,97 @@ void main() {
       await add('# 자기 자신\n[[자기 자신]]');
       expect(c.backlinksTo(target).map((n) => n.id), [a]);
       expect(c.backlinksTo(a), isEmpty);
+    });
+  });
+
+  group('title change fixes links', () {
+    late Directory tmp;
+    late NotesController c;
+    setUp(() async {
+      tmp = Directory.systemTemp.createTempSync('notes2hub-rename');
+      c = NotesController(
+        NoteStore(notesDir: Directory('${tmp.path}/notes'), draftsDir: Directory('${tmp.path}/drafts')),
+      );
+      await c.load();
+    });
+    tearDown(() {
+      c.dispose();
+      tmp.deleteSync(recursive: true);
+    });
+
+    Future<String> add(String body) async {
+      final id = c.create();
+      c.edit(id, body);
+      await c.save(id);
+      return id;
+    }
+
+    String fileOf(String id) => File('${tmp.path}/notes/$id.md').readAsStringSync();
+
+    test('saving a new title rewrites links in other notes (trashed ones too) and keeps their dates', () async {
+      final target = await add('# Plan\nbody');
+      final a = await add('# A\nsee [[Plan]]');
+      final gone = await add('# B\n[[plan]] later');
+      await c.delete(gone);
+      final untouched = await add('# C\n[[Other]]');
+      final before = c.noteById(a)!.updated;
+
+      c.edit(target, '# Roadmap\nbody');
+      final fix = await c.save(target);
+
+      expect(fix, isNotNull);
+      expect(fix!.count, 2);
+      expect(c.noteById(a)!.body, '# A\nsee [[Roadmap]]');
+      expect(fileOf(a), contains('[[Roadmap]]'));
+      expect(c.noteById(a)!.updated, before);
+      expect(fileOf(gone), contains('[[Roadmap]] later'));
+      expect(c.noteById(untouched)!.body, '# C\n[[Other]]');
+      expect(c.backlinksTo(target).map((n) => n.id), [a]);
+    });
+
+    test('undoLinkFix puts the old title back', () async {
+      final target = await add('# Plan');
+      final a = await add('# A\n[[Plan]]');
+      c.edit(target, '# Roadmap');
+      final fix = (await c.save(target))!;
+      await c.undoLinkFix(fix);
+      expect(c.noteById(a)!.body, '# A\n[[Plan]]');
+      expect(fileOf(a), contains('[[Plan]]'));
+    });
+
+    test('nothing changes for formatting-only edits, new notes, empty titles, or a duplicate old title', () async {
+      final target = await add('# Plan');
+      final a = await add('# A\n[[Plan]]');
+      c.edit(target, '# **Plan**');
+      expect(await c.save(target), isNull); // 제목 글자는 같다
+      expect(c.noteById(a)!.body, '# A\n[[Plan]]');
+
+      final fresh = c.create();
+      c.edit(fresh, '# Brand new');
+      expect(await c.save(fresh), isNull); // 옛 제목이 없다
+
+      c.edit(target, '');
+      expect(await c.save(target), isNull); // 새 제목이 비었다
+      expect(c.noteById(a)!.body, '# A\n[[Plan]]');
+
+      final twin1 = await add('# Twin');
+      await add('# Twin');
+      final linker = await add('# L\n[[Twin]]');
+      c.edit(twin1, '# Renamed');
+      expect(await c.save(twin1), isNull); // 같은 제목의 다른 메모가 남아 있다
+      expect(c.noteById(linker)!.body, '# L\n[[Twin]]');
+    });
+
+    test('an unsaved edit of a linking note is fixed too, so saving it later keeps the new link', () async {
+      final target = await add('# Plan');
+      final a = await add('# A\n[[Plan]]');
+      c.edit(a, '# A\n[[Plan]] and more');
+      c.edit(target, '# Roadmap');
+      await c.save(target);
+      expect(c.isDirty(a), isTrue);
+      expect(c.bodyOf(a), '# A\n[[Roadmap]] and more');
+      await c.save(a);
+      expect(fileOf(a), contains('[[Roadmap]] and more'));
     });
   });
 

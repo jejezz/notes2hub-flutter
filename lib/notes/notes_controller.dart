@@ -8,6 +8,18 @@ import 'note.dart';
 import 'note_store.dart';
 import 'wiki_links.dart';
 
+/// 메모 제목이 바뀌어 다른 메모의 `[[링크]]`를 고친 결과. [NotesController.undoLinkFix]로 되돌린다.
+class LinkFix {
+  const LinkFix({required this.ids, required this.from, required this.to});
+
+  /// 링크를 고친 메모들 (제목을 바꾼 메모 자신은 포함하지 않는다).
+  final List<String> ids;
+  final String from;
+  final String to;
+
+  int get count => ids.length;
+}
+
 /// 메모 목록·선택·편집 상태. "저장"은 로컬 파일 기록까지만 한다 (docs/PLAN.md §5).
 ///
 /// 두 겹으로 들고 있다:
@@ -206,9 +218,11 @@ class NotesController extends ChangeNotifier {
   }
 
   /// 로컬 파일에 저장. 실패하면 예외를 던지고 편집본은 그대로 남는다.
-  Future<void> save(String id) async {
+  /// 제목(첫 줄)이 바뀌었으면 다른 메모의 `[[옛 제목]]`을 새 제목으로 고치고 그 결과를 돌려준다 (고친 것이 없으면 null).
+  Future<LinkFix?> save(String id) async {
     final w = _working[id];
-    if (w == null) return;
+    if (w == null) return null;
+    final oldTitle = _saved[id]?.title ?? '';
     final note = w.copyWith(updated: DateTime.now());
     await _store.save(note);
     _saved[id] = note;
@@ -216,6 +230,48 @@ class NotesController extends ChangeNotifier {
     _draftPending.remove(id);
     notifyListeners();
     onLocalChange?.call();
+    return _fixLinksAfterRename(id, oldTitle, note.title);
+  }
+
+  Future<LinkFix?> _fixLinksAfterRename(String id, String from, String to) async {
+    if (from.isEmpty || to.isEmpty || WikiLinks.normalize(from) == WikiLinks.normalize(to)) return null;
+    // 같은 제목의 다른 메모가 남아 있으면 옛 링크는 아직 그 메모를 가리키므로 건드리지 않는다.
+    if (noteByTitle(from) != null) return null;
+    final ids = await _rewriteLinks(from: from, to: to, except: id);
+    return ids.isEmpty ? null : LinkFix(ids: ids, from: from, to: to);
+  }
+
+  /// [fix]를 되돌린다: 고쳤던 메모들의 `[[새 제목]]`을 `[[옛 제목]]`으로.
+  Future<void> undoLinkFix(LinkFix fix) => _rewriteLinks(from: fix.to, to: fix.from, only: fix.ids.toSet());
+
+  /// 메모들의 `[[from]]`을 `[[to]]`로 바꿔 저장한다 (휴지통 메모 포함). 링크 정리는 글을 고친 것이 아니라서
+  /// `updated`는 그대로 둔다. 저장하지 않은 편집본도 같이 고쳐서, 나중에 저장해도 옛 링크로 되돌아가지 않게 한다.
+  Future<List<String>> _rewriteLinks({required String from, required String to, String? except, Set<String>? only}) async {
+    final changed = <String>[];
+    for (final id in {..._saved.keys, ..._working.keys}.toList()) {
+      if (id == except || (only != null && !only.contains(id))) continue;
+      final saved = _saved[id];
+      final working = _working[id];
+      final savedBody = saved == null ? null : WikiLinks.rename(saved.body, from, to);
+      final workingBody = working == null ? null : WikiLinks.rename(working.body, from, to);
+      if (savedBody == null && workingBody == null) continue;
+      if (savedBody != null) {
+        final n = saved!.copyWith(body: savedBody);
+        await _store.save(n); // 초안 파일도 지워지므로 아래에서 편집본이 있으면 다시 쓴다.
+        _saved[id] = n;
+      }
+      if (working != null) {
+        final w = working.copyWith(body: workingBody ?? working.body);
+        _working[id] = w;
+        await _store.writeDraft(w);
+      }
+      changed.add(id);
+    }
+    if (changed.isNotEmpty) {
+      notifyListeners();
+      onLocalChange?.call();
+    }
+    return changed;
   }
 
   /// 저장 전 편집을 버린다. 새 메모면 메모 자체가 사라진다.

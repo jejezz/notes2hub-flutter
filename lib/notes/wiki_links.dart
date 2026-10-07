@@ -55,6 +55,24 @@ abstract final class WikiLinks {
 
   static String _escape(String s) => s.replaceAllMapped(RegExp(r'[\\\[\]*_`~<>]'), (m) => '\\${m[0]}');
 
+  /// [body]의 `[[from]]`(코드 밖, 대소문자·공백 무시)을 `[[to]]`로 바꾼 본문. 바뀐 것이 없으면 null.
+  /// [to]에 `[`·`]`·줄바꿈이 있으면 링크가 될 수 없어 아무것도 바꾸지 않는다.
+  static String? rename(String body, String from, String to) {
+    final key = normalize(from);
+    final target = to.trim();
+    if (key.isEmpty || target.isEmpty || RegExp(r'[\[\]\n]').hasMatch(target)) return null;
+    var changed = false;
+    final out = _mapOutsideCode(
+      body,
+      (seg) => seg.replaceAllMapped(_link, (m) {
+        if (normalize(m.group(1)!) != key) return m[0]!;
+        changed = true;
+        return '[[$target]]';
+      }),
+    );
+    return changed ? out : null;
+  }
+
   /// 링크 주소가 메모를 가리키면 그 id, 아니면 null.
   static String? idOf(String? href) => href != null && href.startsWith('note:') ? href.substring(5) : null;
 
