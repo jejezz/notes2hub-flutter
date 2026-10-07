@@ -630,4 +630,22 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get historyNoSuchVersion => '그 버전의 내용을 찾지 못했습니다.';
+
+  @override
+  String get formatStrike => '취소선';
+
+  @override
+  String get formatCode => '인라인 코드';
+
+  @override
+  String get formatCodeBlock => '코드 블록';
+
+  @override
+  String get formatNumbered => '번호 목록';
+
+  @override
+  String get formatTable => '표';
+
+  @override
+  String get formatRule => '구분선';
 }

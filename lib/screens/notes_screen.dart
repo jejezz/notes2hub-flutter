@@ -15,11 +15,13 @@ import '../app_identity.dart';
 import '../images/asset_store.dart';
 import '../images/image_processor.dart';
 import '../l10n/app_localizations.dart';
+import '../notes/checklist.dart';
 import '../notes/notes_controller.dart';
 import '../platform_kind.dart';
 import '../settings/settings_menus.dart';
 import '../sync/sync_service.dart';
 import '../theme/app_theme.dart';
+import 'md_format.dart';
 import 'md_toolbar.dart';
 import 'share_sheet.dart';
 import '../theme/user_content.dart';
@@ -162,6 +164,12 @@ class _NotesScreenState extends State<NotesScreen> with WidgetsBindingObserver {
       onEdit: () => _open(id),
       // 저장하지 않은 메모(새로 쓰거나 고친 것)는 시트에서 바로 저장할 수 있다.
       onSave: c.isDirty(id) ? () => _saveNote(id) : null,
+      // 체크박스를 누르면 바로 반영한다. 저장하지 않은 편집이 없던 메모는 그대로 저장까지 한다.
+      onBodyChanged: (body) {
+        final wasDirty = c.isDirty(id);
+        c.edit(id, body);
+        if (!wasDirty) _saveNote(id);
+      },
     );
   }
 
@@ -266,6 +274,10 @@ class _NotesScreenState extends State<NotesScreen> with WidgetsBindingObserver {
     _editor.value = next;
     c.edit(id, next.text);
     _editorFocus.requestFocus();
+  }
+
+  void _formatIfEditing(TextEditingValue Function(TextEditingValue) apply) {
+    if (c.selected != null && !_preview) _format(apply);
   }
 
   Future<void> _dropImages(List<XFile> files) async {
@@ -585,6 +597,10 @@ class _NotesScreenState extends State<NotesScreen> with WidgetsBindingObserver {
         SingleActivator(LogicalKeyboardKey.arrowDown, meta: _isMac, control: !_isMac, alt: true): () =>
             layout?.undock(),
         _primary(LogicalKeyboardKey.keyE): () => setState(() => _preview = !_preview),
+        // 서식 단축키는 편집기가 열려 있고 미리보기가 아닐 때만.
+        _primary(LogicalKeyboardKey.keyB): () => _formatIfEditing((v) => MdFormat.wrap(v, '**')),
+        _primary(LogicalKeyboardKey.keyI): () => _formatIfEditing((v) => MdFormat.wrap(v, '*')),
+        _primary(LogicalKeyboardKey.keyK): () => _formatIfEditing(MdFormat.link),
       },
       // Android 뒤로가기/제스처: 편집 화면이면 앱을 닫지 않고 보드로 돌아간다 (편집 화면은 라우트가 아니라 상태).
       child: ListenableBuilder(
@@ -957,6 +973,9 @@ class _EditorPane extends StatelessWidget {
           ),
         ),
         Divider(height: 1, color: theme.dividerColor),
+        // 데스크톱은 편집기 위에 서식 도구줄을 둔다 (폰은 키보드 위, 아래쪽).
+        if (!isMobilePlatform && !preview)
+          MarkdownToolbar(onFormat: onFormat, onGallery: onAddImage, atTop: true, modifier: _mod),
         Expanded(
           // 글 읽기·쓰기 좋은 폭으로 가운데에 모은다.
           child: Align(
@@ -975,6 +994,11 @@ class _EditorPane extends StatelessWidget {
                           listBullet: userContentStyle(theme.textTheme.bodyLarge),
                         ),
                         imageBuilder: (uri, title, alt) => NoteImage(uri: uri, alt: alt, assets: assets),
+                        checkboxBuilder: ChecklistBoxes(note.body, (index, checked) {
+                          // 화면의 본문이 아니라 지금의 본문에서 뒤집는다 (어긋나면 아무것도 하지 않는다).
+                          final next = Checklist.toggle(controller.bodyOf(note.id), index, expected: !checked);
+                          if (next != null) controller.edit(note.id, next);
+                        }).build,
                         onTapLink: (text, href, title) {
                           final uri = href == null ? null : Uri.tryParse(href);
                           if (uri != null) launchUrl(uri);

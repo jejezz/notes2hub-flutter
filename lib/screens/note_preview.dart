@@ -4,6 +4,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../images/asset_store.dart';
 import '../l10n/app_localizations.dart';
+import '../notes/checklist.dart';
 import '../theme/app_theme.dart';
 import '../theme/user_content.dart';
 import 'ctrl_edit_shortcuts.dart';
@@ -48,6 +49,35 @@ class NoteImage extends StatelessWidget {
   }
 }
 
+/// 미리보기의 체크박스: 누르면 [onToggle]이 (문서 순서의 번호, 누른 뒤의 상태)로 불린다.
+///
+/// 마크다운 위젯은 체크박스를 만들 때 번호를 알려주지 않아서, 만든 순서로 센다. 위젯이 같은 본문을 두 번
+/// 해석해도(테마 변경 등) 번호가 어긋나지 않게 항목 수로 나눈 나머지를 쓴다. 본문이 바뀌면 새로 만든다.
+class ChecklistBoxes {
+  ChecklistBoxes(String body, this.onToggle) : _total = Checklist.count(body);
+
+  final void Function(int index, bool checked) onToggle;
+  final int _total;
+  int _next = 0;
+
+  Widget build(bool checked) {
+    final index = _total == 0 ? 0 : _next++ % _total;
+    return Padding(
+      padding: const EdgeInsets.only(right: AppSpacing.xs),
+      child: SizedBox(
+        width: 24,
+        height: 24,
+        child: Checkbox(
+          value: checked,
+          visualDensity: VisualDensity.compact,
+          materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          onChanged: (v) => onToggle(index, v ?? !checked),
+        ),
+      ),
+    );
+  }
+}
+
 /// 보드에서 카드를 눌렀을 때 아래에서 올라오는 미리보기 시트: Markdown을 렌더링해서 보여주고, 길면 본문이
 /// 스크롤된다 (버튼은 고정). 버튼 순서는 [편집] [저장] [공유] [닫기] — 저장하지 않은(새로 쓰거나 고친) 메모만 [onSave]를 주어 [저장]이 보인다. 제목 줄은 따로 두지 않는다 — 본문 첫 줄이 곧 제목이라 중복으로 보인다. 시트의 틀은 branch-dock-flutter의 시트와 같다
 /// (드래그 핸들, 위쪽 모서리 AppRadius.sheet, 화면 높이의 85% 이내).
@@ -57,6 +87,7 @@ Future<void> showNotePreview(
   required AssetStore assets,
   required VoidCallback onEdit,
   VoidCallback? onSave,
+  ValueChanged<String>? onBodyChanged,
 }) {
   final height = MediaQuery.sizeOf(context).height;
   return showModalBottomSheet<void>(
@@ -69,6 +100,7 @@ Future<void> showNotePreview(
     builder: (sheetContext) => NotePreviewSheet(
       body: body,
       assets: assets,
+      onBodyChanged: onBodyChanged,
       onEdit: () {
         Navigator.pop(sheetContext);
         onEdit();
@@ -83,20 +115,42 @@ Future<void> showNotePreview(
   );
 }
 
-class NotePreviewSheet extends StatelessWidget {
+class NotePreviewSheet extends StatefulWidget {
   const NotePreviewSheet({
     super.key,
     required this.body,
     required this.assets,
     required this.onEdit,
     this.onSave,
+    this.onBodyChanged,
   });
+
+  /// 시트에서 체크박스를 눌러 본문이 바뀌면 새 본문을 알린다 (없으면 체크박스는 읽기 전용).
+  final ValueChanged<String>? onBodyChanged;
 
   /// 있으면 [저장] 버튼을 맨 앞에 보인다 (저장하지 않은 메모).
   final VoidCallback? onSave;
   final String body;
   final AssetStore assets;
   final VoidCallback onEdit;
+
+  @override
+  State<NotePreviewSheet> createState() => _NotePreviewSheetState();
+}
+
+class _NotePreviewSheetState extends State<NotePreviewSheet> {
+  late String body = widget.body;
+
+  VoidCallback? get onSave => widget.onSave;
+  AssetStore get assets => widget.assets;
+  VoidCallback get onEdit => widget.onEdit;
+
+  void _toggle(int index, bool nowChecked) {
+    final next = Checklist.toggle(body, index, expected: !nowChecked);
+    if (next == null) return;
+    setState(() => body = next);
+    widget.onBodyChanged?.call(next);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -145,6 +199,7 @@ class NotePreviewSheet extends StatelessWidget {
                         blockquote: userContentStyle(sheetBody),
                       ),
                       imageBuilder: (uri, title, alt) => NoteImage(uri: uri, alt: alt, assets: assets),
+                      checkboxBuilder: widget.onBodyChanged == null ? null : ChecklistBoxes(body, _toggle).build,
                       onTapLink: (text, href, title) {
                         final uri = href == null ? null : Uri.tryParse(href);
                         if (uri != null) launchUrl(uri);

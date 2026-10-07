@@ -640,4 +640,22 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get historyNoSuchVersion => 'Couldn\'t find that version.';
+
+  @override
+  String get formatStrike => 'Strikethrough';
+
+  @override
+  String get formatCode => 'Inline code';
+
+  @override
+  String get formatCodeBlock => 'Code block';
+
+  @override
+  String get formatNumbered => 'Numbered list';
+
+  @override
+  String get formatTable => 'Table';
+
+  @override
+  String get formatRule => 'Divider';
 }
