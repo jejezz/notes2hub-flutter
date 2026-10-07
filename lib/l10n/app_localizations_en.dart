@@ -101,7 +101,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String noteDeleteBody(String title) {
-    return '“$title” will be permanently deleted.';
+    return 'Unsaved changes to \'$title\' will be lost and the note moved to the trash.';
   }
 
   @override
@@ -569,4 +569,75 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get settingsAutoExpandHint =>
       'When the window is docked to a screen edge, opening a note widens it, and returning to the board restores the docked width.';
+
+  @override
+  String noteMovedToTrash(String title) {
+    return 'Moved \'$title\' to the trash';
+  }
+
+  @override
+  String get commonUndo => 'Undo';
+
+  @override
+  String get trashTooltip => 'Trash';
+
+  @override
+  String get trashEmpty => 'The trash is empty';
+
+  @override
+  String get trashHint =>
+      'Notes in the trash are deleted for good after 30 days.';
+
+  @override
+  String get trashRestore => 'Restore';
+
+  @override
+  String get trashPurge => 'Delete forever';
+
+  @override
+  String trashPurgeConfirm(String title) {
+    return 'Delete \'$title\' forever? This can\'t be undone.';
+  }
+
+  @override
+  String get trashEmptyAll => 'Empty trash';
+
+  @override
+  String trashEmptyAllConfirm(int count) {
+    return 'Delete all $count notes in the trash forever? This can\'t be undone.';
+  }
+
+  @override
+  String trashDeletedAt(String date) {
+    return 'Deleted $date';
+  }
+
+  @override
+  String get historyTooltip => 'Version history';
+
+  @override
+  String get historyTitle => 'Version history';
+
+  @override
+  String get historyHint =>
+      'Each sync records the note as it was. Changes that are only saved don\'t appear yet.';
+
+  @override
+  String get historyEmpty =>
+      'No history yet. Versions build up as you sync this note.';
+
+  @override
+  String historyLoadFailed(String error) {
+    return 'Could not load history: $error';
+  }
+
+  @override
+  String get historyRestore => 'Restore this version';
+
+  @override
+  String get historyRestored =>
+      'Loaded the earlier version into the editor. Save to keep it.';
+
+  @override
+  String get historyNoSuchVersion => 'Couldn\'t find that version.';
 }

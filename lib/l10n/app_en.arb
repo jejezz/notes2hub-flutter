@@ -28,7 +28,7 @@
   "noteRevert": "Discard changes",
   "noteDelete": "Delete",
   "noteDeleteTitle": "Delete this note?",
-  "noteDeleteBody": "“{title}” will be permanently deleted.",
+  "noteDeleteBody": "Unsaved changes to '{title}' will be lost and the note moved to the trash.",
   "@noteDeleteBody": {
     "placeholders": {
       "title": {
@@ -347,5 +347,59 @@
   "settingsDockLeft": "Left",
   "settingsDockRight": "Right",
   "settingsAutoExpand": "Widen the window while editing",
-  "settingsAutoExpandHint": "When the window is docked to a screen edge, opening a note widens it, and returning to the board restores the docked width."
+  "settingsAutoExpandHint": "When the window is docked to a screen edge, opening a note widens it, and returning to the board restores the docked width.",
+  "noteMovedToTrash": "Moved '{title}' to the trash",
+  "@noteMovedToTrash": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "commonUndo": "Undo",
+  "trashTooltip": "Trash",
+  "trashEmpty": "The trash is empty",
+  "trashHint": "Notes in the trash are deleted for good after 30 days.",
+  "trashRestore": "Restore",
+  "trashPurge": "Delete forever",
+  "trashPurgeConfirm": "Delete '{title}' forever? This can't be undone.",
+  "@trashPurgeConfirm": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "trashEmptyAll": "Empty trash",
+  "trashEmptyAllConfirm": "Delete all {count} notes in the trash forever? This can't be undone.",
+  "@trashEmptyAllConfirm": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "trashDeletedAt": "Deleted {date}",
+  "@trashDeletedAt": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "historyTooltip": "Version history",
+  "historyTitle": "Version history",
+  "historyHint": "Each sync records the note as it was. Changes that are only saved don't appear yet.",
+  "historyEmpty": "No history yet. Versions build up as you sync this note.",
+  "historyLoadFailed": "Could not load history: {error}",
+  "@historyLoadFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "historyRestore": "Restore this version",
+  "historyRestored": "Loaded the earlier version into the editor. Save to keep it.",
+  "historyNoSuchVersion": "Couldn't find that version."
 }

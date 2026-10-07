@@ -13,6 +13,10 @@ class FakeEngine implements SyncEngine {
   Set<String> pendingNotes = {};
   final calls = <String>[];
 
+  /// 메모 id → 과거 버전 (최근 순), 그리고 sha → 그 시점의 파일 내용.
+  final versions = <String, List<NoteVersion>>{};
+  final versionTexts = <String, String>{};
+
   /// 호출마다 걸리는 시간. 겹침 검사용으로 늘려 쓴다.
   Duration latency = Duration.zero;
   int inFlight = 0;
@@ -53,6 +57,12 @@ class FakeEngine implements SyncEngine {
       return syncQueue != null && syncQueue!.isNotEmpty ? syncQueue!.removeAt(0) : syncResult;
     });
   }
+
+  @override
+  Future<List<NoteVersion>> history(String noteId, {int limit = 100}) async => versions[noteId] ?? const [];
+
+  @override
+  Future<String?> versionContent(String sha, String noteId) async => versionTexts[sha];
 
   @override
   Future<SyncResult> pull({required String token}) async {

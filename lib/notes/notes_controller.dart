@@ -13,10 +13,13 @@ import 'note_store.dart';
 ///  * [_saved]   디스크의 메모 (새 메모는 아직 없음)
 ///  * [_working] 저장 전 편집본 — 새 메모 포함. 1초 debounce로 초안 파일에도 적는다.
 class NotesController extends ChangeNotifier {
-  NotesController(this._store, {this.draftDelay = const Duration(seconds: 1)});
+  NotesController(this._store, {this.draftDelay = const Duration(seconds: 1), this.trashRetention = const Duration(days: 30)});
 
   final NoteStore _store;
   final Duration draftDelay;
+
+  /// 휴지통에 이 기간이 지난 메모는 앱을 켤 때 완전히 지운다 (git 이력에는 남는다).
+  final Duration trashRetention;
   final _uuid = const Uuid();
 
   final Map<String, Note> _saved = {};
@@ -35,14 +38,19 @@ class NotesController extends ChangeNotifier {
   String get query => _query;
   String? get selectedId => _selectedId;
 
-  /// 최근 수정순. 편집 중인 메모는 편집본을 보여준다.
+  /// 최근 수정순 (휴지통 제외). 편집 중인 메모는 편집본을 보여준다.
   List<Note> get notes {
     final byId = {..._saved, ..._working};
-    final list = byId.values.where((n) => n.matches(_query)).toList()..sort((a, b) => b.updated.compareTo(a.updated));
+    final list = byId.values.where((n) => !n.isTrashed && n.matches(_query)).toList()
+      ..sort((a, b) => b.updated.compareTo(a.updated));
     return list;
   }
 
-  bool get isEmpty => _saved.isEmpty && _working.isEmpty;
+  /// 휴지통의 메모, 최근에 버린 순.
+  List<Note> get trashed =>
+      _saved.values.where((n) => n.isTrashed).toList()..sort((a, b) => b.deletedAt!.compareTo(a.deletedAt!));
+
+  bool get isEmpty => !_saved.values.any((n) => !n.isTrashed) && _working.isEmpty;
 
   /// 저장하지 않은 메모 수 (아직 아무것도 쓰지 않은 새 메모는 제외).
   int get unsavedCount => _working.values.where((n) => n.body.trim().isNotEmpty).length;
@@ -67,6 +75,7 @@ class NotesController extends ChangeNotifier {
     for (final n in await _store.loadAll()) {
       _saved[n.id] = n;
     }
+    await _purgeExpired();
     // 앱이 저장 없이 꺼졌어도 편집 내용이 돌아온다.
     for (final d in await _store.loadDrafts()) {
       final base = _saved[d.id];
@@ -195,7 +204,39 @@ class NotesController extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// 휴지통으로 옮긴다 (파일은 남고 `deleted:` 표시만 붙는다). 저장 전 편집은 버려진다.
+  /// 저장된 적 없는 새 메모는 옮길 파일이 없으니 그냥 사라진다.
   Future<void> delete(String id) async {
+    final saved = _saved[id];
+    if (saved == null) {
+      _working.remove(id);
+      _draftPending.remove(id);
+      await _store.clearDraft(id);
+    } else {
+      final note = saved.copyWith(deletedAt: DateTime.now());
+      await _store.save(note); // 초안 파일도 함께 지워진다.
+      _saved[id] = note;
+      _working.remove(id);
+      _draftPending.remove(id);
+    }
+    _afterRemoval(id);
+    notifyListeners();
+    onLocalChange?.call();
+  }
+
+  /// 휴지통에서 꺼낸다.
+  Future<void> restore(String id) async {
+    final saved = _saved[id];
+    if (saved == null || !saved.isTrashed) return;
+    final note = saved.copyWith(restore: true);
+    await _store.save(note);
+    _saved[id] = note;
+    notifyListeners();
+    onLocalChange?.call();
+  }
+
+  /// 휴지통의 메모 하나를 파일째 지운다. 되돌릴 수 없다 (git 이력에만 남는다).
+  Future<void> purge(String id) async {
     await _store.delete(id);
     _saved.remove(id);
     _working.remove(id);
@@ -203,6 +244,27 @@ class NotesController extends ChangeNotifier {
     _afterRemoval(id);
     notifyListeners();
     onLocalChange?.call();
+  }
+
+  Future<void> emptyTrash() async {
+    final ids = [for (final n in trashed) n.id];
+    if (ids.isEmpty) return;
+    for (final id in ids) {
+      await _store.delete(id);
+      _saved.remove(id);
+    }
+    notifyListeners();
+    onLocalChange?.call();
+  }
+
+  Future<void> _purgeExpired() async {
+    final limit = DateTime.now().subtract(trashRetention);
+    for (final n in _saved.values.toList()) {
+      if (n.deletedAt != null && n.deletedAt!.isBefore(limit)) {
+        await _store.delete(n.id);
+        _saved.remove(n.id);
+      }
+    }
   }
 
   /// 동기화로 디스크의 메모가 바뀐 뒤 다시 읽는다. 편집 중이던 내용은 보존한다.

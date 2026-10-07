@@ -7,6 +7,7 @@ GitHub 저장소를 백엔드로 쓰는 Markdown 메모 앱. 서버/구독 없�
 ## 핵심 규칙 (docs/PLAN.md 요약)
 - **저장** = 로컬 파일 기록만(git 없음). **동기화** = commit + pull(merge) + push. 수동이 기본, 옵션으로 저장 후 30초 자동.
 - 메모 1개 = 파일 1개(`notes/<uuid>.md`). 충돌 시 원격을 본 파일로, 로컬은 "충돌 사본"으로 보존 — 사용자에게 묻지 않는다.
+- **삭제 = 휴지통**: 파일을 지우지 않고 frontmatter `deleted:`만 붙인다(동기화로 따라감, 30일 뒤 앱 시작 때 완전 삭제). **버전 기록** = 그 메모 파일이 바뀐 git 커밋 목록(`SyncEngine.history`/`versionContent`), 동기화한 시점만 남는다.
 - 전부 공유(선택적 공유 없음). 에디터는 Markdown 편집 + 미리보기.
 - 창: 크기·위치 기억, 화면 좌/우 가장자리 **도킹**(세로로 길게), 도킹된 상태에서 메모를 열면 폭을 **자동 확장**했다가 보드로 돌아오면 복원 (`lib/window/window_layout.dart`, 좁은 창 레이아웃 포함).
 - UI: 시작 화면 = 카드 **보드**(빠른 메모 입력창 + 날짜별 masonry 카드 + 동기화 칩), 카드를 열면 **전체 화면 편집 페이지**(←/Esc로 복귀). 보드·편집기 코드는 `lib/screens/board_view.dart`, `notes_screen.dart`.
