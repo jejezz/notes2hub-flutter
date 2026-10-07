@@ -1,5 +1,7 @@
 # 모바일 릴리스 가이드
 
+> **현재 모바일은 릴리스에서 제외돼 있다.** `release.yml`에서 `build-android`·`build-ios` 잡을 뺐다 — 태그를 달아도 Android APK/AAB는 만들어지지 않고, 릴리스는 macOS·Windows·Linux만 게시한다. 시크릿(`ANDROID_*`)이 없어도 릴리스가 막히지 않는다. 다시 넣으려면 이 변경 이전의 `release.yml`(git 기록의 `build-android`·`build-ios` 잡)을 되살리고 `release` 잡의 `needs`에 추가한다. 아래 내용은 그때를 위한 기록이다.
+
 iOS·Android를 배포하기 위해 **사람이 한 번 해 두어야 하는 일**과 CI가 하는 일을 정리한다. 설계와 진행 상황은 [MOBILE_PLAN.md](MOBILE_PLAN.md).
 
 ## 산출물
