@@ -17,27 +17,35 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'fakes.dart';
 
 class _FakeWindow implements QuickCaptureWindow {
-  bool active = false;
+  QuickCaptureWindowState current = QuickCaptureWindowState.background;
   final calls = <String>[];
+  final keep = <bool>[];
 
   @override
-  Future<bool> isActive() async => active;
+  Future<QuickCaptureWindowState> state() async => current;
 
   @override
   Future<void> raise() async => calls.add('raise');
 
   @override
-  Future<void> putAway() async => calls.add('putAway');
+  Future<void> putAway(QuickCaptureWindowState before) async =>
+      calls.add('putAway:${before.name}');
+
+  @override
+  Future<void> keepOnClose(bool value) async => keep.add(value);
 }
 
 const _channel = MethodChannel('notes2hub/hotkey');
 
 /// 네이티브가 "단축키가 눌렸다"고 알리는 것을 흉내 낸다.
-Future<void> _press() => TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger.handlePlatformMessage(
-  _channel.name,
-  const StandardMethodCodec().encodeMethodCall(const MethodCall('pressed')),
-  (_) {},
-);
+Future<void> _press() => TestDefaultBinaryMessengerBinding
+    .instance
+    .defaultBinaryMessenger
+    .handlePlatformMessage(
+      _channel.name,
+      const StandardMethodCodec().encodeMethodCall(const MethodCall('pressed')),
+      (_) {},
+    );
 
 void main() {
   late List<String> native;
@@ -46,21 +54,29 @@ void main() {
   setUp(() {
     native = [];
     registerResult = true;
-    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger.setMockMethodCallHandler(_channel, (call) async {
-      native.add(call.method);
-      return call.method == 'register' ? registerResult : null;
-    });
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(_channel, (call) async {
+          native.add(call.method);
+          return call.method == 'register' ? registerResult : null;
+        });
   });
   tearDown(
-    () => TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger.setMockMethodCallHandler(_channel, null),
+    () => TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(_channel, null),
   );
 
-  Future<QuickCaptureHotkey> make({bool supported = true, Map<String, Object> prefs = const {}}) async {
+  late _FakeWindow fakeWindow;
+
+  Future<QuickCaptureHotkey> make({
+    bool supported = true,
+    Map<String, Object> prefs = const {},
+  }) async {
     SharedPreferences.setMockInitialValues(prefs);
+    fakeWindow = _FakeWindow();
     return QuickCaptureHotkey(
       prefs: await SharedPreferences.getInstance(),
       supported: supported,
-      window: _FakeWindow(),
+      window: fakeWindow,
     );
   }
 
@@ -113,75 +129,142 @@ void main() {
     expect(n, 1);
   });
 
-  testWidgets('the shortcut raises the window, saves the typed note, then puts the window away', (tester) async {
-    tester.view.physicalSize = const Size(1000, 800);
-    tester.view.devicePixelRatio = 1;
-    addTearDown(tester.view.reset);
-    final tmp = Directory.systemTemp.createTempSync('notes2hub-quick');
-    addTearDown(() => tmp.deleteSync(recursive: true));
-    final c = NotesController(
-      NoteStore(notesDir: Directory('${tmp.path}/notes'), draftsDir: Directory('${tmp.path}/drafts')),
-    );
-    SharedPreferences.setMockInitialValues({});
-    final window = _FakeWindow();
-    final q = (await tester.runAsync(
-      () async =>
-          QuickCaptureHotkey(prefs: await SharedPreferences.getInstance(), supported: true, window: window),
-    ))!;
-    final sync = (await tester.runAsync(
-      () async => SyncService(
-        prefs: await SharedPreferences.getInstance(),
-        tokens: MemoryTokenStore(),
-        engine: FakeEngine(),
-        notes: c,
-        pullInterval: const Duration(hours: 1),
-      ),
-    ))!;
-    final settings = (await tester.runAsync(AppSettings.load))!;
-    addTearDown(() {
-      sync.dispose();
-      c.dispose();
-      q.dispose();
-    });
-    await tester.runAsync(c.load);
-    await tester.pumpWidget(
-      AppSettingsScope(
-        settings: settings,
-        child: MaterialApp(
-          locale: const Locale('en'),
-          localizationsDelegates: AppLocalizations.localizationsDelegates,
-          supportedLocales: AppLocalizations.supportedLocales,
-          home: NotesScreen(
-            controller: c,
-            sync: sync,
-            assets: AssetStore(Directory('${tmp.path}/assets')),
-            onAbout: () {},
-            quickCapture: q,
+  test('closing the window keeps the app running only while the shortcut is on and really registered', () async {
+    final q = await make();
+    await q.init();
+    expect(q.keepRunning, isTrue); // 기본 켬
+    expect(fakeWindow.keep.last, isTrue);
+
+    await q.setKeepRunning(false);
+    expect(fakeWindow.keep.last, isFalse);
+    await q.setKeepRunning(true);
+    expect(fakeWindow.keep.last, isTrue);
+
+    await q.setEnabled(false); // 단축키를 끄면 창을 닫을 때 앱이 끝난다
+    expect(fakeWindow.keep.last, isFalse);
+    await q.setEnabled(true);
+    expect(fakeWindow.keep.last, isTrue);
+  });
+
+  test('a taken shortcut must not hide the app in the background', () async {
+    registerResult = false;
+    final q = await make();
+    await q.init();
+    expect(fakeWindow.keep, [false]);
+  });
+
+  test('an unsupported platform never changes how closing behaves', () async {
+    final q = await make(supported: false);
+    await q.init();
+    expect(fakeWindow.keep.last, isFalse);
+  });
+
+  testWidgets(
+    'the shortcut raises the window, saves the typed note, then puts the window away',
+    (tester) async {
+      tester.view.physicalSize = const Size(1000, 800);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      final tmp = Directory.systemTemp.createTempSync('notes2hub-quick');
+      addTearDown(() => tmp.deleteSync(recursive: true));
+      final c = NotesController(
+        NoteStore(
+          notesDir: Directory('${tmp.path}/notes'),
+          draftsDir: Directory('${tmp.path}/drafts'),
+        ),
+      );
+      SharedPreferences.setMockInitialValues({});
+      final window = _FakeWindow();
+      final q = (await tester.runAsync(
+        () async => QuickCaptureHotkey(
+          prefs: await SharedPreferences.getInstance(),
+          supported: true,
+          window: window,
+        ),
+      ))!;
+      final sync = (await tester.runAsync(
+        () async => SyncService(
+          prefs: await SharedPreferences.getInstance(),
+          tokens: MemoryTokenStore(),
+          engine: FakeEngine(),
+          notes: c,
+          pullInterval: const Duration(hours: 1),
+        ),
+      ))!;
+      final settings = (await tester.runAsync(AppSettings.load))!;
+      addTearDown(() {
+        sync.dispose();
+        c.dispose();
+        q.dispose();
+      });
+      await tester.runAsync(c.load);
+      await tester.pumpWidget(
+        AppSettingsScope(
+          settings: settings,
+          child: MaterialApp(
+            locale: const Locale('en'),
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            home: NotesScreen(
+              controller: c,
+              sync: sync,
+              assets: AssetStore(Directory('${tmp.path}/assets')),
+              onAbout: () {},
+              quickCapture: q,
+            ),
           ),
         ),
-      ),
-    );
-    await tester.pumpAndSettle();
+      );
+      await tester.pumpAndSettle();
 
-    // 보드 입력창에 쓰던 글은 그대로 남아야 한다.
-    await tester.enterText(find.byType(TextField).first, 'half written');
+      // 보드 입력창에 쓰던 글은 그대로 남아야 한다.
+      await tester.enterText(find.byType(TextField).first, 'half written');
 
-    await tester.runAsync(_press);
-    await tester.pumpAndSettle();
-    expect(window.calls, ['raise']);
-    expect(find.text('Quick note'), findsOneWidget);
+      await tester.runAsync(_press);
+      await tester.pumpAndSettle();
+      expect(window.calls, ['raise']);
+      expect(find.text('Quick note'), findsOneWidget);
 
-    await tester.enterText(find.descendant(of: find.byType(AlertDialog), matching: find.byType(TextField)), 'from anywhere');
-    await tester.sendKeyEvent(LogicalKeyboardKey.enter);
-    for (var i = 0; i < 10; i++) {
-      await tester.runAsync(() => Future<void>.delayed(const Duration(milliseconds: 20)));
-      await tester.pump(const Duration(milliseconds: 20));
-    }
-    await tester.pumpAndSettle();
-    expect(find.text('Quick note'), findsNothing);
-    expect(c.notes.map((n) => n.body), ['from anywhere']);
-    expect(window.calls, ['raise', 'putAway']); // 다른 앱을 쓰던 중에 불렀으니 다시 치운다
-    expect(find.text('half written'), findsOneWidget);
-    await tester.pump(const Duration(seconds: 1));
-  });
+      await tester.enterText(
+        find.descendant(
+          of: find.byType(AlertDialog),
+          matching: find.byType(TextField),
+        ),
+        'from anywhere',
+      );
+      await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+      for (var i = 0; i < 10; i++) {
+        await tester.runAsync(
+          () => Future<void>.delayed(const Duration(milliseconds: 20)),
+        );
+        await tester.pump(const Duration(milliseconds: 20));
+      }
+      await tester.pumpAndSettle();
+      expect(find.text('Quick note'), findsNothing);
+      expect(c.notes.map((n) => n.body), ['from anywhere']);
+      expect(window.calls, [
+        'raise',
+        'putAway:background',
+      ]); // 다른 앱을 쓰던 중에 불렀으니 다시 치운다
+      expect(find.text('half written'), findsOneWidget);
+
+      // 창을 숨겨 둔 채 불렀다면 끝난 뒤 다시 숨기고, 앞에서 쓰던 중이면 그대로 둔다.
+      window.calls.clear();
+      window.current = QuickCaptureWindowState.hidden;
+      await tester.runAsync(_press);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Cancel'));
+      await tester.pumpAndSettle();
+      expect(window.calls, ['raise', 'putAway:hidden']);
+
+      window.calls.clear();
+      window.current = QuickCaptureWindowState.active;
+      await tester.runAsync(_press);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Cancel'));
+      await tester.pumpAndSettle();
+      expect(window.calls, ['raise', 'putAway:active']);
+      await tester.pump(const Duration(seconds: 1));
+    },
+  );
 }

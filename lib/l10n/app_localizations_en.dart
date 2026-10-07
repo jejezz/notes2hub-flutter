@@ -687,9 +687,17 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get settingsQuickCaptureHint =>
-      'Press it from any app to jot a note right away. Works only while the app is running (closing the window quits it).';
+      'Press it from any app to jot a note right away. Works only while the app is running.';
 
   @override
   String get settingsQuickCaptureTaken =>
       'Another app already uses this shortcut, so it couldn\'t be registered.';
+
+  @override
+  String get settingsKeepRunning =>
+      'Keep running in the background after closing the window';
+
+  @override
+  String get settingsKeepRunningHint =>
+      'The close button only hides the window and the shortcut keeps working. Quit with ⌘Q. Click the Dock icon to bring the window back.';
 }
