@@ -25,6 +25,7 @@ class QuickCaptureHotkey extends ChangeNotifier {
   }
 
   static const _kEnabled = 'quick_capture_hotkey';
+  static const _kKeepRunning = 'quick_capture_keep_running';
 
   /// 사용자에게 보여 주는 단축키 이름.
   static const label = '⌃⌥N';
@@ -46,6 +47,12 @@ class QuickCaptureHotkey extends ChangeNotifier {
   /// 사용자가 켜 두었는가 (기본 켬).
   bool get enabled => _prefs.getBool(_kEnabled) ?? true;
 
+  /// 창을 닫아도 앱을 백그라운드에 남기는가 (기본 켬). 단축키가 켜져 있고 실제로 등록된 경우에만 적용된다 —
+  /// 단축키를 받지 못하는데 숨어 있기만 하면 쓸모가 없다.
+  bool get keepRunning => _prefs.getBool(_kKeepRunning) ?? true;
+
+  bool get _keeping => _enabled && _registered && keepRunning;
+
   /// 시스템에 실제로 등록됐는가. 켜 두었는데 false면 다른 앱이 이미 같은 단축키를 쓰고 있다.
   bool get registered => _registered;
 
@@ -54,6 +61,13 @@ class QuickCaptureHotkey extends ChangeNotifier {
 
   Future<void> init() async {
     if (_enabled) await _register();
+    await window.keepOnClose(_keeping);
+  }
+
+  Future<void> setKeepRunning(bool value) async {
+    await _prefs.setBool(_kKeepRunning, value);
+    await window.keepOnClose(_keeping);
+    notifyListeners();
   }
 
   Future<void> setEnabled(bool value) async {
@@ -64,6 +78,7 @@ class QuickCaptureHotkey extends ChangeNotifier {
     } else {
       await _unregister();
     }
+    await window.keepOnClose(_keeping);
     notifyListeners();
   }
 
@@ -96,22 +111,44 @@ class QuickCaptureHotkey extends ChangeNotifier {
   }
 }
 
-/// 빠른 메모를 위해 창을 앞으로 가져왔다가, 쓰고 나면 원래대로 되돌리는 일.
-abstract class QuickCaptureWindow {
-  /// 앱이 지금 맨 앞에서 쓰이고 있는가.
-  Future<bool> isActive();
+/// 단축키를 누른 순간 창이 어떤 상태였나 — 끝난 뒤 그 상태로 되돌리기 위해 기억한다.
+enum QuickCaptureWindowState {
+  /// 앞에서 쓰고 있었다 (되돌릴 것이 없다).
+  active,
 
-  /// 창을 (최소화돼 있으면 복원하고) 앞으로 가져온다.
-  Future<void> raise();
+  /// 보이지만 다른 앱 뒤에 있거나 최소화돼 있었다.
+  background,
 
-  /// 단축키로 불러냈던 창을 다시 치운다 — 쓰던 앱으로 돌아가게.
-  Future<void> putAway();
+  /// 창을 닫아 백그라운드로 숨겨 둔 상태였다.
+  hidden,
 }
 
-class DesktopQuickCaptureWindow implements QuickCaptureWindow {
+/// 빠른 메모를 위해 창을 앞으로 가져왔다가, 쓰고 나면 원래대로 되돌리는 일.
+abstract class QuickCaptureWindow {
+  Future<QuickCaptureWindowState> state();
+
+  /// 창을 (숨겨져 있으면 보이고 최소화돼 있으면 복원해서) 앞으로 가져온다.
+  Future<void> raise();
+
+  /// 단축키로 불러냈던 창을 [before] 상태로 되돌린다 — 쓰던 앱으로 돌아가게.
+  Future<void> putAway(QuickCaptureWindowState before);
+
+  /// true면 창의 닫기 버튼이 앱을 끝내지 않고 창만 숨긴다 (백그라운드에서 단축키를 계속 받는다).
+  Future<void> keepOnClose(bool keep);
+}
+
+class DesktopQuickCaptureWindow
+    with WindowListener
+    implements QuickCaptureWindow {
+  bool _listening = false;
+
   @override
-  Future<bool> isActive() async =>
-      await windowManager.isFocused() && !await windowManager.isMinimized();
+  Future<QuickCaptureWindowState> state() async {
+    if (!await windowManager.isVisible()) return QuickCaptureWindowState.hidden;
+    if (await windowManager.isFocused() && !await windowManager.isMinimized())
+      return QuickCaptureWindowState.active;
+    return QuickCaptureWindowState.background;
+  }
 
   @override
   Future<void> raise() async {
@@ -121,5 +158,28 @@ class DesktopQuickCaptureWindow implements QuickCaptureWindow {
   }
 
   @override
-  Future<void> putAway() => windowManager.minimize();
+  Future<void> putAway(QuickCaptureWindowState before) => switch (before) {
+    QuickCaptureWindowState.active => Future.value(),
+    QuickCaptureWindowState.background => windowManager.minimize(),
+    QuickCaptureWindowState.hidden => windowManager.hide(),
+  };
+
+  @override
+  Future<void> keepOnClose(bool keep) async {
+    if (keep && !_listening) {
+      windowManager.addListener(this);
+      _listening = true;
+    }
+    await windowManager.setPreventClose(keep);
+    // 창을 숨기면 macOS가 "마지막 창이 닫혔다"고 보고 앱을 끝낸다 — 네이티브에서 그 규칙을 끈다.
+    try {
+      await const MethodChannel('notes2hub/hotkey').invokeMethod<void>('keepRunning', keep);
+    } on MissingPluginException {
+      // macOS 밖에서는 이 채널이 없다.
+    }
+  }
+
+  /// [keepOnClose]가 켜져 있을 때만 불린다 (preventClose).
+  @override
+  void onWindowClose() => windowManager.hide();
 }

@@ -7,9 +7,21 @@ private var hotKeyRef: EventHotKeyRef?
 private var hotKeyHandler: EventHandlerRef?
 private var hotKeyChannel: FlutterMethodChannel?
 
+/// 창을 숨기거나 닫아도 앱을 끝내지 않는다 (빠른 메모 단축키를 백그라운드에서 계속 받으려고).
+private var keepRunningInBackground = false
+
 @main
 class AppDelegate: FlutterAppDelegate {
   override func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
+    return !keepRunningInBackground
+  }
+
+  /// 창을 숨긴 채 백그라운드에서 돌고 있을 때 Dock 아이콘을 누르면 창을 다시 보인다.
+  override func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
+    if !flag {
+      mainFlutterWindow?.makeKeyAndOrderFront(nil)
+      NSApp.activate(ignoringOtherApps: true)
+    }
     return true
   }
 
@@ -26,6 +38,9 @@ class AppDelegate: FlutterAppDelegate {
         case "register": result(registerHotKey())
         case "unregister":
           unregisterHotKey()
+          result(nil)
+        case "keepRunning":
+          keepRunningInBackground = (call.arguments as? Bool) ?? false
           result(nil)
         default: result(FlutterMethodNotImplemented)
         }

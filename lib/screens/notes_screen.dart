@@ -201,7 +201,7 @@ class _NotesScreenState extends State<NotesScreen> with WidgetsBindingObserver {
     final q = widget.quickCapture;
     if (q == null || _quickOpen) return;
     _quickOpen = true;
-    final wasActive = await q.window.isActive();
+    final before = await q.window.state();
     try {
       await q.window.raise();
       if (!mounted) return;
@@ -210,7 +210,7 @@ class _NotesScreenState extends State<NotesScreen> with WidgetsBindingObserver {
       if (text != null) await _saveCaptured(text);
     } finally {
       _quickOpen = false;
-      if (!wasActive) await q.window.putAway();
+      await q.window.putAway(before);
     }
   }
 
