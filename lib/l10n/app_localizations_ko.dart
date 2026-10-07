@@ -100,7 +100,7 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String noteDeleteBody(String title) {
-    return '\'$title\' 메모가 영구히 삭제됩니다.';
+    return '\'$title\' 메모의 저장하지 않은 내용이 사라지고 휴지통으로 옮겨집니다.';
   }
 
   @override
@@ -563,4 +563,71 @@ class AppLocalizationsKo extends AppLocalizations {
   @override
   String get settingsAutoExpandHint =>
       '창이 화면 가장자리에 붙어 있으면, 메모를 열 때 폭을 넓히고 보드로 돌아오면 원래대로 되돌립니다.';
+
+  @override
+  String noteMovedToTrash(String title) {
+    return '\'$title\' 메모를 휴지통으로 옮겼습니다';
+  }
+
+  @override
+  String get commonUndo => '되돌리기';
+
+  @override
+  String get trashTooltip => '휴지통';
+
+  @override
+  String get trashEmpty => '휴지통이 비어 있습니다';
+
+  @override
+  String get trashHint => '휴지통의 메모는 30일이 지나면 완전히 삭제됩니다.';
+
+  @override
+  String get trashRestore => '복원';
+
+  @override
+  String get trashPurge => '완전히 삭제';
+
+  @override
+  String trashPurgeConfirm(String title) {
+    return '\'$title\' 메모를 완전히 삭제할까요? 되돌릴 수 없습니다.';
+  }
+
+  @override
+  String get trashEmptyAll => '휴지통 비우기';
+
+  @override
+  String trashEmptyAllConfirm(int count) {
+    return '휴지통의 메모 $count개를 모두 완전히 삭제할까요? 되돌릴 수 없습니다.';
+  }
+
+  @override
+  String trashDeletedAt(String date) {
+    return '$date에 삭제';
+  }
+
+  @override
+  String get historyTooltip => '버전 기록';
+
+  @override
+  String get historyTitle => '버전 기록';
+
+  @override
+  String get historyHint => '동기화할 때마다 그 시점의 내용이 기록됩니다. 저장만 한 변경은 아직 없습니다.';
+
+  @override
+  String get historyEmpty => '아직 기록이 없습니다. 동기화하면 이 메모의 버전이 쌓입니다.';
+
+  @override
+  String historyLoadFailed(String error) {
+    return '버전 기록을 불러오지 못했습니다: $error';
+  }
+
+  @override
+  String get historyRestore => '이 버전으로 되돌리기';
+
+  @override
+  String get historyRestored => '이전 버전을 편집기에 불러왔습니다. 저장하면 반영됩니다.';
+
+  @override
+  String get historyNoSuchVersion => '그 버전의 내용을 찾지 못했습니다.';
 }

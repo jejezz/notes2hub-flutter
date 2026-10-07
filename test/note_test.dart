@@ -13,6 +13,17 @@ void main() {
     expect(back.body, n.body); // a '---' inside the body must not end the frontmatter
   });
 
+  test('trash mark round-trips through frontmatter and can be cleared', () {
+    final n = Note(id: 'abc', created: t, updated: t, body: 'x', deletedAt: t.add(const Duration(days: 1)));
+    expect(n.serialize(), contains('deleted: 2026-10-05T12:00:00.000Z'));
+    final back = Note.parse(n.serialize(), fallbackId: 'x', fallbackTime: DateTime(2000));
+    expect(back.isTrashed, isTrue);
+    expect(back.deletedAt, t.add(const Duration(days: 1)));
+    final restored = back.copyWith(restore: true);
+    expect(restored.isTrashed, isFalse);
+    expect(restored.serialize(), isNot(contains('deleted:')));
+  });
+
   test('file without frontmatter falls back to filename id and mtime', () {
     final back = Note.parse('just text\r\nsecond', fallbackId: 'plain', fallbackTime: t);
     expect(back.id, 'plain');

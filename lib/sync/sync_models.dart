@@ -53,6 +53,15 @@ class SyncStatus {
   bool get isClean => changed == 0 && !unpushed;
 }
 
+/// 메모 한 개의 과거 버전 하나 — 그 메모 파일이 바뀐 커밋.
+class NoteVersion {
+  const NoteVersion({required this.sha, required this.time, required this.message});
+
+  final String sha;
+  final DateTime time;
+  final String message;
+}
+
 abstract class SyncEngine {
   /// [dir]에 git 저장소를 만들고(이미 있으면 재사용) 원격을 연결한 뒤, 원격에 이력이
   /// 있으면 그 브랜치를 체크아웃한다. 로컬에 있던 메모 파일은 그대로 남아 다음
@@ -67,4 +76,11 @@ abstract class SyncEngine {
 
   /// 가져오기만. 저장된 변경이 없을 때의 fast-forward만 한다 — 자동 pull용.
   Future<SyncResult> pull({required String token});
+
+  /// [noteId] 메모 파일이 바뀐 커밋들, 최근 순. 동기화(커밋)한 시점의 내용만 남아 있다.
+  /// 저장소가 없거나 커밋이 없으면 빈 목록.
+  Future<List<NoteVersion>> history(String noteId, {int limit = 100});
+
+  /// [sha] 커밋 시점의 메모 본문 전체(frontmatter 포함). 그 커밋에 없으면 null.
+  Future<String?> versionContent(String sha, String noteId);
 }

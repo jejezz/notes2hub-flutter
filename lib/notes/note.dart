@@ -10,6 +10,7 @@ class Note {
     required this.updated,
     required this.body,
     this.bookmarked = false,
+    this.deletedAt,
   });
 
   final String id;
@@ -20,6 +21,12 @@ class Note {
   /// 북마크한 메모 — 보드 맨 위에 모아 보인다. frontmatter `bookmarked: true`로 저장해
   /// 동기화로 다른 PC에도 따라간다. 북마크를 바꿔도 `updated`는 그대로다.
   final bool bookmarked;
+
+  /// 휴지통으로 옮긴 시각 (frontmatter `deleted:`). null이면 살아 있는 메모.
+  /// 파일은 `notes/`에 그대로 있어서 휴지통 상태도 동기화로 다른 PC에 따라간다.
+  final DateTime? deletedAt;
+
+  bool get isTrashed => deletedAt != null;
 
   static final _imageLine = RegExp(r'^\s*!\[[^\]]*\]\([^)]*\)\s*$');
   static final _imageRef = RegExp(r'!\[[^\]]*\]\(\.\./assets/([^)\s]+)\)');
@@ -88,12 +95,14 @@ class Note {
     return m == null ? null : Uri.decodeComponent(m.group(1)!);
   }
 
-  Note copyWith({String? body, DateTime? updated, bool? bookmarked}) => Note(
+  /// [deletedAt]을 지정하면 휴지통으로, [restore]면 휴지통에서 꺼낸다.
+  Note copyWith({String? body, DateTime? updated, bool? bookmarked, DateTime? deletedAt, bool restore = false}) => Note(
         id: id,
         created: created,
         updated: updated ?? this.updated,
         body: body ?? this.body,
         bookmarked: bookmarked ?? this.bookmarked,
+        deletedAt: restore ? null : (deletedAt ?? this.deletedAt),
       );
 
   bool matches(String query) {
@@ -106,6 +115,7 @@ class Note {
       'created: ${created.toUtc().toIso8601String()}\n'
       'updated: ${updated.toUtc().toIso8601String()}\n'
       '${bookmarked ? 'bookmarked: true\n' : ''}'
+      '${deletedAt != null ? 'deleted: ${deletedAt!.toUtc().toIso8601String()}\n' : ''}'
       '---\n'
       '$body';
 
@@ -128,6 +138,7 @@ class Note {
           updated: DateTime.tryParse(meta['updated'] ?? '') ?? created,
           body: text.substring(end + 5),
           bookmarked: meta['bookmarked'] == 'true',
+          deletedAt: DateTime.tryParse(meta['deleted'] ?? ''),
         );
       }
     }

@@ -310,6 +310,11 @@ class SyncService extends ChangeNotifier with WidgetsBindingObserver {
     }
   }
 
+  /// 메모의 과거 버전들 (동기화로 커밋된 시점들). 다른 git 작업과 겹치지 않게 차례로 실행한다.
+  Future<List<NoteVersion>> history(String noteId) => _serial(() => _engine.history(noteId));
+
+  Future<String?> versionContent(String sha, String noteId) => _serial(() => _engine.versionContent(sha, noteId));
+
   /// 커밋 → 가져오기(병합) → 푸시. 이미 진행 중이면 무시한다.
   Future<void> sync() async {
     final identity = _identity;

@@ -106,7 +106,7 @@ void main() {
     expect(c.notes.any((n) => n.id == blank), isFalse);
   });
 
-  test('delete removes file and draft and returns to the board', () async {
+  test('delete moves the note to the trash (file kept, marked deleted) and returns to the board', () async {
     final c = make();
     await c.load();
     final a = c.create();
@@ -116,9 +116,81 @@ void main() {
     c.edit(b, 'two');
     await c.save(b);
     await c.delete(b);
-    expect(File('${tmp.path}/notes/$b.md').existsSync(), isFalse);
+    expect(File('${tmp.path}/notes/$b.md').readAsStringSync(), contains('deleted: '));
     expect(c.selectedId, isNull);
     expect(c.notes.map((n) => n.id), [a]);
+    expect(c.trashed.map((n) => n.id), [b]);
+    expect(c.notes.any((n) => n.id == b), isFalse);
+  });
+
+  test('restore brings a trashed note back; purge and emptyTrash remove the files', () async {
+    final c = make();
+    await c.load();
+    final ids = <String>[];
+    for (final t in ['one', 'two', 'three']) {
+      final id = c.create();
+      c.edit(id, t);
+      await c.save(id);
+      ids.add(id);
+    }
+    await c.delete(ids[0]);
+    await c.delete(ids[1]);
+    await c.delete(ids[2]);
+    await c.restore(ids[0]);
+    expect(c.notes.map((n) => n.id), [ids[0]]);
+    expect(File('${tmp.path}/notes/${ids[0]}.md').readAsStringSync(), isNot(contains('deleted:')));
+    await c.purge(ids[1]);
+    expect(File('${tmp.path}/notes/${ids[1]}.md').existsSync(), isFalse);
+    await c.emptyTrash();
+    expect(c.trashed, isEmpty);
+    expect(File('${tmp.path}/notes/${ids[2]}.md').existsSync(), isFalse);
+    expect(File('${tmp.path}/notes/${ids[0]}.md').existsSync(), isTrue);
+  });
+
+  test('deleting an unsaved new note just drops it; deleting discards unsaved edits', () async {
+    final c = make();
+    await c.load();
+    final fresh = c.create();
+    c.edit(fresh, 'never saved');
+    await c.delete(fresh);
+    expect(c.trashed, isEmpty);
+    expect(c.notes, isEmpty);
+
+    final id = c.create();
+    c.edit(id, 'v1');
+    await c.save(id);
+    c.edit(id, 'v2 unsaved');
+    await c.delete(id);
+    expect(c.isDirty(id), isFalse);
+    expect(c.trashed.single.body, 'v1');
+  });
+
+  test('notes trashed longer than the retention are purged on load', () async {
+    var c = make();
+    await c.load();
+    final old = c.create();
+    c.edit(old, 'old');
+    await c.save(old);
+    final recent = c.create();
+    c.edit(recent, 'recent');
+    await c.save(recent);
+    await c.delete(old);
+    await c.delete(recent);
+    c = NotesController(store, trashRetention: Duration.zero);
+    // recent는 방금 버렸으니 보존 기간 0이면 둘 다 지워진다 — 기간 안의 것은 남는지 따로 확인한다.
+    await c.load();
+    expect(c.trashed, isEmpty);
+    expect(File('${tmp.path}/notes/$old.md').existsSync(), isFalse);
+
+    c = make();
+    await c.load();
+    final keep = c.create();
+    c.edit(keep, 'keep');
+    await c.save(keep);
+    await c.delete(keep);
+    c = make();
+    await c.load();
+    expect(c.trashed.map((n) => n.id), [keep]);
   });
 
   test('search filters by body, newest first', () async {

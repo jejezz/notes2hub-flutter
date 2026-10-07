@@ -128,6 +128,30 @@ void main() {
     expect(noteFile(da, 'shared').readAsStringSync(), contains('edited on A'));
   });
 
+  test('history lists only the commits that changed that note; versionContent reads each one', () async {
+    await a.connect(remoteUrl: origin, token: '');
+    expect(await a.history('n1'), isEmpty, reason: 'no commits yet');
+    write(da, 'n1', 'first');
+    write(da, 'other', 'unrelated');
+    await sync(a);
+    await Future<void>.delayed(const Duration(milliseconds: 1100)); // 커밋 시각이 초 단위라 순서가 갈리게
+    write(da, 'other', 'unrelated 2');
+    await sync(a); // n1 안 바뀜 → 기록에 안 나와야 한다
+    await Future<void>.delayed(const Duration(milliseconds: 1100));
+    write(da, 'n1', 'second');
+    await sync(a);
+
+    final h = await a.history('n1');
+    expect(h, hasLength(2));
+    expect(h.first.time.isAfter(h.last.time) || h.first.time == h.last.time, isTrue);
+    final newest = await a.versionContent(h.first.sha, 'n1');
+    final oldest = await a.versionContent(h.last.sha, 'n1');
+    expect(newest, contains('second'));
+    expect(oldest, contains('first'));
+    expect(await a.versionContent(h.first.sha, 'missing'), isNull);
+    expect(await a.history('missing'), isEmpty);
+  });
+
   test('deleting a note propagates to the other PC', () async {
     await a.connect(remoteUrl: origin, token: '');
     write(da, 'gone', '# bye');

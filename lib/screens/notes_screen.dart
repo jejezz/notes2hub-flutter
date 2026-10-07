@@ -28,7 +28,9 @@ import 'board_view.dart';
 import 'ctrl_edit_shortcuts.dart';
 import 'note_preview.dart';
 import 'settings_dialog.dart';
+import 'history_dialog.dart';
 import 'sync_button.dart';
+import 'trash_dialog.dart';
 
 bool get _isMac => defaultTargetPlatform == TargetPlatform.macOS;
 String get _mod => _isMac ? '⌘' : 'Ctrl+';
@@ -397,34 +399,67 @@ class _NotesScreenState extends State<NotesScreen> with WidgetsBindingObserver {
     if (id != null) await _deleteNote(id);
   }
 
-  /// 확인 대화상자를 거쳐 메모를 지운다 (편집 화면과 보드 카드가 함께 쓴다).
+  /// 메모를 휴지통으로 옮긴다 (편집 화면과 보드 카드가 함께 쓴다). 저장하지 않은 내용이 있으면
+  /// 그것이 사라지므로 먼저 확인하고, 아니면 바로 옮긴 뒤 "되돌리기"를 보여준다.
   Future<void> _deleteNote(String id) async {
     final note = c.noteById(id);
     if (note == null) return;
     final l10n = AppLocalizations.of(context);
     final title = note.title.isEmpty ? l10n.noteUntitled : note.title;
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(l10n.noteDeleteTitle),
-        content: Text(l10n.noteDeleteBody(title)),
-        actions: [
-          // 기본 포커스는 취소 (ui-ux.md §6).
-          TextButton(autofocus: true, onPressed: () => Navigator.pop(ctx, false), child: Text(l10n.commonCancel)),
-          FilledButton(
-            style: FilledButton.styleFrom(backgroundColor: Theme.of(ctx).colorScheme.error),
-            onPressed: () => Navigator.pop(ctx, true),
-            child: Text(l10n.noteDelete),
-          ),
-        ],
-      ),
-    );
-    if (ok != true) return;
+    final messenger = ScaffoldMessenger.of(context);
+    if (c.isDirty(id) && note.body.trim().isNotEmpty) {
+      final ok = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: Text(l10n.noteDeleteTitle),
+          content: Text(l10n.noteDeleteBody(title)),
+          actions: [
+            // 기본 포커스는 취소 (ui-ux.md §6).
+            TextButton(autofocus: true, onPressed: () => Navigator.pop(ctx, false), child: Text(l10n.commonCancel)),
+            FilledButton(
+              style: FilledButton.styleFrom(backgroundColor: Theme.of(ctx).colorScheme.error),
+              onPressed: () => Navigator.pop(ctx, true),
+              child: Text(l10n.noteDelete),
+            ),
+          ],
+        ),
+      );
+      if (ok != true) return;
+    }
+    final undoable = !c.isNew(id);
     try {
       await c.delete(id);
     } catch (e) {
       if (mounted) _showError(l10n.noteSaveFailed('$e'));
+      return;
     }
+    if (!undoable) return;
+    messenger
+      ..clearSnackBars()
+      ..showSnackBar(
+        SnackBar(
+          content: Text(l10n.noteMovedToTrash(title)),
+          action: SnackBarAction(label: l10n.commonUndo, onPressed: () => c.restore(id)),
+        ),
+      );
+  }
+
+  void _openTrash() => showTrashDialog(context, c);
+
+  void _openHistory() {
+    final id = c.selectedId;
+    if (id == null) return;
+    showHistoryDialog(
+      context,
+      sync: sync,
+      noteId: id,
+      onRestore: (body) {
+        c.edit(id, body);
+        ScaffoldMessenger.of(context)
+          ..clearSnackBars()
+          ..showSnackBar(SnackBar(content: Text(AppLocalizations.of(context).historyRestored)));
+      },
+    );
   }
 
   /// 창이 좁으면(화면 가장자리에 세로로 붙인 모양) 제목과 라벨을 줄이고 덜 쓰는 단추는 "더 보기"로 모은다.
@@ -464,6 +499,8 @@ class _NotesScreenState extends State<NotesScreen> with WidgetsBindingObserver {
           l?.undock();
         case 'settings':
           _openSettings();
+        case 'trash':
+          _openTrash();
         case 'about':
           widget.onAbout();
       }
@@ -490,6 +527,7 @@ class _NotesScreenState extends State<NotesScreen> with WidgetsBindingObserver {
               onSelected: onWindowChoice,
               itemBuilder: (_) => [
                 PopupMenuItem(value: 'settings', child: Text(l10n.settingsTooltip)),
+                PopupMenuItem(value: 'trash', child: Text(l10n.trashTooltip)),
                 ...windowItems,
                 PopupMenuItem(value: 'about', child: Text(l10n.aboutTooltip)),
               ],
@@ -510,6 +548,11 @@ class _NotesScreenState extends State<NotesScreen> with WidgetsBindingObserver {
             onSelected: onWindowChoice,
             itemBuilder: (_) => windowItems,
           ),
+        IconButton(
+          tooltip: l10n.trashTooltip,
+          icon: const Icon(Icons.restore_from_trash_outlined),
+          onPressed: _openTrash,
+        ),
         IconButton(
           tooltip: '${l10n.settingsTooltip} ($_mod,)',
           icon: const Icon(Icons.settings_outlined),
@@ -596,6 +639,7 @@ class _NotesScreenState extends State<NotesScreen> with WidgetsBindingObserver {
                                 onPreviewChanged: (v) => setState(() => _preview = v),
                                 onSave: _save,
                                 onDelete: _delete,
+                                onHistory: _openHistory,
                                 onBack: _back,
                                 assets: widget.assets,
                                 onAddImage: _pickImages,
@@ -732,6 +776,7 @@ class _EditorPane extends StatelessWidget {
     required this.onPreviewChanged,
     required this.onSave,
     required this.onDelete,
+    required this.onHistory,
     required this.onBack,
     required this.assets,
     required this.onAddImage,
@@ -747,6 +792,7 @@ class _EditorPane extends StatelessWidget {
   final ValueChanged<bool> onPreviewChanged;
   final VoidCallback onSave;
   final VoidCallback onDelete;
+  final VoidCallback onHistory;
   final VoidCallback onBack;
   final AssetStore assets;
   final VoidCallback onAddImage;
@@ -868,6 +914,13 @@ class _EditorPane extends StatelessWidget {
                 ),
               if (!tiny)
                 IconButton(
+                  tooltip: l10n.historyTooltip,
+                  visualDensity: compact ? dense : null,
+                  icon: const Icon(Icons.history_rounded, size: 18),
+                  onPressed: onHistory,
+                ),
+              if (!tiny)
+                IconButton(
                   tooltip: l10n.noteDelete,
                   visualDensity: compact ? dense : null,
                   icon: const Icon(Icons.delete_outline_rounded, size: 18),
@@ -886,6 +939,8 @@ class _EditorPane extends StatelessWidget {
                           showShareSheet(context, body: note.body, assets: assets, origin: shareOrigin(menuContext));
                         case 'image':
                           onAddImage();
+                        case 'history':
+                          onHistory();
                         case 'delete':
                           onDelete();
                       }
@@ -893,6 +948,7 @@ class _EditorPane extends StatelessWidget {
                     itemBuilder: (_) => [
                       PopupMenuItem(value: 'share', child: Text(l10n.shareTooltip)),
                       if (!isMobilePlatform) PopupMenuItem(value: 'image', child: Text(l10n.imageAdd)),
+                      PopupMenuItem(value: 'history', child: Text(l10n.historyTooltip)),
                       PopupMenuItem(value: 'delete', child: Text(l10n.noteDelete)),
                     ],
                   ),

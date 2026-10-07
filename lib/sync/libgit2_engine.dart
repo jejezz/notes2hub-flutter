@@ -71,6 +71,18 @@ class LibGit2Engine implements SyncEngine {
     final path = dir.path, ca = caCertPath;
     return Isolate.run(() => _guard(() => _pull(path, ca, token)));
   }
+
+  @override
+  Future<List<NoteVersion>> history(String noteId, {int limit = 100}) {
+    final path = dir.path;
+    return Isolate.run(() => _history(path, noteId, limit));
+  }
+
+  @override
+  Future<String?> versionContent(String sha, String noteId) {
+    final path = dir.path;
+    return Isolate.run(() => _versionContent(path, sha, noteId));
+  }
 }
 
 // ---- 아래는 모두 Isolate 안에서 도는 동기 코드 ------------------------------
@@ -477,6 +489,63 @@ SyncResult _pull(String path, String? ca, String token) {
     );
     final r = _integrate(repo, path, branch, sig, '', fastForwardOnly: true);
     return SyncResult(integrated: r.integrated, needsSync: r.needsMerge);
+  } finally {
+    repo.free();
+  }
+}
+
+/// 메모 파일이 바뀐 커밋만 모은다: 그 커밋의 내용이 첫 부모의 내용과 다르면 변경으로 본다.
+List<NoteVersion> _history(String path, String id, int limit) {
+  if (!Directory('$path/.git').existsSync()) return const [];
+  final repo = Repository.open(path);
+  try {
+    if (_unborn(repo, path)) return const [];
+    final rel = '$_notes$id.md';
+    String? blobAt(Commit c) {
+      try {
+        return c.tree[rel].oid.sha;
+      } catch (_) {
+        return null; // 그 커밋에는 이 메모가 없다
+      }
+    }
+
+    final walker = RevWalk(repo)
+      ..sorting({GitSort.time})
+      ..push(repo.head.target);
+    final out = <NoteVersion>[];
+    for (final c in walker.walk()) {
+      final cur = blobAt(c);
+      if (cur == null) continue;
+      final parents = c.parents;
+      final prev = parents.isEmpty ? null : blobAt(Commit.lookup(repo: repo, oid: parents.first));
+      if (cur == prev) continue;
+      out.add(
+        NoteVersion(
+          sha: c.oid.sha,
+          time: DateTime.fromMillisecondsSinceEpoch(c.time * 1000),
+          message: c.summary,
+        ),
+      );
+      if (out.length >= limit) break;
+    }
+    walker.free();
+    return out;
+  } finally {
+    repo.free();
+  }
+}
+
+String? _versionContent(String path, String sha, String id) {
+  if (!Directory('$path/.git').existsSync()) return null;
+  final repo = Repository.open(path);
+  try {
+    final commit = Commit.lookup(repo: repo, oid: Oid.fromSHA(repo, sha));
+    try {
+      final oid = commit.tree['$_notes$id.md'].oid;
+      return Blob.lookup(repo: repo, oid: oid).content;
+    } catch (_) {
+      return null;
+    }
   } finally {
     repo.free();
   }

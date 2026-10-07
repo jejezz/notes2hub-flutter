@@ -140,7 +140,7 @@ void main() {
 
 void cardButtonsTest() {
   testWidgets(
-    'card buttons: edit opens the editor, delete asks first; a long note previews in a scrollable bottom sheet',
+    'card buttons: edit opens the editor, delete goes to the trash; a long note previews in a scrollable bottom sheet',
     (tester) async {
       tester.view.physicalSize = const Size(1000, 800);
       tester.view.devicePixelRatio = 1;
@@ -219,25 +219,38 @@ void cardButtonsTest() {
       await tester.tap(find.byIcon(Icons.arrow_back_rounded));
       await tester.pumpAndSettle();
 
-      // delete button → confirmation; cancel keeps the note, confirm removes it
-      await tester.tap(find.descendant(of: card('Short one'), matching: find.byIcon(Icons.delete_outline_rounded)));
-      await tester.pumpAndSettle();
-      expect(find.text('Delete this note?'), findsOneWidget);
-      await tester.tap(find.text('Cancel'));
-      await tester.pumpAndSettle();
-      expect(find.text('Short one'), findsOneWidget);
+      // delete button → straight to the trash with an undo; undo brings it back
+      Future<void> settle() async {
+        // 파일 쓰기는 실제 시간이 필요하다 — 실제 시간과 pump를 번갈아 진행한다.
+        for (var i = 0; i < 10; i++) {
+          await tester.runAsync(() => Future<void>.delayed(const Duration(milliseconds: 20)));
+          await tester.pump(const Duration(milliseconds: 20));
+        }
+        await tester.pumpAndSettle();
+      }
 
       await tester.tap(find.descendant(of: card('Short one'), matching: find.byIcon(Icons.delete_outline_rounded)));
-      await tester.pumpAndSettle();
-      await tester.tap(find.widgetWithText(FilledButton, 'Delete'));
-      // 지우기는 실제 파일 삭제를 거친다 — 실제 시간과 pump를 번갈아 진행한다.
-      for (var i = 0; i < 10; i++) {
-        await tester.runAsync(() => Future<void>.delayed(const Duration(milliseconds: 20)));
-        await tester.pump(const Duration(milliseconds: 20));
-      }
-      await tester.pumpAndSettle();
+      await settle();
       expect(find.text('Short one'), findsNothing);
-      expect(File('${tmp.path}/notes/$shortId.md').existsSync(), isFalse);
+      expect(File('${tmp.path}/notes/$shortId.md').readAsStringSync(), contains('deleted: '));
+      expect(c.trashed.map((n) => n.id), [shortId]);
+      await tester.tap(find.text('Undo'));
+      await settle();
+      expect(find.text('Short one'), findsOneWidget);
+      expect(c.trashed, isEmpty);
+
+      // the trash dialog lists deleted notes and restores them
+      await tester.tap(find.descendant(of: card('Short one'), matching: find.byIcon(Icons.delete_outline_rounded)));
+      await settle();
+      await tester.tap(find.byTooltip('Trash'));
+      await tester.pumpAndSettle();
+      expect(find.text('Short one'), findsOneWidget);
+      await tester.tap(find.byTooltip('Restore'));
+      await settle();
+      expect(c.trashed, isEmpty);
+      await tester.tap(find.text('Close'));
+      await tester.pumpAndSettle();
+      expect(find.text('Short one'), findsOneWidget);
       await tester.pump(const Duration(seconds: 1)); // 동기화 상태 갱신 타이머(300ms)를 비운다
     },
   );
