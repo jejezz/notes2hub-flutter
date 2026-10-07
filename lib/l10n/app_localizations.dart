@@ -1201,6 +1201,42 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'그 버전의 내용을 찾지 못했습니다.'**
   String get historyNoSuchVersion;
+
+  /// No description provided for @formatStrike.
+  ///
+  /// In ko, this message translates to:
+  /// **'취소선'**
+  String get formatStrike;
+
+  /// No description provided for @formatCode.
+  ///
+  /// In ko, this message translates to:
+  /// **'인라인 코드'**
+  String get formatCode;
+
+  /// No description provided for @formatCodeBlock.
+  ///
+  /// In ko, this message translates to:
+  /// **'코드 블록'**
+  String get formatCodeBlock;
+
+  /// No description provided for @formatNumbered.
+  ///
+  /// In ko, this message translates to:
+  /// **'번호 목록'**
+  String get formatNumbered;
+
+  /// No description provided for @formatTable.
+  ///
+  /// In ko, this message translates to:
+  /// **'표'**
+  String get formatTable;
+
+  /// No description provided for @formatRule.
+  ///
+  /// In ko, this message translates to:
+  /// **'구분선'**
+  String get formatRule;
 }
 
 class _AppLocalizationsDelegate

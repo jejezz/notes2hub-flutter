@@ -401,5 +401,11 @@
   },
   "historyRestore": "Restore this version",
   "historyRestored": "Loaded the earlier version into the editor. Save to keep it.",
-  "historyNoSuchVersion": "Couldn't find that version."
+  "historyNoSuchVersion": "Couldn't find that version.",
+  "formatStrike": "Strikethrough",
+  "formatCode": "Inline code",
+  "formatCodeBlock": "Code block",
+  "formatNumbered": "Numbered list",
+  "formatTable": "Table",
+  "formatRule": "Divider"
 }

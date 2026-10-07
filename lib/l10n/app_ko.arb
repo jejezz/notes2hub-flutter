@@ -418,5 +418,11 @@
   },
   "historyRestore": "이 버전으로 되돌리기",
   "historyRestored": "이전 버전을 편집기에 불러왔습니다. 저장하면 반영됩니다.",
-  "historyNoSuchVersion": "그 버전의 내용을 찾지 못했습니다."
+  "historyNoSuchVersion": "그 버전의 내용을 찾지 못했습니다.",
+  "formatStrike": "취소선",
+  "formatCode": "인라인 코드",
+  "formatCodeBlock": "코드 블록",
+  "formatNumbered": "번호 목록",
+  "formatTable": "표",
+  "formatRule": "구분선"
 }
