@@ -16,13 +16,16 @@ import '../images/asset_store.dart';
 import '../images/image_processor.dart';
 import '../l10n/app_localizations.dart';
 import '../notes/checklist.dart';
+import '../notes/note.dart';
 import '../notes/notes_controller.dart';
+import '../notes/wiki_links.dart';
 import '../platform_kind.dart';
 import '../settings/settings_menus.dart';
 import '../sync/sync_service.dart';
 import '../theme/app_theme.dart';
 import 'md_format.dart';
 import 'md_toolbar.dart';
+import 'note_link_picker.dart';
 import 'share_sheet.dart';
 import '../theme/user_content.dart';
 import '../window/window_layout.dart';
@@ -164,6 +167,8 @@ class _NotesScreenState extends State<NotesScreen> with WidgetsBindingObserver {
       onEdit: () => _open(id),
       // 저장하지 않은 메모(새로 쓰거나 고친 것)는 시트에서 바로 저장할 수 있다.
       onSave: c.isDirty(id) ? () => _saveNote(id) : null,
+      resolveNoteId: (t) => c.noteByTitle(t)?.id,
+      onNoteHref: _followNoteHref,
       // 체크박스를 누르면 바로 반영한다. 저장하지 않은 편집이 없던 메모는 그대로 저장까지 한다.
       onBodyChanged: (body) {
         final wasDirty = c.isDirty(id);
@@ -274,6 +279,33 @@ class _NotesScreenState extends State<NotesScreen> with WidgetsBindingObserver {
     _editor.value = next;
     c.edit(id, next.text);
     _editorFocus.requestFocus();
+  }
+
+  /// 편집기에서 메모를 골라 `[[제목]]`을 넣는다.
+  Future<void> _insertNoteLink() async {
+    final id = c.selectedId;
+    if (id == null) return;
+    final title = await showNoteLinkPicker(context, [for (final n in c.notes) if (n.id != id) n]);
+    if (title != null && mounted) _format((v) => MdFormat.insert(v, '[[$title]]'));
+  }
+
+  /// 미리보기·시트에서 `[[제목]]` 링크를 눌렀을 때: 있는 메모면 그 메모로, 없는 제목이면 그 제목으로 새 메모를 만든다.
+  /// 미리보기에서 눌렀으면 다음 메모도 미리보기로 이어서 읽는다.
+  void _followNoteHref(String href) {
+    final id = WikiLinks.idOf(href);
+    if (id != null) {
+      if (c.noteById(id) == null) return;
+      final keepPreview = c.selectedId != null && _preview;
+      c.select(id);
+      setState(() => _preview = keepPreview);
+      return;
+    }
+    final title = WikiLinks.newTitleOf(href);
+    if (title == null) return;
+    final fresh = c.create();
+    c.edit(fresh, '# $title\n\n');
+    setState(() => _preview = false);
+    WidgetsBinding.instance.addPostFrameCallback((_) => _editorFocus.requestFocus());
   }
 
   void _formatIfEditing(TextEditingValue Function(TextEditingValue) apply) {
@@ -656,6 +688,8 @@ class _NotesScreenState extends State<NotesScreen> with WidgetsBindingObserver {
                                 onSave: _save,
                                 onDelete: _delete,
                                 onHistory: _openHistory,
+                                onNoteLink: _insertNoteLink,
+                                onNoteHref: _followNoteHref,
                                 onBack: _back,
                                 assets: widget.assets,
                                 onAddImage: _pickImages,
@@ -793,6 +827,8 @@ class _EditorPane extends StatelessWidget {
     required this.onSave,
     required this.onDelete,
     required this.onHistory,
+    required this.onNoteLink,
+    required this.onNoteHref,
     required this.onBack,
     required this.assets,
     required this.onAddImage,
@@ -809,6 +845,8 @@ class _EditorPane extends StatelessWidget {
   final VoidCallback onSave;
   final VoidCallback onDelete;
   final VoidCallback onHistory;
+  final VoidCallback onNoteLink;
+  final ValueChanged<String> onNoteHref;
   final VoidCallback onBack;
   final AssetStore assets;
   final VoidCallback onAddImage;
@@ -975,7 +1013,13 @@ class _EditorPane extends StatelessWidget {
         Divider(height: 1, color: theme.dividerColor),
         // 데스크톱은 편집기 위에 서식 도구줄을 둔다 (폰은 키보드 위, 아래쪽).
         if (!isMobilePlatform && !preview)
-          MarkdownToolbar(onFormat: onFormat, onGallery: onAddImage, atTop: true, modifier: _mod),
+          MarkdownToolbar(
+            onFormat: onFormat,
+            onGallery: onAddImage,
+            onNoteLink: onNoteLink,
+            atTop: true,
+            modifier: _mod,
+          ),
         Expanded(
           // 글 읽기·쓰기 좋은 폭으로 가운데에 모은다.
           child: Align(
@@ -986,7 +1030,7 @@ class _EditorPane extends StatelessWidget {
               child: CtrlEditShortcuts(
                 child: preview
                     ? Markdown(
-                        data: note.body,
+                        data: WikiLinks.render(note.body, (t) => controller.noteByTitle(t)?.id),
                         selectable: true,
                         padding: EdgeInsets.all(pad),
                         styleSheet: MarkdownStyleSheet.fromTheme(theme).copyWith(
@@ -1000,6 +1044,10 @@ class _EditorPane extends StatelessWidget {
                           if (next != null) controller.edit(note.id, next);
                         }).build,
                         onTapLink: (text, href, title) {
+                          if (WikiLinks.isNoteHref(href)) {
+                            onNoteHref(href!);
+                            return;
+                          }
                           final uri = href == null ? null : Uri.tryParse(href);
                           if (uri != null) launchUrl(uri);
                         },
@@ -1032,9 +1080,55 @@ class _EditorPane extends StatelessWidget {
             ),
           ),
         ),
+        _Backlinks(
+          notes: controller.backlinksTo(note.id),
+          onOpen: controller.select,
+        ),
         if (isMobilePlatform && !preview)
-          MarkdownToolbar(onFormat: onFormat, onGallery: onAddImage, onCamera: onTakePhoto),
+          MarkdownToolbar(onFormat: onFormat, onGallery: onAddImage, onCamera: onTakePhoto, onNoteLink: onNoteLink),
       ],
+    );
+  }
+}
+
+/// 이 메모를 `[[제목]]`으로 링크한 메모들 — 편집기 아래 한 줄. 없으면 아무것도 보이지 않는다.
+class _Backlinks extends StatelessWidget {
+  const _Backlinks({required this.notes, required this.onOpen});
+
+  final List<Note> notes;
+  final ValueChanged<String> onOpen;
+
+  @override
+  Widget build(BuildContext context) {
+    if (notes.isEmpty) return const SizedBox.shrink();
+    final l10n = AppLocalizations.of(context);
+    final theme = Theme.of(context);
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        border: Border(top: BorderSide(color: theme.dividerColor)),
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg, vertical: AppSpacing.xs),
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(
+          children: [
+            Icon(Icons.subdirectory_arrow_left_rounded, size: 16, color: theme.hintColor),
+            const SizedBox(width: AppSpacing.xs),
+            Text(l10n.backlinksLabel, style: theme.textTheme.bodySmall?.copyWith(color: theme.hintColor)),
+            const SizedBox(width: AppSpacing.sm),
+            for (final n in notes)
+              Padding(
+                padding: const EdgeInsets.only(right: AppSpacing.xs),
+                child: ActionChip(
+                  visualDensity: VisualDensity.compact,
+                  label: Text(n.title.isEmpty ? l10n.noteUntitled : n.title, maxLines: 1),
+                  onPressed: () => onOpen(n.id),
+                ),
+              ),
+          ],
+        ),
+      ),
     );
   }
 }

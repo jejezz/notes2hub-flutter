@@ -424,5 +424,10 @@
   "formatCodeBlock": "코드 블록",
   "formatNumbered": "번호 목록",
   "formatTable": "표",
-  "formatRule": "구분선"
+  "formatRule": "구분선",
+  "formatNoteLink": "메모 링크",
+  "noteLinkPickerTitle": "링크할 메모",
+  "noteLinkSearchHint": "제목 검색",
+  "noteLinkNone": "링크할 메모가 없습니다",
+  "backlinksLabel": "이 메모를 가리키는 메모"
 }

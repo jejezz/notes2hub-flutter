@@ -407,5 +407,10 @@
   "formatCodeBlock": "Code block",
   "formatNumbered": "Numbered list",
   "formatTable": "Table",
-  "formatRule": "Divider"
+  "formatRule": "Divider",
+  "formatNoteLink": "Link to a note",
+  "noteLinkPickerTitle": "Note to link",
+  "noteLinkSearchHint": "Search titles",
+  "noteLinkNone": "No notes to link",
+  "backlinksLabel": "Linked from"
 }

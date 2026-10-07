@@ -6,6 +6,7 @@ import 'package:uuid/uuid.dart';
 import '../images/asset_store.dart';
 import 'note.dart';
 import 'note_store.dart';
+import 'wiki_links.dart';
 
 /// 메모 목록·선택·편집 상태. "저장"은 로컬 파일 기록까지만 한다 (docs/PLAN.md §5).
 ///
@@ -67,6 +68,29 @@ class NotesController extends ChangeNotifier {
 
   /// 편집 중인 내용을 포함한 메모 (없으면 null).
   Note? noteById(String id) => _working[id] ?? _saved[id];
+
+  /// `[[제목]]`이 가리키는 메모 — 휴지통 밖에서 제목이 같은 것 중 가장 최근에 고친 것 (없으면 null).
+  Note? noteByTitle(String title) {
+    final key = WikiLinks.normalize(title);
+    if (key.isEmpty) return null;
+    Note? best;
+    for (final n in {..._saved, ..._working}.values) {
+      if (n.isTrashed || WikiLinks.normalize(n.title) != key) continue;
+      if (best == null || n.updated.isAfter(best.updated)) best = n;
+    }
+    return best;
+  }
+
+  /// [id] 메모를 `[[제목]]`으로 링크한 다른 메모들, 최근 수정순.
+  List<Note> backlinksTo(String id) {
+    final target = noteById(id);
+    final key = target == null ? '' : WikiLinks.normalize(target.title);
+    if (key.isEmpty) return const [];
+    return [
+      for (final n in notes)
+        if (n.id != id && WikiLinks.titlesIn(n.body).any((t) => WikiLinks.normalize(t) == key)) n,
+    ];
+  }
 
   bool isDirty(String id) => _working.containsKey(id);
   bool isNew(String id) => !_saved.containsKey(id);

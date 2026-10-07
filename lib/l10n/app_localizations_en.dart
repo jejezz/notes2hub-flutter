@@ -658,4 +658,19 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get formatRule => 'Divider';
+
+  @override
+  String get formatNoteLink => 'Link to a note';
+
+  @override
+  String get noteLinkPickerTitle => 'Note to link';
+
+  @override
+  String get noteLinkSearchHint => 'Search titles';
+
+  @override
+  String get noteLinkNone => 'No notes to link';
+
+  @override
+  String get backlinksLabel => 'Linked from';
 }

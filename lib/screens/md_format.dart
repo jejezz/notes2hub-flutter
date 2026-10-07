@@ -138,4 +138,13 @@ abstract final class MdFormat {
     final start = lineEnd + insert.indexOf('제목');
     return TextEditingValue(text: next, selection: TextSelection(baseOffset: start, extentOffset: start + 2));
   }
+
+  /// 선택 영역(없으면 커서 자리)을 [text]로 바꾸고 커서를 그 뒤에 둔다.
+  static TextEditingValue insert(TextEditingValue v, String text) {
+    final s = _sel(v);
+    return TextEditingValue(
+      text: v.text.replaceRange(s.start, s.end, text),
+      selection: TextSelection.collapsed(offset: s.start + text.length),
+    );
+  }
 }

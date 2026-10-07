@@ -5,6 +5,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../images/asset_store.dart';
 import '../l10n/app_localizations.dart';
 import '../notes/checklist.dart';
+import '../notes/wiki_links.dart';
 import '../theme/app_theme.dart';
 import '../theme/user_content.dart';
 import 'ctrl_edit_shortcuts.dart';
@@ -88,6 +89,8 @@ Future<void> showNotePreview(
   required VoidCallback onEdit,
   VoidCallback? onSave,
   ValueChanged<String>? onBodyChanged,
+  String? Function(String title)? resolveNoteId,
+  ValueChanged<String>? onNoteHref,
 }) {
   final height = MediaQuery.sizeOf(context).height;
   return showModalBottomSheet<void>(
@@ -101,6 +104,13 @@ Future<void> showNotePreview(
       body: body,
       assets: assets,
       onBodyChanged: onBodyChanged,
+      resolveNoteId: resolveNoteId,
+      onNoteHref: onNoteHref == null
+          ? null
+          : (href) {
+              Navigator.pop(sheetContext);
+              onNoteHref(href);
+            },
       onEdit: () {
         Navigator.pop(sheetContext);
         onEdit();
@@ -123,7 +133,13 @@ class NotePreviewSheet extends StatefulWidget {
     required this.onEdit,
     this.onSave,
     this.onBodyChanged,
+    this.resolveNoteId,
+    this.onNoteHref,
   });
+
+  /// `[[제목]]`을 메모로 푸는 함수와, 풀린 링크(`note:`/`newnote:`)를 눌렀을 때 부르는 함수.
+  final String? Function(String title)? resolveNoteId;
+  final ValueChanged<String>? onNoteHref;
 
   /// 시트에서 체크박스를 눌러 본문이 바뀌면 새 본문을 알린다 (없으면 체크박스는 읽기 전용).
   final ValueChanged<String>? onBodyChanged;
@@ -173,7 +189,9 @@ class _NotePreviewSheetState extends State<NotePreviewSheet> {
                   primary: true,
                   child: CtrlEditShortcuts(
                     child: MarkdownBody(
-                      data: body.trim().isEmpty ? ' ' : body,
+                      data: body.trim().isEmpty
+                          ? ' '
+                          : (widget.resolveNoteId == null ? body : WikiLinks.render(body, widget.resolveNoteId!)),
                       selectable: true,
                       // 시트의 본문은 제목(titleLarge)보다 확실히 작게: 본문은 bodyMedium보다 1pt 작은 크기, 본문 안의 제목들도 그 근처로.
                       styleSheet: MarkdownStyleSheet.fromTheme(theme).copyWith(
@@ -201,6 +219,10 @@ class _NotePreviewSheetState extends State<NotePreviewSheet> {
                       imageBuilder: (uri, title, alt) => NoteImage(uri: uri, alt: alt, assets: assets),
                       checkboxBuilder: widget.onBodyChanged == null ? null : ChecklistBoxes(body, _toggle).build,
                       onTapLink: (text, href, title) {
+                        if (WikiLinks.isNoteHref(href)) {
+                          widget.onNoteHref?.call(href!);
+                          return;
+                        }
                         final uri = href == null ? null : Uri.tryParse(href);
                         if (uri != null) launchUrl(uri);
                       },
