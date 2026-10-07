@@ -28,6 +28,7 @@ import 'sync/ca_bundle.dart';
 import 'sync/device_label.dart';
 import 'sync/libgit2_engine.dart';
 import 'sync/sync_service.dart';
+import 'window/quick_capture.dart';
 import 'window/window_layout.dart';
 import 'settings/app_settings.dart';
 import 'theme/app_theme.dart';
@@ -102,7 +103,12 @@ Future<void> _main() async {
     notes: notes,
     deviceLabel: await readDeviceLabel(),
   );
-  runApp(App(settings: settings, notes: notes, sync: sync, assets: assets, windowLayout: windowLayout));
+  QuickCaptureHotkey? quickCapture;
+  if (_isDesktop) {
+    quickCapture = QuickCaptureHotkey(prefs: prefs);
+    await quickCapture.init();
+  }
+  runApp(App(settings: settings, notes: notes, sync: sync, assets: assets, windowLayout: windowLayout, quickCapture: quickCapture));
 }
 
 class App extends StatefulWidget {
@@ -113,6 +119,7 @@ class App extends StatefulWidget {
     required this.sync,
     required this.assets,
     this.windowLayout,
+    this.quickCapture,
   });
 
   final AppSettings settings;
@@ -120,6 +127,7 @@ class App extends StatefulWidget {
   final SyncService sync;
   final AssetStore assets;
   final WindowLayout? windowLayout;
+  final QuickCaptureHotkey? quickCapture;
 
   @override
   State<App> createState() => _AppState();
@@ -202,7 +210,7 @@ class _AppState extends State<App> with WidgetsBindingObserver {
           supportedLocales: AppLocalizations.supportedLocales,
           localeResolutionCallback: AppSettings.resolveLocale,
           builder: (context, child) => AppMenuBar(onAbout: _showAbout, child: child!),
-          home: NotesScreen(controller: widget.notes, sync: widget.sync, assets: widget.assets, windowLayout: widget.windowLayout, onAbout: _showAbout),
+          home: NotesScreen(controller: widget.notes, sync: widget.sync, assets: widget.assets, windowLayout: widget.windowLayout, quickCapture: widget.quickCapture, onAbout: _showAbout),
         ),
       ),
     );
