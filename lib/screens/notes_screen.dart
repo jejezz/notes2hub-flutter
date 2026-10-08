@@ -259,6 +259,8 @@ class _NotesScreenState extends State<NotesScreen> with WidgetsBindingObserver {
       ..showSnackBar(
         SnackBar(
           content: Text(l10n.linksFixed(fix.count)),
+          persist: false,
+          showCloseIcon: true,
           action: SnackBarAction(label: l10n.commonUndo, onPressed: () => c.undoLinkFix(fix)),
         ),
       );
@@ -479,6 +481,8 @@ class _NotesScreenState extends State<NotesScreen> with WidgetsBindingObserver {
         SnackBar(
           content: Text(message),
           duration: const Duration(seconds: 8),
+          persist: false,
+          showCloseIcon: true,
           action: SnackBarAction(
             label: l10n.commonCopy,
             onPressed: () => Clipboard.setData(ClipboardData(text: message)),
@@ -532,6 +536,8 @@ class _NotesScreenState extends State<NotesScreen> with WidgetsBindingObserver {
       ..showSnackBar(
         SnackBar(
           content: Text(l10n.noteMovedToTrash(title)),
+          persist: false,
+          showCloseIcon: true,
           action: SnackBarAction(label: l10n.commonUndo, onPressed: () => c.restore(id)),
         ),
       );
