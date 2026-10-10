@@ -32,6 +32,8 @@ import 'window/quick_capture.dart';
 import 'window/window_layout.dart';
 import 'settings/app_settings.dart';
 import 'theme/app_theme.dart';
+import 'update/update_scope.dart';
+import 'update/update_service.dart';
 
 final bool _isDesktop = Platform.isMacOS || Platform.isWindows || Platform.isLinux;
 
@@ -108,7 +110,13 @@ Future<void> _main() async {
     quickCapture = QuickCaptureHotkey(prefs: prefs);
     await quickCapture.init();
   }
-  runApp(App(settings: settings, notes: notes, sync: sync, assets: assets, windowLayout: windowLayout, quickCapture: quickCapture));
+  // 데스크톱이 아니거나 UPDATE_SERVER 가 비어 있으면 null — 업데이트 확인 없음.
+  final updates = await UpdateService.create();
+  // UpdateScope 는 MaterialApp 위 — 정보 창이 이것을 읽어 "업데이트 확인" 단추를 붙인다.
+  runApp(UpdateScope(
+    service: updates,
+    child: App(settings: settings, notes: notes, sync: sync, assets: assets, windowLayout: windowLayout, quickCapture: quickCapture, updates: updates),
+  ));
 }
 
 class App extends StatefulWidget {
@@ -120,6 +128,7 @@ class App extends StatefulWidget {
     required this.assets,
     this.windowLayout,
     this.quickCapture,
+    this.updates,
   });
 
   final AppSettings settings;
@@ -128,6 +137,9 @@ class App extends StatefulWidget {
   final AssetStore assets;
   final WindowLayout? windowLayout;
   final QuickCaptureHotkey? quickCapture;
+
+  /// 시작할 때 새 버전을 확인한다. null 이면 업데이트 확인을 쓰지 않는다.
+  final UpdateService? updates;
 
   @override
   State<App> createState() => _AppState();
@@ -143,6 +155,7 @@ class _AppState extends State<App> with WidgetsBindingObserver {
     widget.settings.addListener(_syncWindowBrightness);
     _syncWindowBrightness();
     _loadNotes();
+    widget.updates?.startAutomaticCheck(_navigatorKey);
   }
 
   Future<void> _loadNotes() async {
@@ -192,6 +205,11 @@ class _AppState extends State<App> with WidgetsBindingObserver {
     showAppAboutDialog(context, tagline: l10n.aboutTagline, description: l10n.aboutDescription);
   }
 
+  void _checkForUpdates() {
+    final context = _navigatorKey.currentContext;
+    if (context != null) widget.updates?.checkManually(context);
+  }
+
   @override
   Widget build(BuildContext context) {
     return AppSettingsScope(
@@ -209,7 +227,11 @@ class _AppState extends State<App> with WidgetsBindingObserver {
           localizationsDelegates: AppLocalizations.localizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
           localeResolutionCallback: AppSettings.resolveLocale,
-          builder: (context, child) => AppMenuBar(onAbout: _showAbout, child: child!),
+          builder: (context, child) => AppMenuBar(
+            onAbout: _showAbout,
+            onCheckForUpdates: widget.updates == null ? null : _checkForUpdates,
+            child: child!,
+          ),
           home: NotesScreen(controller: widget.notes, sync: widget.sync, assets: widget.assets, windowLayout: widget.windowLayout, quickCapture: widget.quickCapture, onAbout: _showAbout),
         ),
       ),
