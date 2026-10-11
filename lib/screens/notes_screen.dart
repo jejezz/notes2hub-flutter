@@ -29,6 +29,7 @@ import 'note_link_picker.dart';
 import 'quick_capture_dialog.dart';
 import 'share_sheet.dart';
 import '../theme/user_content.dart';
+import '../window/focus_tint.dart';
 import '../window/quick_capture.dart';
 import '../window/window_layout.dart';
 import 'board_view.dart';
@@ -615,6 +616,7 @@ class _NotesScreenState extends State<NotesScreen> with WidgetsBindingObserver {
       // 앱 이름은 좁아도 남긴다. 아이콘 간격을 줄여 자리를 만들고, 그래도 모자라면 말줄임표로 줄인다.
       Widget tight(Widget w) => sized(w, density: VisualDensity.compact);
       return AppBar(
+        flexibleSpace: const FocusTint(),
         titleSpacing: AppSpacing.md,
         title: const Text(AppIdentity.displayName, maxLines: 1, overflow: TextOverflow.ellipsis),
         actions: [
@@ -639,6 +641,7 @@ class _NotesScreenState extends State<NotesScreen> with WidgetsBindingObserver {
       );
     }
     return AppBar(
+      flexibleSpace: const FocusTint(),
       title: const Text(AppIdentity.displayName),
       actions: [
         sized(syncButton),
