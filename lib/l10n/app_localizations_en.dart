@@ -787,6 +787,14 @@ class AppLocalizationsEn extends AppLocalizations {
   String get updateOpenReleasePage => 'Open release page';
 
   @override
+  String get updateBrowserDownloadTitle => 'Downloading in your browser';
+
+  @override
+  String updateBrowserDownloadBody(String appName) {
+    return 'Your browser is downloading the new version. Open the DMG and drag $appName to the Applications folder. If it\'s running, quit it first and replace the old copy.';
+  }
+
+  @override
   String get updateMacosOpenedTitle => 'The installer window is open';
 
   @override

@@ -495,6 +495,15 @@
     }
   },
   "updateOpenReleasePage": "Open release page",
+  "updateBrowserDownloadTitle": "Downloading in your browser",
+  "updateBrowserDownloadBody": "Your browser is downloading the new version. Open the DMG and drag {appName} to the Applications folder. If it's running, quit it first and replace the old copy.",
+  "@updateBrowserDownloadBody": {
+    "placeholders": {
+      "appName": {
+        "type": "String"
+      }
+    }
+  },
   "updateMacosOpenedTitle": "The installer window is open",
   "updateMacosOpenedBody": "In the window that opened, drag {appName} to the Applications folder. If it's running, quit it first and replace the old copy.",
   "@updateMacosOpenedBody": {
