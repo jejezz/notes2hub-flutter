@@ -20,9 +20,10 @@ class _FocusTintState extends State<FocusTint> with WindowListener {
     super.initState();
     if (isMobilePlatform) return;
     windowManager.addListener(this);
+    // 플러그인이 없는 환경(위젯 테스트)에서는 실패해도 처음 값(포커스됨)을 그대로 쓴다.
     windowManager.isFocused().then((v) {
       if (mounted) setState(() => _focused = v);
-    });
+    }).catchError((Object _) {});
   }
 
   @override
