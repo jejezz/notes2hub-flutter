@@ -605,12 +605,15 @@ class _NotesScreenState extends State<NotesScreen> with WidgetsBindingObserver {
       }
     }
 
+    // 타이틀 바 아이콘은 모두 20px로 통일한다.
+    Widget sized(Widget w, {VisualDensity? density}) => IconButtonTheme(
+      data: IconButtonThemeData(style: IconButton.styleFrom(iconSize: 20, visualDensity: density)),
+      child: w,
+    );
+
     if (narrow) {
       // 앱 이름은 좁아도 남긴다. 아이콘 간격을 줄여 자리를 만들고, 그래도 모자라면 말줄임표로 줄인다.
-      Widget tight(Widget w) => IconButtonTheme(
-        data: IconButtonThemeData(style: IconButton.styleFrom(visualDensity: VisualDensity.compact)),
-        child: w,
-      );
+      Widget tight(Widget w) => sized(w, density: VisualDensity.compact);
       return AppBar(
         titleSpacing: AppSpacing.md,
         title: const Text(AppIdentity.displayName, maxLines: 1, overflow: TextOverflow.ellipsis),
@@ -638,28 +641,36 @@ class _NotesScreenState extends State<NotesScreen> with WidgetsBindingObserver {
     return AppBar(
       title: const Text(AppIdentity.displayName),
       actions: [
-        syncButton,
-        newNote,
+        sized(syncButton),
+        sized(newNote),
         if (l != null)
-          PopupMenuButton<String>(
-            tooltip: l10n.windowTooltip,
-            icon: const Icon(Icons.view_sidebar_outlined),
-            onSelected: onWindowChoice,
-            itemBuilder: (_) => windowItems,
+          sized(
+            PopupMenuButton<String>(
+              tooltip: l10n.windowTooltip,
+              icon: const Icon(Icons.view_sidebar_outlined),
+              onSelected: onWindowChoice,
+              itemBuilder: (_) => windowItems,
+            ),
           ),
-        IconButton(
-          tooltip: l10n.trashTooltip,
-          icon: const Icon(Icons.restore_from_trash_outlined),
-          onPressed: _openTrash,
+        sized(
+          IconButton(
+            tooltip: l10n.trashTooltip,
+            icon: const Icon(Icons.restore_from_trash_outlined),
+            onPressed: _openTrash,
+          ),
         ),
-        IconButton(
-          tooltip: '${l10n.settingsTooltip} ($_mod,)',
-          icon: const Icon(Icons.settings_outlined),
-          onPressed: _openSettings,
+        sized(
+          IconButton(
+            tooltip: '${l10n.settingsTooltip} ($_mod,)',
+            icon: const Icon(Icons.settings_outlined),
+            onPressed: _openSettings,
+          ),
         ),
-        const ThemeMenuButton(),
-        const LanguageMenuButton(),
-        IconButton(tooltip: l10n.aboutTooltip, icon: const Icon(Icons.info_outline_rounded), onPressed: widget.onAbout),
+        sized(const ThemeMenuButton()),
+        sized(const LanguageMenuButton()),
+        sized(
+          IconButton(tooltip: l10n.aboutTooltip, icon: const Icon(Icons.info_outline_rounded), onPressed: widget.onAbout),
+        ),
         const SizedBox(width: AppSpacing.sm),
       ],
     );
