@@ -775,6 +775,14 @@ class AppLocalizationsKo extends AppLocalizations {
   String get updateOpenReleasePage => '릴리스 페이지 열기';
 
   @override
+  String get updateBrowserDownloadTitle => '브라우저에서 내려받습니다';
+
+  @override
+  String updateBrowserDownloadBody(String appName) {
+    return '브라우저가 새 버전 내려받기를 시작합니다. 받은 DMG를 열어 $appName 을(를) Applications 폴더로 끌어다 놓아 주세요. 실행 중이면 종료한 뒤 덮어쓰세요.';
+  }
+
+  @override
   String get updateMacosOpenedTitle => '설치 창이 열렸습니다';
 
   @override

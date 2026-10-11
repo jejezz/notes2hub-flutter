@@ -1454,6 +1454,18 @@ abstract class AppLocalizations {
   /// **'릴리스 페이지 열기'**
   String get updateOpenReleasePage;
 
+  /// No description provided for @updateBrowserDownloadTitle.
+  ///
+  /// In ko, this message translates to:
+  /// **'브라우저에서 내려받습니다'**
+  String get updateBrowserDownloadTitle;
+
+  /// No description provided for @updateBrowserDownloadBody.
+  ///
+  /// In ko, this message translates to:
+  /// **'브라우저가 새 버전 내려받기를 시작합니다. 받은 DMG를 열어 {appName} 을(를) Applications 폴더로 끌어다 놓아 주세요. 실행 중이면 종료한 뒤 덮어쓰세요.'**
+  String updateBrowserDownloadBody(String appName);
+
   /// No description provided for @updateMacosOpenedTitle.
   ///
   /// In ko, this message translates to:

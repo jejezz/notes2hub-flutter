@@ -34,7 +34,9 @@ class UpdateService {
     Future<void> Function()? quitApp,
     Future<void> Function(Uri url)? openUrl,
     this.startupDelay = const Duration(seconds: 5),
+    bool? browserDownload,
   })  : os = os ?? _currentOs(),
+        browserDownload = browserDownload ?? _sandboxed(),
         _quitApp = quitApp ?? _exitApp,
         _openUrl = openUrl ?? _launch;
 
@@ -69,6 +71,13 @@ class UpdateService {
   final Future<void> Function(Uri url) _openUrl;
 
   static String _currentOs() => Platform.isMacOS ? 'macos' : (Platform.isWindows ? 'windows' : 'linux');
+
+  /// 앱 샌드박스 안에서 도는가. 샌드박스 앱이 직접 내려받은 DMG는 "샌드박스가 만든 파일"로 표시되어 그 안의 앱이
+  /// Gatekeeper에 실행을 거부당한다("응용 프로그램을 열 수 없습니다"). 그래서 이 경우 내려받기는 브라우저에 맡긴다.
+  static bool _sandboxed() => Platform.isMacOS && Platform.environment.containsKey('APP_SANDBOX_CONTAINER_ID');
+
+  /// macOS 샌드박스 앱이면 true. 테스트에서 값을 바꿀 수 있다.
+  final bool browserDownload;
 
   // 정식 종료: 앱의 WidgetsBindingObserver.didRequestAppExit 를 거친 뒤 끝난다. 종료 직전에 정리할 것(로그 flush,
   // 저장)이 있는 앱은 거기서 하면 된다. `exit(0)` 은 그것을 건너뛰므로 쓰지 않는다.
@@ -189,7 +198,39 @@ class UpdateService {
     }
   }
 
+  /// 샌드박스 앱: 내려받기를 브라우저에 맡긴다. 브라우저가 받은 DMG는 보통의 격리 표시만 붙어 공증 검사를 통과한다.
+  /// 주소는 앱 업데이터가 내려받기에 허용하는 것(GitHub 릴리스)만 연다.
+  Future<void> _downloadInBrowser(BuildContext context, UpdateInfo info) async {
+    final l10n = AppLocalizations.of(context);
+    final url = info.asset.url;
+    final allowed = url.scheme == 'https' && updater.downloadUrlPrefixes.any(url.toString().startsWith);
+    final target = allowed ? url : info.releaseUrl;
+    if (target == null) {
+      await showDialog<void>(
+        context: context,
+        builder: (_) => UpdateMessageDialog(
+          title: l10n.updateFailedTitle,
+          message: updateErrorMessage(l10n, UpdateErrorKind.insecureUrl),
+        ),
+      );
+      return;
+    }
+    await _openUrl(target);
+    if (!context.mounted) return;
+    await showDialog<void>(
+      context: context,
+      builder: (_) => UpdateMessageDialog(
+        title: l10n.updateBrowserDownloadTitle,
+        message: l10n.updateBrowserDownloadBody(AppIdentity.displayName),
+      ),
+    );
+  }
+
   Future<void> _download(BuildContext context, UpdateInfo info) async {
+    if (browserDownload) {
+      await _downloadInBrowser(context, info);
+      return;
+    }
     final downloaded = await showDialog<DownloadedUpdate>(
       context: context,
       barrierDismissible: false,
