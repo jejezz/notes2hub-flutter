@@ -61,7 +61,14 @@ class SyncButton extends StatelessWidget {
         ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
         : Icon(icon, size: 18, color: color);
     if (compact) {
-      return IconButton(tooltip: message, onPressed: onPressed, icon: leading);
+      // 크기는 타이틀 바의 IconButtonTheme(iconSize)을 따른다.
+      return IconButton(
+        tooltip: message,
+        onPressed: onPressed,
+        icon: sync.syncing
+            ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
+            : Icon(icon, color: color),
+      );
     }
     return Tooltip(
       message: detail ?? '${l10n.syncTooltip} ($shortcut)${sync.repoFullName == null ? '' : '\n${sync.repoFullName}'}',
