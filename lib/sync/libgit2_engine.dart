@@ -134,6 +134,28 @@ Callbacks _callbacks(String token, List<String> rejects) => Callbacks(
   },
 );
 
+/// fetch/push 뒤 remote를 바로 해제한다 (연결·소켓을 GC까지 붙들지 않도록).
+void _fetch(Repository repo, String token, List<String> rejects) {
+  final remote = Remote.lookup(repo: repo, name: 'origin');
+  try {
+    remote.fetch(callbacks: _callbacks(token, rejects));
+  } finally {
+    remote.free();
+  }
+}
+
+void _push(Repository repo, String branch, String token, List<String> rejects) {
+  final remote = Remote.lookup(repo: repo, name: 'origin');
+  try {
+    remote.push(
+      refspecs: ['refs/heads/$branch:refs/heads/$branch'],
+      callbacks: _callbacks(token, rejects),
+    );
+  } finally {
+    remote.free();
+  }
+}
+
 /// 아직 커밋이 없는가. `repo.isEmpty`는 HEAD가 `master`일 때만 true라서 `main`에서는 쓸 수 없다.
 bool _unborn(Repository repo, String path) =>
     !Reference.list(repo).contains('refs/heads/${_headBranch(path)}');
@@ -175,10 +197,7 @@ SyncResult _connect(String path, String? ca, String url, String token) {
     } else {
       Remote.create(repo: repo, name: 'origin', url: url);
     }
-    Remote.lookup(
-      repo: repo,
-      name: 'origin',
-    ).fetch(callbacks: _callbacks(token, []));
+    _fetch(repo, token, []);
     final branch = _remoteBranch(repo);
     if (branch != null && _unborn(repo, path)) {
       final target = Reference.lookup(
@@ -431,18 +450,12 @@ SyncResult _sync(
     var copies = 0;
     final rejects = <String>[];
     for (var attempt = 0; attempt < 3; attempt++) {
-      Remote.lookup(
-        repo: repo,
-        name: 'origin',
-      ).fetch(callbacks: _callbacks(token, rejects));
+      _fetch(repo, token, rejects);
       final r = _integrate(repo, path, branch, sig, label);
       integrated = integrated || r.integrated;
       copies += r.copies;
       rejects.clear();
-      Remote.lookup(repo: repo, name: 'origin').push(
-        refspecs: ['refs/heads/$branch:refs/heads/$branch'],
-        callbacks: _callbacks(token, rejects),
-      );
+      _push(repo, branch, token, rejects);
       // 그 사이 다른 PC가 먼저 올렸으면 거절된다 → 다시 가져와 합친 뒤 재시도.
       if (rejects.isEmpty) {
         return SyncResult(
@@ -470,10 +483,7 @@ SyncResult _pull(String path, String? ca, String token) {
   try {
     final branch = _headBranch(path);
     final pending = _pending(repo, path);
-    Remote.lookup(
-      repo: repo,
-      name: 'origin',
-    ).fetch(callbacks: _callbacks(token, []));
+    _fetch(repo, token, []);
     if (pending > 0) {
       // 저장된 변경이 있으면 작업 폴더를 건드리지 않는다. 원격이 앞서 있는지만 알린다.
       final theirsName = 'refs/remotes/origin/$branch';
@@ -517,7 +527,9 @@ List<NoteVersion> _history(String path, String id, int limit) {
       final cur = blobAt(c);
       if (cur == null) continue;
       final parents = c.parents;
-      final prev = parents.isEmpty ? null : blobAt(Commit.lookup(repo: repo, oid: parents.first));
+      final prev = parents.isEmpty
+          ? null
+          : blobAt(Commit.lookup(repo: repo, oid: parents.first));
       if (cur == prev) continue;
       out.add(
         NoteVersion(
