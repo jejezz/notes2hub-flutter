@@ -26,6 +26,7 @@ import 'notes/notes_controller.dart';
 import 'screens/notes_screen.dart';
 import 'sync/ca_bundle.dart';
 import 'sync/device_label.dart';
+import 'sync/file_limit.dart';
 import 'sync/libgit2_engine.dart';
 import 'sync/sync_service.dart';
 import 'window/quick_capture.dart';
@@ -68,6 +69,7 @@ class _StartupError extends StatelessWidget {
 
 Future<void> _main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  raiseOpenFileLimit();
   registerExtraLicenses();
   // 모바일은 libgit2 로딩·Android CA 설정이 먼저 필요하다 (데스크톱에서는 아무 일도 하지 않는다).
   await PlatformSpecific.initialize();
