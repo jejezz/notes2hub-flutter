@@ -53,6 +53,15 @@ void main() {
     expect(noteFile(db, 'n1').readAsStringSync(), contains('# one'));
   });
 
+  test('a network operation that outlasts the timeout returns an offline failure', () async {
+    final slow = LibGit2Engine(dir: da, networkTimeout: Duration.zero);
+    final r = await slow.connect(remoteUrl: origin, token: '');
+    expect(r.ok, isFalse);
+    expect(r.offline, isTrue);
+    expect(r.error, contains('timed out'));
+    await Future<void>.delayed(const Duration(seconds: 1)); // 버려진 Isolate가 폴더를 놓을 때까지
+  });
+
   test('syncing with nothing to do is a quiet no-op', () async {
     await a.connect(remoteUrl: origin, token: '');
     final r = await sync(a);

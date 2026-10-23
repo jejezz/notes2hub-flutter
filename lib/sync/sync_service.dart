@@ -147,6 +147,9 @@ class SyncService extends ChangeNotifier with WidgetsBindingObserver {
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) unawaited(autoPull());
+    // 네트워크에 걸려 멈춘 git 작업이 있으면 VM 종료가 그것을 기다려 몇 분씩 붙잡힌다.
+    // 저장은 이미 파일로 끝났고 git 쪽은 다음 동기화가 이어받으므로 바로 끝낸다.
+    if (state == AppLifecycleState.detached && _syncing) exit(0);
   }
 
   bool _disposed = false;

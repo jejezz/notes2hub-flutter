@@ -12,7 +12,25 @@ import 'sync_models.dart';
 /// libgit2 호출은 동기식 FFI라 네트워크가 느리면 화면이 멈춘다. 그래서 작업 전체를
 /// Isolate에서 돌리고, 경계에는 문자열·단순 값만 넘긴다.
 class LibGit2Engine implements SyncEngine {
-  LibGit2Engine({required this.dir, this.caCertPath});
+  LibGit2Engine({
+    required this.dir,
+    this.caCertPath,
+    this.networkTimeout = const Duration(seconds: 90),
+  });
+
+  /// 네트워크 작업(연결·동기화·가져오기) 하나에 허용하는 시간. libgit2에는 타임아웃 옵션이 없어
+  /// 절전에서 깨어난 뒤 죽은 연결에 걸리면 몇 분씩 멈추므로, 넘기면 기다리지 않고 오프라인 실패로 돌려준다.
+  /// (멈춘 Isolate는 끝나는 대로 스스로 정리된다.)
+  final Duration networkTimeout;
+
+  Future<SyncResult> _network(SyncResult Function() job) =>
+      Isolate.run(job).timeout(
+        networkTimeout,
+        onTimeout: () => SyncResult(
+          error: 'timed out after ${networkTimeout.inSeconds}s (network not responding)',
+          offline: true,
+        ),
+      );
 
   /// git 작업 폴더 (안에 `notes/`가 있다).
   final Directory dir;
@@ -26,9 +44,7 @@ class LibGit2Engine implements SyncEngine {
     required String token,
   }) {
     final path = dir.path, ca = caCertPath;
-    return Isolate.run(
-      () => _guard(() => _connect(path, ca, remoteUrl, token)),
-    );
+    return _network(() => _guard(() => _connect(path, ca, remoteUrl, token)));
   }
 
   @override
@@ -58,7 +74,7 @@ class LibGit2Engine implements SyncEngine {
     required String deviceLabel,
   }) {
     final path = dir.path, ca = caCertPath;
-    return Isolate.run(
+    return _network(
       () => _guard(
         () =>
             _sync(path, ca, token, identity.name, identity.email, deviceLabel),
@@ -69,7 +85,7 @@ class LibGit2Engine implements SyncEngine {
   @override
   Future<SyncResult> pull({required String token}) {
     final path = dir.path, ca = caCertPath;
-    return Isolate.run(() => _guard(() => _pull(path, ca, token)));
+    return _network(() => _guard(() => _pull(path, ca, token)));
   }
 
   @override
