@@ -139,6 +139,78 @@ abstract final class MdFormat {
     return TextEditingValue(text: next, selection: TextSelection(baseOffset: start, extentOffset: start + 2));
   }
 
+  static final _listItem = RegExp(r'^\s*(?:[-*+]|\d+\.)\s');
+  static final _numbered = RegExp(r'^\s*(\d+)\.\s');
+  static final _heading = RegExp(r'^#{1,6}\s');
+  static final _altBullet = RegExp(r'^(\s*)[*+](\s)');
+  static final _gluedNumber = RegExp(r'(?<=[^\d\s][.!?:)])(\d{1,2})\.\s');
+
+  /// 줄바꿈이 빠진 채 붙여넣은 글(주로 Claude 화면에서 복사)을 Markdown답게 정리한다.
+  /// 문장 끝에 붙은 `N. ` 목록 번호 앞에 줄을 나누고, 목록·제목 앞뒤를 빈 줄로 띄우고, 연속 빈 줄과 줄 끝 공백을 정리하고,
+  /// `*`·`+` 목록 기호를 `-`로 맞춘다. ``` 코드 블록 안은 그대로 둔다.
+  static String tidyText(String text) {
+    final lines = <({String text, bool code})>[];
+    var inFence = false;
+    var last = 0;
+    for (final raw in text.replaceAll('\r\n', '\n').split('\n')) {
+      if (raw.trimLeft().startsWith('```')) {
+        inFence = !inFence;
+        lines.add((text: raw, code: true));
+        continue;
+      }
+      if (inFence) {
+        lines.add((text: raw, code: true));
+        continue;
+      }
+      final line = raw.trimRight().replaceFirstMapped(_altBullet, (m) => '${m[1]}-${m[2]}');
+      final start = _numbered.firstMatch(line);
+      if (start != null) last = int.parse(start[1]!);
+      // 번호가 1이거나 이어지는 번호일 때만 나눈다 (`v1.2. ` 같은 글을 목록으로 오해하지 않게).
+      var from = 0;
+      for (final m in _gluedNumber.allMatches(line)) {
+        final n = int.parse(m[1]!);
+        if (n != 1 && n != last + 1) continue;
+        last = n;
+        lines.add((text: line.substring(from, m.start), code: false));
+        from = m.start;
+      }
+      lines.add((text: line.substring(from), code: false));
+    }
+
+    final out = <String>[];
+    ({String text, bool code})? prev;
+    for (final l in lines) {
+      if (!l.code) {
+        final blank = l.text.trim().isEmpty;
+        if (blank && prev != null && !prev.code && prev.text.trim().isEmpty) continue;
+        final p = prev;
+        if (p != null && !p.code && p.text.trim().isNotEmpty && !blank) {
+          final startsList = _listItem.hasMatch(l.text) && !_listItem.hasMatch(p.text) && !p.text.startsWith(' ');
+          if (_heading.hasMatch(l.text) || _heading.hasMatch(p.text) || startsList) out.add('');
+        }
+      }
+      out.add(l.text);
+      prev = l;
+    }
+    return out.join('\n');
+  }
+
+  /// 선택한 글(선택이 없으면 메모 전체)을 [tidyText]로 정리한다.
+  static TextEditingValue tidy(TextEditingValue v) {
+    final s = _sel(v);
+    final t = v.text;
+    if (s.isCollapsed) {
+      final next = tidyText(t);
+      final cursor = tidyText(t.substring(0, s.start)).length.clamp(0, next.length);
+      return TextEditingValue(text: next, selection: TextSelection.collapsed(offset: cursor));
+    }
+    final tidied = tidyText(t.substring(s.start, s.end));
+    return TextEditingValue(
+      text: t.replaceRange(s.start, s.end, tidied),
+      selection: TextSelection(baseOffset: s.start, extentOffset: s.start + tidied.length),
+    );
+  }
+
   /// 선택 영역(없으면 커서 자리)을 [text]로 바꾸고 커서를 그 뒤에 둔다.
   static TextEditingValue insert(TextEditingValue v, String text) {
     final s = _sel(v);

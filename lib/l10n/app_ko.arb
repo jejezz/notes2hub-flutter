@@ -425,6 +425,7 @@
   "formatNumbered": "번호 목록",
   "formatTable": "표",
   "formatRule": "구분선",
+  "formatTidy": "Markdown 정리 (붙여넣은 글의 줄바꿈·목록 정돈)",
   "formatNoteLink": "메모 링크",
   "noteLinkPickerTitle": "링크할 메모",
   "noteLinkSearchHint": "제목 검색",

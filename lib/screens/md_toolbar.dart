@@ -124,6 +124,11 @@ class MarkdownToolbar extends StatelessWidget {
                   l10n.formatRule,
                   () => onFormat(MdFormat.rule),
                 ),
+                button(
+                  Icons.auto_fix_high_rounded,
+                  l10n.formatTidy,
+                  () => onFormat(MdFormat.tidy),
+                ),
                 divider(),
                 button(
                   Icons.add_photo_alternate_outlined,

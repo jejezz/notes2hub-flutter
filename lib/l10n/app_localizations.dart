@@ -1238,6 +1238,12 @@ abstract class AppLocalizations {
   /// **'구분선'**
   String get formatRule;
 
+  /// No description provided for @formatTidy.
+  ///
+  /// In ko, this message translates to:
+  /// **'Markdown 정리 (붙여넣은 글의 줄바꿈·목록 정돈)'**
+  String get formatTidy;
+
   /// No description provided for @formatNoteLink.
   ///
   /// In ko, this message translates to:
