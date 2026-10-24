@@ -650,6 +650,9 @@ class AppLocalizationsKo extends AppLocalizations {
   String get formatRule => '구분선';
 
   @override
+  String get formatTidy => 'Markdown 정리 (붙여넣은 글의 줄바꿈·목록 정돈)';
+
+  @override
   String get formatNoteLink => '메모 링크';
 
   @override

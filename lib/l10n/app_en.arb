@@ -408,6 +408,7 @@
   "formatNumbered": "Numbered list",
   "formatTable": "Table",
   "formatRule": "Divider",
+  "formatTidy": "Tidy Markdown (fix line breaks and lists in pasted text)",
   "formatNoteLink": "Link to a note",
   "noteLinkPickerTitle": "Note to link",
   "noteLinkSearchHint": "Search titles",
