@@ -184,13 +184,15 @@ void main() {
     final period = tester.getRect(find.byKey(const ValueKey('alarm-period')));
     final hour = tester.getRect(find.byKey(const ValueKey('alarm-hour')));
     expect(period.bottom, lessThanOrEqualTo(hour.top));
-    expect(period.width, greaterThan(period.height * 3)); // horizontal
+    expect(period.width, greaterThan(period.height * 2)); // horizontal
+    expect(period.width, lessThan(260)); // 내용 폭 (대화상자 폭 280을 채우지 않는다)
 
     await tester.tap(find.text('오후'));
     await tester.pump();
-    await tester.tap(find.text('03')); // hour chip -> moves on to minutes
+    final dial = tester.getRect(find.byKey(const ValueKey('alarm-dial')));
+    await tester.tapAt(dial.center + Offset(dial.width * 0.4, 0)); // 3시 방향 -> 3시, 이어서 분
     await tester.pump();
-    await tester.tap(find.text('45'));
+    await tester.tapAt(dial.center - Offset(dial.width * 0.4, 0)); // 9시 방향 -> 45분
     await tester.pump();
     await tester.tap(find.byKey(const ValueKey('alarm-time-ok')));
     await tester.pumpAndSettle();
