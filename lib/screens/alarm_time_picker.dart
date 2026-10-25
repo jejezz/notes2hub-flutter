@@ -17,8 +17,14 @@ Future<TimeOfDay?> showAlarmTimePicker(
 
 /// SeoulNamsan은 글자 틀 아래쪽(descent 305/1000)을 숫자 밑 여백으로 넉넉히 잡아 두어서, 숫자 글리프의 가운데가
 /// 틀 가운데보다 약 0.158em 위에 놓인다 (숫자 높이 85~808, 틀 -305~880 → 글리프 중심 446.5, 틀 중심 287.5).
-/// 가운데 맞춤을 해도 숫자가 위로 쏠려 보이는 원인이라 그만큼 내려 준다.
+/// 가운데 맞춤을 해도 숫자가 위로 쏠려 보이는 원인이다. 큰 시각 글자는 상자 없이 밑줄만 쓰므로 영향이 없고,
+/// 다이얼의 동그라미 안 숫자만 그만큼 내려서 맞춘다.
 const _digitDrop = 0.158;
+
+const _contentWidth = 280.0;
+
+/// 숫자 원(반지름 20)이 다이얼 가장자리에 닿는 위치.
+const _ring = 20.0;
 
 class _AlarmTimePicker extends StatefulWidget {
   const _AlarmTimePicker({required this.initial});
@@ -54,103 +60,107 @@ class _AlarmTimePickerState extends State<_AlarmTimePicker> {
     final big = theme.textTheme.displayMedium?.copyWith(
       fontWeight: FontWeight.w300,
     );
-    final drop = (big?.fontSize ?? 45) * _digitDrop;
 
+    // 선택한 쪽(시/분)은 상자 대신 밑줄로 표시한다.
     Widget field(String text, bool selected, VoidCallback onTap, {Key? key}) =>
-        Material(
+        InkWell(
           key: key,
-          color: selected
-              ? scheme.primaryContainer
-              : scheme.surfaceContainerHighest,
           borderRadius: BorderRadius.circular(AppRadius.button),
-          child: InkWell(
-            borderRadius: BorderRadius.circular(AppRadius.button),
-            onTap: onTap,
-            child: SizedBox(
-              width: 104,
-              height: 80,
-              child: Center(
-                child: Transform.translate(
-                  offset: Offset(0, drop),
-                  child: Text(
-                    text,
-                    style: big?.copyWith(
-                      color: selected
-                          ? scheme.onPrimaryContainer
-                          : scheme.onSurface,
-                    ),
-                  ),
+          onTap: onTap,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(text, style: big),
+              Container(
+                height: 3,
+                width: (big?.fontSize ?? 45) * 1.1,
+                decoration: BoxDecoration(
+                  color: selected ? scheme.primary : Colors.transparent,
+                  borderRadius: BorderRadius.circular(2),
                 ),
               ),
-            ),
+            ],
           ),
         );
 
     return AlertDialog(
       title: Text(loc.timePickerDialHelpText),
       content: SizedBox(
-        width: 280,
+        width: _contentWidth,
         child: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              if (!is24) ...[
-                SegmentedButton<bool>(
-                  key: const ValueKey('alarm-period'),
-                  showSelectedIcon: false,
-                  segments: [
-                    ButtonSegment(
-                      value: false,
-                      label: Text(loc.anteMeridiemAbbreviation),
-                    ),
-                    ButtonSegment(
-                      value: true,
-                      label: Text(loc.postMeridiemAbbreviation),
-                    ),
-                  ],
-                  selected: {pm},
-                  onSelectionChanged: (s) =>
-                      setState(() => _hour = (_hour % 12) + (s.first ? 12 : 0)),
-                ),
-                const SizedBox(height: AppSpacing.md),
-              ],
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  field(
-                    (is24 ? _hour : shownHour).toString().padLeft(2, '0'),
-                    _editHour,
-                    () => setState(() => _editHour = true),
-                    key: const ValueKey('alarm-hour'),
-                  ),
-                  SizedBox(
-                    width: 24,
-                    child: Center(
-                      child: Transform.translate(
-                        offset: Offset(0, drop),
-                        child: Text(':', style: big),
+              // 오전/오후 스위치, 시각 글자, 다이얼의 앞쪽(왼쪽) 가장자리를 한 줄에 맞춘다.
+              // 다이얼은 9시 방향 숫자 원이 다이얼 가장자리에 닿게 그려서 그 줄이 곧 다이얼 가장자리다.
+              Center(
+                child: SizedBox(
+                  width: _Dial.size,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      if (!is24) ...[
+                        SegmentedButton<bool>(
+                          key: const ValueKey('alarm-period'),
+                          showSelectedIcon: false,
+                          segments: [
+                            ButtonSegment(
+                              value: false,
+                              label: Text(loc.anteMeridiemAbbreviation),
+                            ),
+                            ButtonSegment(
+                              value: true,
+                              label: Text(loc.postMeridiemAbbreviation),
+                            ),
+                          ],
+                          selected: {pm},
+                          onSelectionChanged: (s) => setState(
+                            () => _hour = (_hour % 12) + (s.first ? 12 : 0),
+                          ),
+                        ),
+                        const SizedBox(height: AppSpacing.md),
+                      ],
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          field(
+                            (is24 ? _hour : shownHour).toString().padLeft(
+                              2,
+                              '0',
+                            ),
+                            _editHour,
+                            () => setState(() => _editHour = true),
+                            key: const ValueKey('alarm-hour'),
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 6),
+                            child: Text(':', style: big),
+                          ),
+                          field(
+                            _minute.toString().padLeft(2, '0'),
+                            !_editHour,
+                            () => setState(() => _editHour = false),
+                            key: const ValueKey('alarm-minute'),
+                          ),
+                        ],
                       ),
-                    ),
+                      const SizedBox(height: AppSpacing.lg),
+                      _Dial(
+                        key: const ValueKey('alarm-dial'),
+                        hourMode: _editHour,
+                        is24: is24,
+                        hour: _hour,
+                        minute: _minute,
+                        onHour: (h) => setState(() => _hour = h),
+                        onMinute: (m) => setState(() => _minute = m),
+                        onHourDone: () =>
+                            setState(() => _editHour = false), // 시를 고르면 이어서 분
+                      ),
+                    ],
                   ),
-                  field(
-                    _minute.toString().padLeft(2, '0'),
-                    !_editHour,
-                    () => setState(() => _editHour = false),
-                    key: const ValueKey('alarm-minute'),
-                  ),
-                ],
-              ),
-              const SizedBox(height: AppSpacing.lg),
-              _Dial(
-                key: const ValueKey('alarm-dial'),
-                hourMode: _editHour,
-                is24: is24,
-                hour: _hour,
-                minute: _minute,
-                onHour: (h) => setState(() => _hour = h),
-                onMinute: (m) => setState(() => _minute = m),
-                onHourDone: () =>
-                    setState(() => _editHour = false), // 시를 고르면 이어서 분
+                ),
               ),
             ],
           ),
@@ -277,11 +287,11 @@ class _DialPainter extends CustomPainter {
     if (hourMode) {
       deg = (hour % 12) * 30.0;
       radius = is24 && (hour == 0 || hour > 12)
-          ? r - 24
-          : (is24 ? r - 24 - 40 : r - 28);
+          ? r - _ring
+          : (is24 ? r - _ring - 40 : r - _ring);
     } else {
       deg = minute * 6.0;
-      radius = r - 28;
+      radius = r - _ring;
     }
     final tip = at(deg, radius);
     final hand = Paint()
@@ -320,24 +330,24 @@ class _DialPainter extends CustomPainter {
           final innerHour = pos == 0 ? 12 : pos;
           text(
             outerHour.toString().padLeft(2, '0'),
-            at(pos * 30.0, r - 24),
+            at(pos * 30.0, r - _ring),
             selected: hour == outerHour,
           );
           text(
             innerHour.toString().padLeft(2, '0'),
-            at(pos * 30.0, r - 24 - 40),
+            at(pos * 30.0, r - _ring - 40),
             selected: hour == innerHour,
           );
         } else {
           final h = pos == 0 ? 12 : pos;
-          text('$h', at(pos * 30.0, r - 28), selected: hour % 12 == h % 12);
+          text('$h', at(pos * 30.0, r - _ring), selected: hour % 12 == h % 12);
         }
       }
     } else {
       for (var m = 0; m < 60; m += 5) {
         text(
           m.toString().padLeft(2, '0'),
-          at(m * 6.0, r - 28),
+          at(m * 6.0, r - _ring),
           selected: minute == m,
         );
       }

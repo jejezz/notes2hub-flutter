@@ -184,6 +184,7 @@ void main() {
     final period = tester.getRect(find.byKey(const ValueKey('alarm-period')));
     final hour = tester.getRect(find.byKey(const ValueKey('alarm-hour')));
     expect(period.bottom, lessThanOrEqualTo(hour.top));
+    expect(period.left, hour.left); // 앞쪽 가장자리 정렬
     expect(period.width, greaterThan(period.height * 2)); // horizontal
     expect(period.width, lessThan(260)); // 내용 폭 (대화상자 폭 280을 채우지 않는다)
 
