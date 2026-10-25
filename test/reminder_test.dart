@@ -9,6 +9,8 @@ import 'package:notes2hub/notes/notes_controller.dart';
 import 'package:notes2hub/notes/reminder_notifications.dart';
 import 'package:notes2hub/notes/reminder_service.dart';
 import 'package:notes2hub/screens/alarm_time_picker.dart';
+import 'package:notes2hub/screens/board_view.dart';
+import 'package:notes2hub/images/asset_store.dart';
 import 'package:notes2hub/screens/reminder_dialogs.dart';
 
 class _FakeScheduler implements ReminderScheduler {
@@ -198,5 +200,43 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('alarm-time-ok')));
     await tester.pumpAndSettle();
     expect(result, const TimeOfDay(hour: 15, minute: 45));
+  });
+
+  testWidgets('card reminder button shows the alarm state and opens the picker callback', (tester) async {
+    var taps = 0;
+    Future<void> show(Note n) async {
+      await tester.pumpWidget(MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        locale: const Locale('en'),
+        home: Scaffold(
+          body: SizedBox(
+            width: 400,
+            child: NoteCard(
+              note: n,
+              assets: AssetStore(Directory('${tmp.path}/assets')),
+              state: CardSync.none,
+              onTap: () {},
+              onEdit: () {},
+              onDelete: () {},
+              onBookmark: () {},
+              onReminder: () => taps++,
+            ),
+          ),
+        ),
+      ));
+    }
+
+    final base = Note(id: 'a', created: DateTime(2026), updated: DateTime(2026), body: 'x');
+    await show(base);
+    expect(find.byIcon(Icons.alarm_add_outlined), findsOneWidget);
+    await tester.tap(find.byKey(const ValueKey('card-reminder')));
+    expect(taps, 1);
+
+    await show(base.copyWith(remindAt: DateTime.now().add(const Duration(days: 1))));
+    expect(find.byIcon(Icons.alarm_on_rounded), findsOneWidget);
+
+    await show(base.copyWith(remindAt: DateTime.now().subtract(const Duration(hours: 1))));
+    expect(find.byIcon(Icons.alarm_rounded), findsOneWidget);
   });
 }

@@ -547,8 +547,9 @@ class _NotesScreenState extends State<NotesScreen> with WidgetsBindingObserver {
 
   void _openTrash() => showTrashDialog(context, c);
 
-  Future<void> _editReminder() async {
-    final id = c.selectedId;
+  /// 알람 시각을 고른다 — [noteId]가 없으면 편집 중인 메모.
+  Future<void> _editReminder([String? noteId]) async {
+    final id = noteId ?? c.selectedId;
     if (id == null) return;
     final choice = await showReminderPicker(context, current: c.noteById(id)?.remindAt);
     if (choice != null) await c.setReminder(id, choice.at);
@@ -789,6 +790,7 @@ class _NotesScreenState extends State<NotesScreen> with WidgetsBindingObserver {
                                 onEdit: _open,
                                 onDelete: _deleteNote,
                                 onBookmark: c.toggleBookmark,
+                                onReminder: _editReminder,
                                 onCreate: _create,
                                 onRefresh: _syncNow,
                               ),
