@@ -8,6 +8,7 @@ import 'package:notes2hub/notes/note_store.dart';
 import 'package:notes2hub/notes/notes_controller.dart';
 import 'package:notes2hub/notes/reminder_notifications.dart';
 import 'package:notes2hub/notes/reminder_service.dart';
+import 'package:notes2hub/screens/alarm_time_picker.dart';
 import 'package:notes2hub/screens/reminder_dialogs.dart';
 
 class _FakeScheduler implements ReminderScheduler {
@@ -163,5 +164,36 @@ void main() {
     expect(OsReminderScheduler.notificationId('abc'), OsReminderScheduler.notificationId('abc'));
     expect(OsReminderScheduler.notificationId('abc'), isNot(OsReminderScheduler.notificationId('abd')));
     expect(OsReminderScheduler.notificationId('0b2c3f6e-1a2b-4c5d-8e9f-001122334455'), lessThan(0x80000000));
+  });
+
+  testWidgets('time picker: period toggle sits above the time and picks hour then minute', (tester) async {
+    TimeOfDay? result;
+    await tester.pumpWidget(MaterialApp(
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
+      locale: const Locale('ko'),
+      home: Builder(
+        builder: (context) => TextButton(
+          onPressed: () async => result = await showAlarmTimePicker(context, const TimeOfDay(hour: 10, minute: 0)),
+          child: const Text('open'),
+        ),
+      ),
+    ));
+    await tester.tap(find.text('open'));
+    await tester.pumpAndSettle();
+    final period = tester.getRect(find.byKey(const ValueKey('alarm-period')));
+    final hour = tester.getRect(find.byKey(const ValueKey('alarm-hour')));
+    expect(period.bottom, lessThanOrEqualTo(hour.top));
+    expect(period.width, greaterThan(period.height * 3)); // horizontal
+
+    await tester.tap(find.text('오후'));
+    await tester.pump();
+    await tester.tap(find.text('03')); // hour chip -> moves on to minutes
+    await tester.pump();
+    await tester.tap(find.text('45'));
+    await tester.pump();
+    await tester.tap(find.byKey(const ValueKey('alarm-time-ok')));
+    await tester.pumpAndSettle();
+    expect(result, const TimeOfDay(hour: 15, minute: 45));
   });
 }

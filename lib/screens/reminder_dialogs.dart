@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import '../l10n/app_localizations.dart';
 import '../notes/note.dart';
 import '../theme/app_theme.dart';
+import 'alarm_time_picker.dart';
 
 /// 알람 시각 선택 결과: [at]이 null이면 알람 끄기.
 class ReminderChoice {
@@ -54,7 +55,7 @@ class _ReminderPickerState extends State<_ReminderPicker> {
   }
 
   Future<void> _pickTime() async {
-    final t = await showTimePicker(context: context, initialTime: TimeOfDay.fromDateTime(_at));
+    final t = await showAlarmTimePicker(context, TimeOfDay.fromDateTime(_at));
     if (t != null) setState(() => _at = DateTime(_at.year, _at.month, _at.day, t.hour, t.minute));
   }
 
