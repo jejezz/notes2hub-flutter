@@ -539,5 +539,13 @@
       }
     }
   },
-  "updateQuitAndInstall": "Quit and install"
+  "updateQuitAndInstall": "Quit and install",
+  "reminderTitle": "Reminder",
+  "reminderTooltip": "Reminder",
+  "reminderSet": "Set reminder",
+  "reminderClear": "Turn off",
+  "reminderPast": "Pick a time in the future",
+  "reminderDone": "Done",
+  "reminderSnooze": "In 10 min",
+  "reminderOpen": "Open note"
 }

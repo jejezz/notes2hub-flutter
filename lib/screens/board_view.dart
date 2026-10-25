@@ -420,6 +420,12 @@ class NoteCard extends StatelessWidget {
                               style: theme.textTheme.labelSmall?.copyWith(color: scheme.onSurfaceVariant),
                             ),
                             if (chip != null) _Chip(text: chip.$1, color: chip.$2),
+                            if (note.remindAt != null)
+                              _Chip(
+                                icon: Icons.alarm_rounded,
+                                text: DateFormat.MMMd(locale).add_Hm().format(note.remindAt!.toLocal()),
+                                color: dark ? AppColors.warning : AppColors.warningTextLight,
+                              ),
                           ],
                         ),
                       ),
@@ -448,8 +454,9 @@ class NoteCard extends StatelessWidget {
 }
 
 class _Chip extends StatelessWidget {
-  const _Chip({required this.text, required this.color});
+  const _Chip({required this.text, required this.color, this.icon});
 
+  final IconData? icon;
   final String text;
   final Color color;
 
@@ -460,9 +467,17 @@ class _Chip extends StatelessWidget {
       color: color.withValues(alpha: 0.14),
       borderRadius: BorderRadius.circular(AppRadius.chip),
     ),
-    child: Text(
-      text,
-      style: Theme.of(context).textTheme.labelSmall?.copyWith(color: color, fontWeight: FontWeight.w700),
+    child: Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        if (icon != null) ...[Icon(icon, size: 12, color: color), const SizedBox(width: 3)],
+        Flexible(
+          child: Text(
+            text,
+            style: Theme.of(context).textTheme.labelSmall?.copyWith(color: color, fontWeight: FontWeight.w700),
+          ),
+        ),
+      ],
     ),
   );
 }

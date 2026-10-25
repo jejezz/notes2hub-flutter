@@ -8,6 +8,7 @@ GitHub 저장소를 백엔드로 쓰는 Markdown 메모 앱. 서버/구독 없�
 - **저장** = 로컬 파일 기록만(git 없음). **동기화** = commit + pull(merge) + push. 수동이 기본, 옵션으로 저장 후 30초 자동.
 - 메모 1개 = 파일 1개(`notes/<uuid>.md`). 충돌 시 원격을 본 파일로, 로컬은 "충돌 사본"으로 보존 — 사용자에게 묻지 않는다.
 - **삭제 = 휴지통**: 파일을 지우지 않고 frontmatter `deleted:`만 붙인다(동기화로 따라감, 30일 뒤 앱 시작 때 완전 삭제). **버전 기록** = 그 메모 파일이 바뀐 git 커밋 목록(`SyncEngine.history`/`versionContent`), 동기화한 시점만 남는다.
+- **알람** = frontmatter `remind:`(UTC). 앱이 켜져 있을 때 `ReminderService`가 15초마다 확인해 시각이 지난 메모를 대화상자로 띄운다(확인=알람 삭제, 10분 뒤=미루기). 꺼져 있던 사이 지난 알람은 켤 때 나온다. Android·iOS·macOS는 `ReminderScheduler`(flutter_local_notifications)가 앞으로 올 알람을 OS에 예약해 앱이 꺼져 있어도 울린다(UTC 절대 시각, 알림 권한은 알람이 처음 생길 때 요청). Windows·Linux는 플러그인에 예약 알림이 없어 앱 안 알람만.
 - 전부 공유(선택적 공유 없음). 에디터는 Markdown 편집 + 미리보기.
 - 창: 크기·위치 기억, 화면 좌/우 가장자리 **도킹**(세로로 길게), 도킹된 상태에서 메모를 열면 폭을 **자동 확장**했다가 보드로 돌아오면 복원 (`lib/window/window_layout.dart`, 좁은 창 레이아웃 포함).
 - UI: 시작 화면 = 카드 **보드**(빠른 메모 입력창 + 날짜별 masonry 카드 + 동기화 칩), 카드를 열면 **전체 화면 편집 페이지**(←/Esc로 복귀). 보드·편집기 코드는 `lib/screens/board_view.dart`, `notes_screen.dart`.

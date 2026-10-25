@@ -23,6 +23,10 @@ import 'images/asset_store.dart';
 import 'notes/app_paths.dart';
 import 'notes/note_store.dart';
 import 'notes/notes_controller.dart';
+import 'notes/note.dart';
+import 'notes/reminder_notifications.dart';
+import 'notes/reminder_service.dart';
+import 'screens/reminder_dialogs.dart';
 import 'screens/notes_screen.dart';
 import 'sync/ca_bundle.dart';
 import 'sync/device_label.dart';
@@ -149,6 +153,9 @@ class App extends StatefulWidget {
 
 class _AppState extends State<App> with WidgetsBindingObserver {
   final _navigatorKey = GlobalKey<NavigatorState>();
+  late final ReminderService _reminders = ReminderService(widget.notes, scheduler: createOsReminderScheduler());
+  StreamSubscription<Note>? _reminderEvents;
+  Future<void> _reminderQueue = Future.value();
 
   @override
   void initState() {
@@ -163,6 +170,8 @@ class _AppState extends State<App> with WidgetsBindingObserver {
   Future<void> _loadNotes() async {
     try {
       await widget.notes.load();
+      _reminderEvents = _reminders.due.listen((n) => _reminderQueue = _reminderQueue.then((_) => _alert(n)));
+      _reminders.start();
       // 어떤 메모도 참조하지 않는 오래된 첨부를 정리한다 (7일 지난 것만).
       unawaited(widget.assets.collectOrphans(widget.notes.referencedAssets));
       // 메모를 읽은 뒤에 연결 상태를 복원한다 — 시작 pull이 끝나면 목록을 다시 읽는다.
@@ -177,8 +186,35 @@ class _AppState extends State<App> with WidgetsBindingObserver {
     }
   }
 
+  /// 알람이 울린 메모를 띄운다. 여러 개가 겹치면 하나씩 차례로 (큐).
+  Future<void> _alert(Note n) async {
+    final current = widget.notes.noteById(n.id);
+    if (current?.remindAt != n.remindAt) return; // 기다리는 사이 다른 기기·화면에서 처리됐다
+    if (_isDesktop) {
+      // 가려져 있거나 다른 창 뒤에 있어도 알람이 보이게 한다.
+      await windowManager.show();
+      await windowManager.focus();
+    }
+    final context = _navigatorKey.currentContext;
+    if (context == null || !context.mounted) return;
+    final action = await showReminderAlert(context, n);
+    switch (action) {
+      case ReminderAction.snooze:
+        await widget.notes.setReminder(n.id, DateTime.now().add(const Duration(minutes: 10)));
+      case ReminderAction.open:
+        await widget.notes.setReminder(n.id, null);
+        widget.notes.select(n.id);
+      case ReminderAction.done:
+        await widget.notes.setReminder(n.id, null);
+      case null:
+        break;
+    }
+  }
+
   @override
   void dispose() {
+    _reminderEvents?.cancel();
+    _reminders.dispose();
     widget.settings.removeListener(_syncWindowBrightness);
     widget.sync.dispose();
     widget.notes.dispose();
