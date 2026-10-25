@@ -825,4 +825,28 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get updateQuitAndInstall => 'Quit and install';
+
+  @override
+  String get reminderTitle => 'Reminder';
+
+  @override
+  String get reminderTooltip => 'Reminder';
+
+  @override
+  String get reminderSet => 'Set reminder';
+
+  @override
+  String get reminderClear => 'Turn off';
+
+  @override
+  String get reminderPast => 'Pick a time in the future';
+
+  @override
+  String get reminderDone => 'Done';
+
+  @override
+  String get reminderSnooze => 'In 10 min';
+
+  @override
+  String get reminderOpen => 'Open note';
 }

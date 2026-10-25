@@ -217,6 +217,42 @@ class NotesController extends ChangeNotifier {
     if (saved != null) onLocalChange?.call();
   }
 
+  /// 알람을 맞추거나([at]) 끈다(null). 북마크처럼 본문과 `updated`는 건드리지 않고 즉시 디스크에 적는다.
+  /// 저장하지 않은 새 메모는 편집본에만 담기고, 저장할 때 파일로 간다.
+  Future<void> setReminder(String id, DateTime? at) async {
+    final current = noteById(id);
+    if (current == null || current.remindAt == at) return;
+    Note apply(Note n) => at == null ? n.copyWith(clearRemind: true) : n.copyWith(remindAt: at);
+    final saved = _saved[id];
+    final working = _working[id];
+    if (saved != null) {
+      final note = apply(saved);
+      await _store.save(note); // 초안 파일도 지워지므로 아래에서 편집본이 있으면 다시 쓴다.
+      _saved[id] = note;
+    }
+    if (working != null) {
+      final w = apply(working);
+      _working[id] = w;
+      if (saved != null) await _store.writeDraft(w);
+    }
+    notifyListeners();
+    if (saved != null) onLocalChange?.call();
+  }
+
+  /// 시각이 지났는데 아직 확인하지 않은 알람이 있는 메모 (저장된 것만, 휴지통 제외), 알람 시각순.
+  List<Note> dueReminders(DateTime now) =>
+      [
+        for (final n in _saved.values)
+          if (!n.isTrashed && n.remindAt != null && !n.remindAt!.isAfter(now)) n,
+      ]..sort((a, b) => a.remindAt!.compareTo(b.remindAt!));
+
+  /// 아직 오지 않은 알람이 있는 메모 (저장된 것만, 휴지통 제외), 알람 시각순 — OS 알림 예약용.
+  List<Note> upcomingReminders(DateTime now) =>
+      [
+        for (final n in _saved.values)
+          if (!n.isTrashed && n.remindAt != null && n.remindAt!.isAfter(now)) n,
+      ]..sort((a, b) => a.remindAt!.compareTo(b.remindAt!));
+
   /// 로컬 파일에 저장. 실패하면 예외를 던지고 편집본은 그대로 남는다.
   /// 제목(첫 줄)이 바뀌었으면 다른 메모의 `[[옛 제목]]`을 새 제목으로 고치고 그 결과를 돌려준다 (고친 것이 없으면 null).
   Future<LinkFix?> save(String id) async {
