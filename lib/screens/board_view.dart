@@ -28,6 +28,7 @@ class NotesBoard extends StatelessWidget {
     required this.onEdit,
     required this.onDelete,
     required this.onBookmark,
+    required this.onReminder,
     required this.onCreate,
     this.onRefresh,
   });
@@ -50,6 +51,9 @@ class NotesBoard extends StatelessWidget {
 
   /// 카드의 북마크 버튼.
   final ValueChanged<String> onBookmark;
+
+  /// 카드의 알람 버튼 — 알람 시각을 고르는 창을 연다.
+  final ValueChanged<String> onReminder;
   final VoidCallback onCreate;
 
   /// 아래로 당겨 새로고침 (폰) — 동기화. 없으면 당겨서 새로고침을 쓰지 않는다.
@@ -228,6 +232,7 @@ class NotesBoard extends StatelessWidget {
                         onEdit: () => onEdit(n.id),
                         onDelete: () => onDelete(n.id),
                         onBookmark: () => onBookmark(n.id),
+                        onReminder: () => onReminder(n.id),
                         touch: mobile,
                       );
                     },
@@ -268,6 +273,7 @@ class NoteCard extends StatelessWidget {
     required this.onEdit,
     required this.onDelete,
     required this.onBookmark,
+    required this.onReminder,
     this.touch = false,
   });
 
@@ -281,6 +287,7 @@ class NoteCard extends StatelessWidget {
   final VoidCallback onEdit;
   final VoidCallback onDelete;
   final VoidCallback onBookmark;
+  final VoidCallback onReminder;
 
   /// 길게 누르기 메뉴: 편집 · 북마크 · 삭제.
   void _showMenu(BuildContext context) {
@@ -317,6 +324,14 @@ class NoteCard extends StatelessWidget {
               },
             ),
             ListTile(
+              leading: Icon(note.remindAt == null ? Icons.alarm_add_outlined : Icons.alarm_on_rounded),
+              title: Text(l10n.reminderTooltip),
+              onTap: () {
+                Navigator.pop(ctx);
+                onReminder();
+              },
+            ),
+            ListTile(
               leading: Icon(Icons.delete_outline_rounded, color: Theme.of(ctx).colorScheme.error),
               title: Text(l10n.noteDelete, style: TextStyle(color: Theme.of(ctx).colorScheme.error)),
               onTap: () {
@@ -341,6 +356,8 @@ class NoteCard extends StatelessWidget {
     final cover = note.coverAsset;
     final conflict = note.isConflictCopy;
     final dark = theme.brightness == Brightness.dark;
+    final remind = note.remindAt;
+    final overdue = remind != null && !remind.isAfter(DateTime.now());
 
     // 칩: 저장 안 됨 > 충돌 사본 > 동기화 대기 > 동기화됨.
     final (String, Color)? chip = switch ((state, conflict)) {
@@ -422,7 +439,6 @@ class NoteCard extends StatelessWidget {
                             if (chip != null) _Chip(text: chip.$1, color: chip.$2),
                             if (note.remindAt != null)
                               _Chip(
-                                icon: Icons.alarm_rounded,
                                 text: DateFormat.MMMd(locale).add_Hm().format(note.remindAt!.toLocal()),
                                 color: dark ? AppColors.warning : AppColors.warningTextLight,
                               ),
@@ -436,6 +452,19 @@ class NoteCard extends StatelessWidget {
                         tooltip: note.bookmarked ? l10n.noteBookmarkRemove : l10n.noteBookmarkAdd,
                         onPressed: onBookmark,
                         color: note.bookmarked ? scheme.primary : null,
+                      ),
+                      // 알람 상태: 없음(윤곽) · 예약됨(강조색) · 시각이 지났는데 아직 확인 전(경고색).
+                      _CardButton(
+                        key: const ValueKey('card-reminder'),
+                        touch: touch,
+                        icon: remind == null
+                            ? Icons.alarm_add_outlined
+                            : (overdue ? Icons.alarm_rounded : Icons.alarm_on_rounded),
+                        tooltip: remind == null
+                            ? l10n.reminderTooltip
+                            : '${l10n.reminderTooltip} · ${DateFormat.MMMd(locale).add_Hm().format(remind.toLocal())}',
+                        onPressed: onReminder,
+                        color: remind == null ? null : (overdue ? (dark ? AppColors.warning : AppColors.warningTextLight) : scheme.primary),
                       ),
                       if (!touch) ...[
                         _CardButton(icon: Icons.edit_outlined, tooltip: l10n.noteEditTab, onPressed: onEdit),
@@ -454,9 +483,8 @@ class NoteCard extends StatelessWidget {
 }
 
 class _Chip extends StatelessWidget {
-  const _Chip({required this.text, required this.color, this.icon});
+  const _Chip({required this.text, required this.color});
 
-  final IconData? icon;
   final String text;
   final Color color;
 
@@ -470,7 +498,6 @@ class _Chip extends StatelessWidget {
     child: Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        if (icon != null) ...[Icon(icon, size: 12, color: color), const SizedBox(width: 3)],
         Flexible(
           child: Text(
             text,
@@ -484,7 +511,7 @@ class _Chip extends StatelessWidget {
 
 /// 카드 아래의 작은 아이콘 버튼 (편집, 삭제).
 class _CardButton extends StatelessWidget {
-  const _CardButton({required this.icon, required this.tooltip, required this.onPressed, this.color, this.touch = false});
+  const _CardButton({super.key, required this.icon, required this.tooltip, required this.onPressed, this.color, this.touch = false});
 
   final bool touch;
   final Color? color;

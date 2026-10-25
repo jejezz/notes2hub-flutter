@@ -547,8 +547,9 @@ class _NotesScreenState extends State<NotesScreen> with WidgetsBindingObserver {
 
   void _openTrash() => showTrashDialog(context, c);
 
-  Future<void> _editReminder() async {
-    final id = c.selectedId;
+  /// 알람 시각을 고른다 — [noteId]가 없으면 편집 중인 메모.
+  Future<void> _editReminder([String? noteId]) async {
+    final id = noteId ?? c.selectedId;
     if (id == null) return;
     final choice = await showReminderPicker(context, current: c.noteById(id)?.remindAt);
     if (choice != null) await c.setReminder(id, choice.at);
@@ -789,6 +790,7 @@ class _NotesScreenState extends State<NotesScreen> with WidgetsBindingObserver {
                                 onEdit: _open,
                                 onDelete: _deleteNote,
                                 onBookmark: c.toggleBookmark,
+                                onReminder: _editReminder,
                                 onCreate: _create,
                                 onRefresh: _syncNow,
                               ),
@@ -1025,13 +1027,6 @@ class _EditorPane extends StatelessWidget {
                     ),
                   ),
                 ),
-              if (!isMobilePlatform && !tiny) // 폰에서는 키보드 위 도구줄에 있다
-              IconButton(
-                tooltip: '${l10n.imageAdd} ($_mod⇧I)',
-                visualDensity: compact ? dense : null,
-                icon: const Icon(Icons.add_photo_alternate_outlined, size: 18),
-                onPressed: onAddImage,
-              ),
               if (compact)
                 IconButton.filled(
                   tooltip: '${l10n.noteSave} (${_mod}S)',
@@ -1085,8 +1080,6 @@ class _EditorPane extends StatelessWidget {
                       switch (v) {
                         case 'share':
                           showShareSheet(context, body: note.body, assets: assets, origin: shareOrigin(menuContext));
-                        case 'image':
-                          onAddImage();
                         case 'reminder':
                           onReminder();
                         case 'history':
@@ -1097,7 +1090,6 @@ class _EditorPane extends StatelessWidget {
                     },
                     itemBuilder: (_) => [
                       if (tiny) PopupMenuItem(value: 'share', child: Text(l10n.shareTooltip)),
-                      if (tiny && !isMobilePlatform) PopupMenuItem(value: 'image', child: Text(l10n.imageAdd)),
                       PopupMenuItem(value: 'reminder', child: Text(l10n.reminderTooltip)),
                       PopupMenuItem(value: 'history', child: Text(l10n.historyTooltip)),
                       if (tiny) PopupMenuItem(value: 'delete', child: Text(l10n.noteDelete)),
