@@ -115,6 +115,16 @@
     }
   },
   "settingsTitle": "Settings",
+  "settingsSectionAppearance": "Appearance",
+  "settingsMode": "Mode",
+  "settingsModeSystem": "System",
+  "settingsPalette": "Color scheme",
+  "settingsPaletteSaturn": "Saturn",
+  "settingsPaletteTeal": "Teal",
+  "settingsPaletteAmber": "Amber",
+  "settingsPaletteRose": "Rose",
+  "settingsPaletteSlate": "Slate",
+  "settingsPaletteHighContrast": "High contrast",
   "settingsAccount": "GitHub account",
   "settingsSignedInAs": "Signed in as {login}",
   "@settingsSignedInAs": {

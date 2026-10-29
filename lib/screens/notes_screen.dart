@@ -20,7 +20,6 @@ import '../notes/note.dart';
 import '../notes/notes_controller.dart';
 import '../notes/wiki_links.dart';
 import '../platform_kind.dart';
-import '../settings/settings_menus.dart';
 import '../sync/sync_service.dart';
 import '../theme/app_theme.dart';
 import 'md_format.dart';
@@ -622,8 +621,6 @@ class _NotesScreenState extends State<NotesScreen> with WidgetsBindingObserver {
         actions: [
           tight(syncButton),
           if (!isMobilePlatform) tight(newNote), // 폰에서는 보드의 + 버튼을 쓴다
-          tight(const ThemeMenuButton()),
-          tight(const LanguageMenuButton()),
           tight(
             PopupMenuButton<String>(
               tooltip: l10n.moreTooltip,
@@ -669,8 +666,6 @@ class _NotesScreenState extends State<NotesScreen> with WidgetsBindingObserver {
             onPressed: _openSettings,
           ),
         ),
-        sized(const ThemeMenuButton()),
-        sized(const LanguageMenuButton()),
         sized(
           IconButton(tooltip: l10n.aboutTooltip, icon: const Icon(Icons.info_outline_rounded), onPressed: widget.onAbout),
         ),
