@@ -11,6 +11,7 @@ class Note {
     required this.body,
     this.bookmarked = false,
     this.deletedAt,
+    this.remindAt,
   });
 
   final String id;
@@ -25,6 +26,10 @@ class Note {
   /// 휴지통으로 옮긴 시각 (frontmatter `deleted:`). null이면 살아 있는 메모.
   /// 파일은 `notes/`에 그대로 있어서 휴지통 상태도 동기화로 다른 PC에 따라간다.
   final DateTime? deletedAt;
+
+  /// 알람 시각 (frontmatter `remind:`). 이 시각이 되면 앱이 메모 내용을 띄운다. 확인하면 지워진다.
+  /// 메모 파일에 들어 있어서 동기화로 다른 PC에도 따라간다.
+  final DateTime? remindAt;
 
   bool get isTrashed => deletedAt != null;
 
@@ -98,13 +103,23 @@ class Note {
   }
 
   /// [deletedAt]을 지정하면 휴지통으로, [restore]면 휴지통에서 꺼낸다.
-  Note copyWith({String? body, DateTime? updated, bool? bookmarked, DateTime? deletedAt, bool restore = false}) => Note(
+  /// [remindAt]을 지정하면 알람을 맞추고, [clearRemind]면 알람을 끈다.
+  Note copyWith({
+    String? body,
+    DateTime? updated,
+    bool? bookmarked,
+    DateTime? deletedAt,
+    bool restore = false,
+    DateTime? remindAt,
+    bool clearRemind = false,
+  }) => Note(
         id: id,
         created: created,
         updated: updated ?? this.updated,
         body: body ?? this.body,
         bookmarked: bookmarked ?? this.bookmarked,
         deletedAt: restore ? null : (deletedAt ?? this.deletedAt),
+        remindAt: clearRemind ? null : (remindAt ?? this.remindAt),
       );
 
   bool matches(String query) {
@@ -117,6 +132,7 @@ class Note {
       'created: ${created.toUtc().toIso8601String()}\n'
       'updated: ${updated.toUtc().toIso8601String()}\n'
       '${bookmarked ? 'bookmarked: true\n' : ''}'
+      '${remindAt != null ? 'remind: ${remindAt!.toUtc().toIso8601String()}\n' : ''}'
       '${deletedAt != null ? 'deleted: ${deletedAt!.toUtc().toIso8601String()}\n' : ''}'
       '---\n'
       '$body';
@@ -141,6 +157,7 @@ class Note {
           body: text.substring(end + 5),
           bookmarked: meta['bookmarked'] == 'true',
           deletedAt: DateTime.tryParse(meta['deleted'] ?? ''),
+          remindAt: DateTime.tryParse(meta['remind'] ?? ''),
         );
       }
     }

@@ -190,6 +190,36 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsTitle => 'Settings';
 
   @override
+  String get settingsSectionAppearance => 'Appearance';
+
+  @override
+  String get settingsMode => 'Mode';
+
+  @override
+  String get settingsModeSystem => 'System';
+
+  @override
+  String get settingsPalette => 'Color scheme';
+
+  @override
+  String get settingsPaletteSaturn => 'Saturn';
+
+  @override
+  String get settingsPaletteTeal => 'Teal';
+
+  @override
+  String get settingsPaletteAmber => 'Amber';
+
+  @override
+  String get settingsPaletteRose => 'Rose';
+
+  @override
+  String get settingsPaletteSlate => 'Slate';
+
+  @override
+  String get settingsPaletteHighContrast => 'High contrast';
+
+  @override
   String get settingsAccount => 'GitHub account';
 
   @override
@@ -828,4 +858,28 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get updateQuitAndInstall => 'Quit and install';
+
+  @override
+  String get reminderTitle => 'Reminder';
+
+  @override
+  String get reminderTooltip => 'Reminder';
+
+  @override
+  String get reminderSet => 'Set reminder';
+
+  @override
+  String get reminderClear => 'Turn off';
+
+  @override
+  String get reminderPast => 'Pick a time in the future';
+
+  @override
+  String get reminderDone => 'Done';
+
+  @override
+  String get reminderSnooze => 'In 10 min';
+
+  @override
+  String get reminderOpen => 'Open note';
 }

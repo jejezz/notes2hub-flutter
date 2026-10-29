@@ -115,6 +115,16 @@
     }
   },
   "settingsTitle": "Settings",
+  "settingsSectionAppearance": "Appearance",
+  "settingsMode": "Mode",
+  "settingsModeSystem": "System",
+  "settingsPalette": "Color scheme",
+  "settingsPaletteSaturn": "Saturn",
+  "settingsPaletteTeal": "Teal",
+  "settingsPaletteAmber": "Amber",
+  "settingsPaletteRose": "Rose",
+  "settingsPaletteSlate": "Slate",
+  "settingsPaletteHighContrast": "High contrast",
   "settingsAccount": "GitHub account",
   "settingsSignedInAs": "Signed in as {login}",
   "@settingsSignedInAs": {
@@ -540,5 +550,13 @@
       }
     }
   },
-  "updateQuitAndInstall": "Quit and install"
+  "updateQuitAndInstall": "Quit and install",
+  "reminderTitle": "Reminder",
+  "reminderTooltip": "Reminder",
+  "reminderSet": "Set reminder",
+  "reminderClear": "Turn off",
+  "reminderPast": "Pick a time in the future",
+  "reminderDone": "Done",
+  "reminderSnooze": "In 10 min",
+  "reminderOpen": "Open note"
 }

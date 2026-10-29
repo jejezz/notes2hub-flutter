@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import '../github/github_api.dart';
 import '../l10n/app_localizations.dart';
 import '../platform_kind.dart';
+import '../settings/settings_menus.dart';
 import '../sync/sync_service.dart';
 import '../theme/app_theme.dart';
 import '../window/quick_capture.dart';
@@ -12,18 +13,19 @@ import '../window/window_layout.dart';
 import 'login_dialog.dart';
 import 'repo_dialog.dart';
 
+/// 설정 화면: 모바일까지 지원하는 앱이라 전체 페이지로 민다(settings-screen.md §1).
+/// 데스크톱 전용 앱은 AlertDialog를 쓴다 — 이 앱은 그 예외다.
 Future<void> showSettingsDialog(
   BuildContext context,
   SyncService sync, [
   WindowLayout? layout,
   QuickCaptureHotkey? quickCapture,
-]) => showDialog<void>(
-  context: context,
-  builder: (_) => _SettingsDialog(sync: sync, layout: layout, quickCapture: quickCapture),
+]) => Navigator.of(context).push<void>(
+  MaterialPageRoute(builder: (_) => _SettingsScreen(sync: sync, layout: layout, quickCapture: quickCapture)),
 );
 
-class _SettingsDialog extends StatelessWidget {
-  const _SettingsDialog({required this.sync, this.layout, this.quickCapture});
+class _SettingsScreen extends StatelessWidget {
+  const _SettingsScreen({required this.sync, this.layout, this.quickCapture});
 
   final SyncService sync;
   final QuickCaptureHotkey? quickCapture;
@@ -35,16 +37,28 @@ class _SettingsDialog extends StatelessWidget {
     final theme = Theme.of(context);
     return ListenableBuilder(
       listenable: Listenable.merge([sync, ?layout, ?quickCapture]),
-      builder: (context, _) => AlertDialog(
-        title: Text(l10n.settingsTitle),
-        content: SizedBox(
-          width: 460,
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _Section(
+      builder: (context, _) => Scaffold(
+        appBar: AppBar(title: Text(l10n.settingsTitle)),
+        body: SingleChildScrollView(
+          padding: const EdgeInsets.all(AppSpacing.lg),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _Section(l10n.settingsSectionAppearance),
+              Text(l10n.settingsMode, style: theme.textTheme.bodySmall),
+              const SizedBox(height: AppSpacing.xs),
+              const ModeSegmentedButton(),
+              const SizedBox(height: AppSpacing.md),
+              Text(l10n.settingsPalette, style: theme.textTheme.bodySmall),
+              const SizedBox(height: AppSpacing.xs),
+              const AccentPaletteChips(),
+              const SizedBox(height: AppSpacing.md),
+              Text(l10n.languageMenuTooltip, style: theme.textTheme.bodySmall),
+              const SizedBox(height: AppSpacing.xs),
+              const LanguageSegmentedButton(),
+              const SizedBox(height: AppSpacing.xl),
+              _Section(
                   l10n.settingsAccount,
                   action: sync.loggedIn
                       ? OutlinedButton(onPressed: sync.logout, child: Text(l10n.settingsLogout))
@@ -138,9 +152,7 @@ class _SettingsDialog extends StatelessWidget {
             ),
           ),
         ),
-        actions: [TextButton(onPressed: () => Navigator.pop(context), child: Text(l10n.commonClose))],
-      ),
-    );
+      );
   }
 }
 

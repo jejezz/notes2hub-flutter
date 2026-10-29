@@ -189,6 +189,36 @@ class AppLocalizationsKo extends AppLocalizations {
   String get settingsTitle => '설정';
 
   @override
+  String get settingsSectionAppearance => '외형';
+
+  @override
+  String get settingsMode => '모드';
+
+  @override
+  String get settingsModeSystem => '시스템';
+
+  @override
+  String get settingsPalette => '색 구성';
+
+  @override
+  String get settingsPaletteSaturn => '새턴';
+
+  @override
+  String get settingsPaletteTeal => '청록';
+
+  @override
+  String get settingsPaletteAmber => '호박';
+
+  @override
+  String get settingsPaletteRose => '장미';
+
+  @override
+  String get settingsPaletteSlate => '슬레이트';
+
+  @override
+  String get settingsPaletteHighContrast => '고대비';
+
+  @override
   String get settingsAccount => 'GitHub 계정';
 
   @override
@@ -816,4 +846,28 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get updateQuitAndInstall => '종료하고 설치';
+
+  @override
+  String get reminderTitle => '알람';
+
+  @override
+  String get reminderTooltip => '알람';
+
+  @override
+  String get reminderSet => '알람 설정';
+
+  @override
+  String get reminderClear => '알람 끄기';
+
+  @override
+  String get reminderPast => '지난 시각에는 알람을 맞출 수 없어요';
+
+  @override
+  String get reminderDone => '확인';
+
+  @override
+  String get reminderSnooze => '10분 뒤';
+
+  @override
+  String get reminderOpen => '메모 열기';
 }
