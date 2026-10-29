@@ -26,6 +26,7 @@ import 'md_format.dart';
 import 'md_toolbar.dart';
 import 'note_link_picker.dart';
 import 'quick_capture_dialog.dart';
+import 'reminder_dialogs.dart';
 import 'share_sheet.dart';
 import '../theme/user_content.dart';
 import '../window/focus_tint.dart';
@@ -545,6 +546,14 @@ class _NotesScreenState extends State<NotesScreen> with WidgetsBindingObserver {
 
   void _openTrash() => showTrashDialog(context, c);
 
+  /// 알람 시각을 고른다 — [noteId]가 없으면 편집 중인 메모.
+  Future<void> _editReminder([String? noteId]) async {
+    final id = noteId ?? c.selectedId;
+    if (id == null) return;
+    final choice = await showReminderPicker(context, current: c.noteById(id)?.remindAt);
+    if (choice != null) await c.setReminder(id, choice.at);
+  }
+
   void _openHistory() {
     final id = c.selectedId;
     if (id == null) return;
@@ -752,6 +761,7 @@ class _NotesScreenState extends State<NotesScreen> with WidgetsBindingObserver {
                                 onSave: _save,
                                 onDelete: _delete,
                                 onHistory: _openHistory,
+                                onReminder: _editReminder,
                                 onNoteLink: _insertNoteLink,
                                 onNoteHref: _followNoteHref,
                                 onBack: _back,
@@ -775,6 +785,7 @@ class _NotesScreenState extends State<NotesScreen> with WidgetsBindingObserver {
                                 onEdit: _open,
                                 onDelete: _deleteNote,
                                 onBookmark: c.toggleBookmark,
+                                onReminder: _editReminder,
                                 onCreate: _create,
                                 onRefresh: _syncNow,
                               ),
@@ -891,6 +902,7 @@ class _EditorPane extends StatelessWidget {
     required this.onSave,
     required this.onDelete,
     required this.onHistory,
+    required this.onReminder,
     required this.onNoteLink,
     required this.onNoteHref,
     required this.onBack,
@@ -909,6 +921,7 @@ class _EditorPane extends StatelessWidget {
   final VoidCallback onSave;
   final VoidCallback onDelete;
   final VoidCallback onHistory;
+  final VoidCallback onReminder;
   final VoidCallback onNoteLink;
   final ValueChanged<String> onNoteHref;
   final VoidCallback onBack;
@@ -929,6 +942,8 @@ class _EditorPane extends StatelessWidget {
     // 창을 화면 가장자리에 세로로 붙인 좁은 모양: 글자 라벨 대신 아이콘으로 줄인다.
     final compact = MediaQuery.sizeOf(context).width < 840;
     final tiny = MediaQuery.sizeOf(context).width < 400;
+    // 좁은 창에서는 알람·버전 기록을 ⋮ 메뉴로 묶는다 (단추가 넘치지 않게).
+    final narrow = MediaQuery.sizeOf(context).width < 520;
     final pad = compact ? AppSpacing.md : AppSpacing.xl;
     const dense = VisualDensity.compact;
     return Column(
@@ -1007,13 +1022,6 @@ class _EditorPane extends StatelessWidget {
                     ),
                   ),
                 ),
-              if (!isMobilePlatform && !tiny) // 폰에서는 키보드 위 도구줄에 있다
-              IconButton(
-                tooltip: '${l10n.imageAdd} ($_mod⇧I)',
-                visualDensity: compact ? dense : null,
-                icon: const Icon(Icons.add_photo_alternate_outlined, size: 18),
-                onPressed: onAddImage,
-              ),
               if (compact)
                 IconButton.filled(
                   tooltip: '${l10n.noteSave} (${_mod}S)',
@@ -1030,7 +1038,19 @@ class _EditorPane extends StatelessWidget {
                     label: Text(l10n.noteSave),
                   ),
                 ),
-              if (!tiny)
+              if (!narrow)
+                IconButton(
+                  key: const ValueKey('reminder-button'),
+                  tooltip: l10n.reminderTooltip,
+                  visualDensity: compact ? dense : null,
+                  icon: Icon(
+                    note.remindAt == null ? Icons.alarm_add_outlined : Icons.alarm_on_rounded,
+                    size: 18,
+                    color: note.remindAt == null ? null : theme.colorScheme.primary,
+                  ),
+                  onPressed: onReminder,
+                ),
+              if (!narrow)
                 IconButton(
                   tooltip: l10n.historyTooltip,
                   visualDensity: compact ? dense : null,
@@ -1043,9 +1063,9 @@ class _EditorPane extends StatelessWidget {
                   visualDensity: compact ? dense : null,
                   icon: const Icon(Icons.delete_outline_rounded, size: 18),
                   onPressed: onDelete,
-                )
-              else
-                // 아주 좁으면(폰 세로, 최소 폭 창) 덜 쓰는 단추를 ⋮ 메뉴로 묶는다.
+                ),
+              if (narrow)
+                // 좁으면(폰 세로, 최소 폭 창) 덜 쓰는 단추를 ⋮ 메뉴로 묶는다.
                 Builder(
                   builder: (menuContext) => PopupMenuButton<String>(
                     tooltip: l10n.moreTooltip,
@@ -1055,8 +1075,8 @@ class _EditorPane extends StatelessWidget {
                       switch (v) {
                         case 'share':
                           showShareSheet(context, body: note.body, assets: assets, origin: shareOrigin(menuContext));
-                        case 'image':
-                          onAddImage();
+                        case 'reminder':
+                          onReminder();
                         case 'history':
                           onHistory();
                         case 'delete':
@@ -1064,10 +1084,10 @@ class _EditorPane extends StatelessWidget {
                       }
                     },
                     itemBuilder: (_) => [
-                      PopupMenuItem(value: 'share', child: Text(l10n.shareTooltip)),
-                      if (!isMobilePlatform) PopupMenuItem(value: 'image', child: Text(l10n.imageAdd)),
+                      if (tiny) PopupMenuItem(value: 'share', child: Text(l10n.shareTooltip)),
+                      PopupMenuItem(value: 'reminder', child: Text(l10n.reminderTooltip)),
                       PopupMenuItem(value: 'history', child: Text(l10n.historyTooltip)),
-                      PopupMenuItem(value: 'delete', child: Text(l10n.noteDelete)),
+                      if (tiny) PopupMenuItem(value: 'delete', child: Text(l10n.noteDelete)),
                     ],
                   ),
                 ),

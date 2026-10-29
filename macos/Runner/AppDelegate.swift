@@ -1,6 +1,7 @@
 import Cocoa
 import Carbon.HIToolbox
 import FlutterMacOS
+import UserNotifications
 
 /// 빠른 메모 전역 단축키(⌃⌥N)의 상태. Carbon 이벤트 콜백은 C 함수라서 값을 붙잡을 수 없어 파일 수준에 둔다.
 private var hotKeyRef: EventHotKeyRef?
@@ -11,7 +12,7 @@ private var hotKeyChannel: FlutterMethodChannel?
 private var keepRunningInBackground = false
 
 @main
-class AppDelegate: FlutterAppDelegate {
+class AppDelegate: FlutterAppDelegate, UNUserNotificationCenterDelegate {
   override func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
     return !keepRunningInBackground
   }
@@ -23,6 +24,14 @@ class AppDelegate: FlutterAppDelegate {
       NSApp.activate(ignoringOtherApps: true)
     }
     return true
+  }
+
+  /// 앱이 앞에 있을 때 도착한 예약 알림도 배너로 보인다.
+  func userNotificationCenter(
+    _ center: UNUserNotificationCenter, willPresent notification: UNNotification,
+    withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void
+  ) {
+    completionHandler([.banner, .sound])
   }
 
   override func applicationSupportsSecureRestorableState(_ app: NSApplication) -> Bool {
@@ -46,6 +55,8 @@ class AppDelegate: FlutterAppDelegate {
         }
       }
     }
+    // 앱이 켜져 있을 때도 예약 알림이 표시되게 한다 (flutter_local_notifications).
+    UNUserNotificationCenter.current().delegate = self
     super.applicationDidFinishLaunching(notification)
   }
 }

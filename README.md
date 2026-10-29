@@ -25,7 +25,7 @@
 </p>
 
 <p align="center">
-  <img src="docs/screenshots/demo.gif" width="720" alt="Notes2Hub demo: write a note, save it, sync to GitHub">
+  <img src="docs/screenshots/demo.gif" width="720" alt="Notes2Hub demo: type a quick note, edit it, save it">
 </p>
 
 ## Features
@@ -39,8 +39,8 @@
 - **Light & dark, English & 한국어** — follows the system, or pick one in the toolbar
 
 <p align="center">
-  <img src="docs/screenshots/home.png" width="360" alt="The board: quick-capture bar and note cards">
-  <img src="docs/screenshots/detail.png" width="360" alt="The editor with Markdown preview">
+  <img src="docs/screenshots/home.png" width="360" alt="The board in light and dark: quick-capture bar and note cards">
+  <img src="docs/screenshots/detail.png" width="360" alt="The editor with Markdown preview, light and dark">
 </p>
 
 ## Install

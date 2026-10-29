@@ -843,4 +843,28 @@ class AppLocalizationsKo extends AppLocalizations {
 
   @override
   String get updateQuitAndInstall => '종료하고 설치';
+
+  @override
+  String get reminderTitle => '알람';
+
+  @override
+  String get reminderTooltip => '알람';
+
+  @override
+  String get reminderSet => '알람 설정';
+
+  @override
+  String get reminderClear => '알람 끄기';
+
+  @override
+  String get reminderPast => '지난 시각에는 알람을 맞출 수 없어요';
+
+  @override
+  String get reminderDone => '확인';
+
+  @override
+  String get reminderSnooze => '10분 뒤';
+
+  @override
+  String get reminderOpen => '메모 열기';
 }

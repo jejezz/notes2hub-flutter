@@ -25,7 +25,7 @@
 </p>
 
 <p align="center">
-  <img src="docs/screenshots/demo.gif" width="720" alt="Notes2Hub 데모: 메모 작성, 저장, GitHub 동기화">
+  <img src="docs/screenshots/demo.gif" width="720" alt="Notes2Hub 데모: 빠른 메모 입력, 편집, 저장">
 </p>
 
 ## 기능
@@ -39,8 +39,8 @@
 - **라이트·다크, 한국어·English** — 시스템 설정을 따르거나 툴바에서 고를 수 있습니다
 
 <p align="center">
-  <img src="docs/screenshots/home.png" width="360" alt="보드: 빠른 메모 입력창과 메모 카드">
-  <img src="docs/screenshots/detail.png" width="360" alt="Markdown 미리보기가 있는 편집기">
+  <img src="docs/screenshots/home.png" width="360" alt="라이트·다크 보드: 빠른 메모 입력창과 메모 카드">
+  <img src="docs/screenshots/detail.png" width="360" alt="Markdown 미리보기가 있는 편집기 (라이트·다크)">
 </p>
 
 ## 설치

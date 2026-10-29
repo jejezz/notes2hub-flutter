@@ -1573,6 +1573,54 @@ abstract class AppLocalizations {
   /// In ko, this message translates to:
   /// **'종료하고 설치'**
   String get updateQuitAndInstall;
+
+  /// No description provided for @reminderTitle.
+  ///
+  /// In ko, this message translates to:
+  /// **'알람'**
+  String get reminderTitle;
+
+  /// No description provided for @reminderTooltip.
+  ///
+  /// In ko, this message translates to:
+  /// **'알람'**
+  String get reminderTooltip;
+
+  /// No description provided for @reminderSet.
+  ///
+  /// In ko, this message translates to:
+  /// **'알람 설정'**
+  String get reminderSet;
+
+  /// No description provided for @reminderClear.
+  ///
+  /// In ko, this message translates to:
+  /// **'알람 끄기'**
+  String get reminderClear;
+
+  /// No description provided for @reminderPast.
+  ///
+  /// In ko, this message translates to:
+  /// **'지난 시각에는 알람을 맞출 수 없어요'**
+  String get reminderPast;
+
+  /// No description provided for @reminderDone.
+  ///
+  /// In ko, this message translates to:
+  /// **'확인'**
+  String get reminderDone;
+
+  /// No description provided for @reminderSnooze.
+  ///
+  /// In ko, this message translates to:
+  /// **'10분 뒤'**
+  String get reminderSnooze;
+
+  /// No description provided for @reminderOpen.
+  ///
+  /// In ko, this message translates to:
+  /// **'메모 열기'**
+  String get reminderOpen;
 }
 
 class _AppLocalizationsDelegate
