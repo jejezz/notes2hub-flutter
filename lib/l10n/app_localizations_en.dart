@@ -690,7 +690,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get formatRule => 'Divider';
 
   @override
-  String get formatTidy => 'Tidy Markdown (fix line breaks and lists in pasted text)';
+  String get formatTidy =>
+      'Tidy Markdown (fix line breaks and lists in pasted text)';
 
   @override
   String get formatNoteLink => 'Link to a note';

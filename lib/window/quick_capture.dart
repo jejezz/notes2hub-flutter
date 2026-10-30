@@ -47,9 +47,9 @@ class QuickCaptureHotkey extends ChangeNotifier {
   /// 사용자가 켜 두었는가 (기본 켬).
   bool get enabled => _prefs.getBool(_kEnabled) ?? true;
 
-  /// 창을 닫아도 앱을 백그라운드에 남기는가 (기본 켬). 단축키가 켜져 있고 실제로 등록된 경우에만 적용된다 —
+  /// 창을 닫아도 앱을 백그라운드에 남기는가 (기본 끔 — 켜 두면 종료·업데이트 때 앱이 안 끝나는 일이 있었다). 단축키가 켜져 있고 실제로 등록된 경우에만 적용된다 —
   /// 단축키를 받지 못하는데 숨어 있기만 하면 쓸모가 없다.
-  bool get keepRunning => _prefs.getBool(_kKeepRunning) ?? true;
+  bool get keepRunning => _prefs.getBool(_kKeepRunning) ?? false;
 
   bool get _keeping => _enabled && _registered && keepRunning;
 
