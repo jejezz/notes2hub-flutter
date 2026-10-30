@@ -80,6 +80,7 @@ Future<void> _main() async {
 
   final prefs = await SharedPreferences.getInstance();
   WindowLayout? windowLayout;
+  Future<void> Function()? showWindow;
   if (_isDesktop) {
     await windowManager.ensureInitialized();
     final layout = WindowLayout(prefs: prefs, port: DesktopWindowPort());
@@ -87,12 +88,19 @@ Future<void> _main() async {
     // ui-ux.md §5: 최소 크기는 960×600 이하. 이 앱은 화면 가장자리에 세로로 붙여 쓰는 메모 앱이라
     // 훨씬 좁게(320) 줄일 수 있다. 크기·위치는 직접 정하지 않고 저장된 값(또는 도킹)을 복원한다.
     const options = WindowOptions(minimumSize: Size(320, 420), title: AppIdentity.displayName);
+    final placed = Completer<void>();
     await windowManager.waitUntilReadyToShow(options, () async {
       await layout.restore(); // 창을 보이기 전에 위치·크기를 맞춘다 (깜빡임 방지)
+      placed.complete();
+    });
+    // 첫 프레임이 그려진 뒤에 보여야 깜빡이지 않는다 (window-placement.md §5).
+    showWindow = () async {
+      await placed.future;
+      await _nextFrame();
       windowManager.addListener(layout);
       await windowManager.show();
       await windowManager.focus();
-    });
+    };
   }
 
   final settings = await AppSettings.load();
@@ -123,6 +131,19 @@ Future<void> _main() async {
     service: updates,
     child: App(settings: settings, notes: notes, sync: sync, assets: assets, windowLayout: windowLayout, quickCapture: quickCapture, updates: updates),
   ));
+
+  if (showWindow != null) {
+    final show = showWindow;
+    WidgetsBinding.instance.addPostFrameCallback((_) => unawaited(show()));
+  }
+}
+
+/// 다음 프레임이 그려질 때까지 기다린다.
+Future<void> _nextFrame() {
+  final completer = Completer<void>();
+  WidgetsBinding.instance.addPostFrameCallback((_) => completer.complete());
+  WidgetsBinding.instance.scheduleFrame();
+  return completer.future;
 }
 
 class App extends StatefulWidget {
