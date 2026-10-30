@@ -132,13 +132,14 @@ void main() {
   test('closing the window keeps the app running only while the shortcut is on and really registered', () async {
     final q = await make();
     await q.init();
-    expect(q.keepRunning, isTrue); // 기본 켬
-    expect(fakeWindow.keep.last, isTrue);
+    expect(q.keepRunning, isFalse); // 기본 끔 — 다른 앱과 같이 창을 닫으면 종료
+    expect(fakeWindow.keep.last, isFalse);
 
+    await q.setKeepRunning(true);
+    expect(fakeWindow.keep.last, isTrue);
     await q.setKeepRunning(false);
     expect(fakeWindow.keep.last, isFalse);
     await q.setKeepRunning(true);
-    expect(fakeWindow.keep.last, isTrue);
 
     await q.setEnabled(false); // 단축키를 끄면 창을 닫을 때 앱이 끝난다
     expect(fakeWindow.keep.last, isFalse);
